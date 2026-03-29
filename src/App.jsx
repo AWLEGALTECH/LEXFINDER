@@ -192,17 +192,25 @@ function parseValor(s) {
 const IS_DATE = /^\d{2}\/\d{2}\/\d{4}$/;
 const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
 
-function pickDebit(rowValues, debitoX) {
-  const candidates = rowValues.length >= 2 ? rowValues.slice(0, -1) : rowValues;
-  if (!candidates.length) return null;
+function pickDebit(rowValues, cols) {
+  if (!rowValues.length) return null;
+  const { debitoX, creditoX, saldoX } = cols;
+
   if (debitoX !== null) {
-    const best = candidates.reduce((b, c) =>
-      Math.abs(c.x - debitoX) < Math.abs(b.x - debitoX) ? c : b, candidates[0]);
-    // Rejeitar se muito longe da coluna Débito (provavelmente é crédito ou saldo)
-    if (candidates.length === 1 && Math.abs(best.x - debitoX) > 60) return null;
-    return parseValor(best.text);
+    // Pegar o valor mais próximo da coluna Débito que NÃO esteja mais perto de Crédito ou Saldo
+    let best = null, bestDist = Infinity;
+    for (const rv of rowValues) {
+      const distDeb = Math.abs(rv.x - debitoX);
+      if (creditoX !== null && Math.abs(rv.x - creditoX) < distDeb) continue;
+      if (saldoX !== null && Math.abs(rv.x - saldoX) < distDeb) continue;
+      if (distDeb < bestDist) { bestDist = distDeb; best = rv; }
+    }
+    return best ? parseValor(best.text) : null;
   }
-  return parseValor(candidates[candidates.length - 1].text);
+
+  // Fallback sem detecção de colunas: remove último (provável saldo), pega penúltimo
+  const candidates = rowValues.length >= 2 ? rowValues.slice(0, -1) : rowValues;
+  return candidates.length ? parseValor(candidates[candidates.length - 1].text) : null;
 }
 
 // Detecta layout: "superior" (data no topo do grupo) vs "inferior" (data no final do grupo)
@@ -233,14 +241,14 @@ function detectLayout(allRows) {
 }
 
 // Extrai histórico e valor de débito de uma row
-function extractFromRow(row, debitoX, skipDate) {
+function extractFromRow(row, cols, skipDate) {
   const startIdx = skipDate ? 1 : 0;
   const afterStart = row.items.slice(startIdx);
   const firstValIdx = afterStart.findIndex(i => IS_VALUE.test(i.text));
   const histItems = firstValIdx >= 0 ? afterStart.slice(0, firstValIdx) : afterStart;
   const historico = histItems.map(i => i.text).join(" ").trim();
   const rowValues = row.items.filter(i => IS_VALUE.test(i.text));
-  const debitVal = rowValues.length > 0 ? pickDebit(rowValues, debitoX) : null;
+  const debitVal = rowValues.length > 0 ? pickDebit(rowValues, cols) : null;
   return { historico, debitVal };
 }
 
@@ -251,7 +259,7 @@ async function parseDocumentoPDF(file, onProgress) {
 
   // ── Fase 1: Extrair todas as páginas ──
   const pageData = [];
-  let debitoX = null;
+  const cols = { debitoX: null, creditoX: null, saldoX: null };
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     onProgress && onProgress(pageNum, pdf.numPages);
     const page = await pdf.getPage(pageNum);
@@ -260,9 +268,12 @@ async function parseDocumentoPDF(file, onProgress) {
       .map(it => ({ text: it.str.trim(), x: it.transform[4], y: it.transform[5] }));
     const rows = groupByY(items);
     const flat = items.map(i => i.text).join(" ");
-    if (debitoX === null) {
+    // Detectar posições X das 3 colunas de valores no cabeçalho da tabela
+    if (cols.debitoX === null) {
       for (const item of items) {
-        if (/^d[eé]bito/i.test(item.text)) { debitoX = item.x; break; }
+        if (/^cr[eé]dito/i.test(item.text) && cols.creditoX === null) cols.creditoX = item.x;
+        if (/^d[eé]bito/i.test(item.text) && cols.debitoX === null) cols.debitoX = item.x;
+        if (/^saldo/i.test(item.text) && cols.saldoX === null) cols.saldoX = item.x;
       }
     }
     pageData.push({ rows, flat, items });
@@ -352,7 +363,7 @@ async function parseDocumentoPDF(file, onProgress) {
       if (layout === "inferior") flushBuffer(first);
       lastDate = first;
 
-      const { historico, debitVal } = extractFromRow(row, debitoX, true);
+      const { historico, debitVal } = extractFromRow(row, cols, true);
 
       if (hasValues && debitVal) {
         const t = { data: first, historico, valor: debitVal };
@@ -397,12 +408,12 @@ async function parseDocumentoPDF(file, onProgress) {
           const extra = row.items.slice(0, firstValIdx).map(i => i.text).join(" ").trim();
           if (extra) pending.historico = (pending.historico + " " + extra).trim();
         }
-        const debitVal = pickDebit(rowValues, debitoX);
+        const debitVal = pickDebit(rowValues, cols);
         if (debitVal) { pending.valor = debitVal; emit(pending); }
         pending = null;
       } else {
         // Transação standalone (valores na mesma linha que descrição)
-        const { historico, debitVal } = extractFromRow(row, debitoX, false);
+        const { historico, debitVal } = extractFromRow(row, cols, false);
         if (debitVal) {
           const date = layout === "superior" ? lastDate : null;
           const t = { data: date, historico, valor: debitVal };
