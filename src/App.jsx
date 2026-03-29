@@ -11,27 +11,119 @@ const THEME = {
   border: "rgba(59,130,246,0.28)",
 };
 
-// Categorias de desconto serão preenchidas com a lógica de extração
+function normalizeText(text) {
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 const CATEGORIAS = [
-  // Exemplo de estrutura:
-  // {
-  //   id: "id_unico",
-  //   label: "Nome da Categoria",
-  //   sublabel: "Descrição curta",
-  //   icon: "!",
-  //   ...THEME,
-  //   keywords: ["palavra-chave-1", "palavra-chave-2"],
-  //   fundamento: "Base legal aplicável",
-  //   acao: "Ação recomendada para o advogado",
-  //   descricao: "Descrição da rubrica",
-  // },
+  {
+    id: "tarifas",
+    label: "Tarifas Avulsas",
+    sublabel: "Cobranças por serviços avulsos",
+    icon: "!",
+    ...THEME,
+    keywords: ["tarifa bancaria", "saqueterminal", "saquecorrespondente", "saquepessoal", "saquetermi", "saquecorre", "pend.tarifas bancaria", "adiant.depositante", "tar adiant.depositante"],
+    fundamento: "Art. 3º, Res. CMN 3.919/10; Súmula 297 STJ",
+    acao: "Pleitear restituição em dobro das tarifas cobradas sem prévia contratação expressa (Art. 42, CDC). Verificar se houve autorização expressa em contrato.",
+    descricao: "Tarifa Bancária Avulsa",
+  },
+  {
+    id: "cesta",
+    label: "Pacotes e Cestas",
+    sublabel: "Mensalidades de pacotes de serviços",
+    icon: "!",
+    ...THEME,
+    keywords: ["cesta", "vr.parcial cesta", "pacote de servicos", "pacote servico", "pacote", "padronizado prioritarios", "pserv", "binclub"],
+    fundamento: "Art. 3º e 4º, Res. CMN 3.919/10; Art. 39, CDC",
+    acao: "Verificar se o cliente efetivamente contratou o pacote. Em caso negativo, pleitear restituição de todos os valores cobrados nos últimos 5 anos.",
+    descricao: "Pacote/Cesta de Serviços",
+  },
+  {
+    id: "encargos",
+    label: "Encargos e IOF",
+    sublabel: "Encargos sobre limite de crédito e IOF",
+    icon: "!",
+    ...THEME,
+    keywords: ["encargos limite de cred", "encargos limite credito", "encargos descoberto", "encargos saldo vinculado", "encargo saldo vinculado", "encargos excesso limite", "encargos", "iof s/ utilizacao limite", "iof s/utilizacao", "iof s/"],
+    fundamento: "Art. 52 e 422, CC; Res. CMN 3.919/10; Dec. 6.306/07",
+    acao: "Verificar se houve efetiva utilização do limite. Encargos e IOF cobrados sem utilização ou em duplicidade são passíveis de repetição de indébito.",
+    descricao: "Encargo sobre Limite / IOF",
+  },
+  {
+    id: "mora",
+    label: "Mora de Crédito",
+    sublabel: "Juros de mora em operações de crédito",
+    icon: "!",
+    ...THEME,
+    keywords: ["mora credito pessoal", "mora cred pess", "mora conta de telefone", "mora cta telef", "mora de operacao", "mora operacao de credito", "mora cartao de credito", "mora cartao", "mora encargos", "mora vida e previdencia"],
+    fundamento: "Art. 52, §1º, CDC; Súmula 379 STJ",
+    acao: "Verificar legalidade da cobrança. Mora decorrente de cobranças indevidas é igualmente indevida. Pleitear cancelamento da mora sobre débitos contestados.",
+    descricao: "Mora de Crédito",
+  },
+  {
+    id: "seguros",
+    label: "Seguros e Previdência",
+    sublabel: "Prêmios e mensalidades de seguros",
+    icon: "!",
+    ...THEME,
+    keywords: ["bradesco vida e previdencia", "bradesco vida e prev", "bradesco vida prev", "prev-seg", "vida e previdencia", "bradesco seg-resid", "bradesco capitalizacao", "sabemi", "seguro prestamista", "seguro protecao financeira", "seguro mais protegido", "seg protecao cheque", "seguro cart deb bradesco", "servico cartao protegido", "seguradora secon", "aspecir", "odontoprev", "mbm previdencia", "previplan", "aquisicao/devolucao-seg", "liberty seguros", "titulo de capitalizacao"],
+    fundamento: "Art. 39, III, CDC; Súmula 473 STJ; Art. 757, CC",
+    acao: "Verificar se o seguro foi contratado voluntariamente. Seguros vinculados a financiamentos sem opção de recusa são abusivos (Súmula 473 STJ). Pleitear cancelamento e devolução.",
+    descricao: "Seguro ou Previdência",
+  },
+  {
+    id: "credito",
+    label: "Crédito Pessoal",
+    sublabel: "Empréstimos, financiamentos e operações vencidas",
+    icon: "!",
+    ...THEME,
+    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "bx.ant.financ/emp", "bx.ant.fin/emp", "bx ant", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "jbcred", "crefisa", "sudacred", "agiplan", "easycob", "eagle", "bx"],
+    fundamento: "Art. 52, CDC; Lei 10.931/04; Res. CMN 4.559/17",
+    acao: "Solicitar demonstrativo completo da operação. Verificar CET e taxa de juros. Contestar cobranças acima do contratado ou sem autorização expressa.",
+    descricao: "Operação de Crédito Pessoal",
+  },
+  {
+    id: "anuidade",
+    label: "Anuidade e Cartão",
+    sublabel: "Anuidades e tarifas de cartão de crédito",
+    icon: "!",
+    ...THEME,
+    keywords: ["anuidade", "cartao credito anuidade", "gasto c/cartao de credito", "gastos cartao de credito", "gasto c credito", "provisao gasto cart cred"],
+    fundamento: "Res. CMN 3.919/10; Art. 39, CDC",
+    acao: "Verificar se a anuidade foi informada no momento da contratação. Anuidades cobradas sem previsão contratual expressa são indevidas.",
+    descricao: "Anuidade/Tarifa de Cartão",
+  },
+  {
+    id: "extrato",
+    label: "Emissão de Documentos",
+    sublabel: "Tarifas por extratos e segunda via",
+    icon: "!",
+    ...THEME,
+    keywords: ["emissao extrato", "tarifa emissao extrato", "extratomes", "extratomomovimento", "2via de extrato", "extrato unificado", "tar demonst.consolidade", "tar demonstr consolidado", "2 via cartaodebito", "tar 2 via cartao", "2 via"],
+    fundamento: "Art. 6º, VIII, CDC; Res. CMN 3.919/10",
+    acao: "Emissão de extratos é direito do consumidor (Art. 6º, VIII, CDC). Cobrança por acesso à informação bancária é abusiva. Pleitear devolução dos valores.",
+    descricao: "Emissão de Extrato/Documento",
+  },
+  {
+    id: "outros",
+    label: "Outras Cobranças",
+    sublabel: "Cobranças irregulares diversas",
+    icon: "!",
+    ...THEME,
+    keywords: ["msg", "regularizacao manual", "regularizacao lancamento", "reorganizacao financeira"],
+    fundamento: "Art. 39, CDC; Res. CMN 3.919/10",
+    acao: "Verificar natureza da cobrança e se houve autorização contratual expressa. Solicitar memória de cálculo e contestar cobranças sem fundamento contratual.",
+    descricao: "Cobrança Diversa",
+  },
 ];
 
 function matchCategoria(historico) {
-  const h = historico.toLowerCase();
+  const h = normalizeText(historico);
+  // REM: = remetente de PIX/TED, DES: = destinatário — nunca são tarifas bancárias
+  if (/\brem\s*:/.test(h) || /\bdes\s*:/.test(h)) return null;
   for (const cat of CATEGORIAS) {
     for (const kw of cat.keywords) {
-      if (h.includes(kw)) return cat;
+      if (h.includes(normalizeText(kw))) return cat;
     }
   }
   return null;
@@ -92,37 +184,161 @@ function groupByY(items, tolerance = 4) {
   return rows.sort((a, b) => b.y - a.y);
 }
 
-// Função principal de parse — lógica específica será implementada no próximo passo
+function parseValor(s) {
+  if (!s) return null;
+  const clean = s.replace(/[DC]$/i, "").replace(/\./g, "").replace(",", ".");
+  const v = parseFloat(clean);
+  return isNaN(v) || v <= 0 ? null : v;
+}
+
+const IS_DATE = /^\d{2}\/\d{2}\/\d{4}$/;
+const IS_VALUE = /^\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
+
+function pickDebit(rowValues, debitoX) {
+  // Last value is almost always saldo — exclude it when 2+ values exist
+  const candidates = rowValues.length >= 2 ? rowValues.slice(0, -1) : rowValues;
+  if (!candidates.length) return null;
+  if (debitoX !== null) {
+    const best = candidates.reduce((b, c) =>
+      Math.abs(c.x - debitoX) < Math.abs(b.x - debitoX) ? c : b, candidates[0]);
+    return parseValor(best.text);
+  }
+  // Fallback: last candidate (debit follows credit in column order)
+  return parseValor(candidates[candidates.length - 1].text);
+}
+
 async function parseDocumentoPDF(file, onProgress) {
   const pdfjsLib = await loadPdfJs();
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
 
   let clientName = "";
-  let documento = "";
+  let agencia = "";
+  let conta = "";
   let periodo = "";
   const allTransactions = [];
+  let debitoX = null;
 
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     onProgress && onProgress(pageNum, pdf.numPages);
     const page = await pdf.getPage(pageNum);
     const tc = await page.getTextContent();
     const items = tc.items
-      .filter(it => it.str.trim().length > 0)
+      .filter(it => it.str.trim())
       .map(it => ({
         text: it.str.trim(),
         x: it.transform[4],
         y: it.transform[5],
-        w: it.width,
       }));
 
-    // TODO: Implementar extração dos campos de cabeçalho e transações
     const rows = groupByY(items);
+    const flat = items.map(i => i.text).join(" ");
+
+    // Extrair cabeçalho nas primeiras páginas
+    if (pageNum <= 3) {
+      if (!clientName) {
+        const m = flat.match(/nome\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+ag[eê]|\s+cpf|\s+conta|\s+cta\b|\d{3}\.)/i)
+          || flat.match(/titular\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+ag[eê]|\s+cpf|\s+conta|\d{3}\.)/i);
+        if (m) clientName = m[1].replace(/\s+/g, " ").trim();
+      }
+      if (!agencia) {
+        const m = flat.match(/ag[eê]ncia\s*[:\-]?\s*(\d{3,6}(?:[-]\d)?)/i)
+          || flat.match(/\bag\.?\s+(\d{3,6})\b/i);
+        if (m) agencia = m[1];
+      }
+      if (!conta) {
+        const m = flat.match(/conta\s*[:\-]?\s*([\d]{4,8}[-][\d])/i)
+          || flat.match(/cta\.?\s*[:\-]?\s*([\d]{4,8}[-][\d])/i)
+          || flat.match(/c\/c\s*[:\-]?\s*([\d]{4,8}[-][\d])/i);
+        if (m) conta = m[1];
+      }
+      if (!periodo) {
+        const m = flat.match(/entre\s+([\d\/]+)\s+e\s+([\d\/]+)/i)
+          || flat.match(/per[ií]odo\s*[:\-]?\s*([\d\/]+)\s+a\s+([\d\/]+)/i);
+        if (m) periodo = `${m[1]} a ${m[2]}`;
+      }
+    }
+
+    // Detectar posição X da coluna "Débito"
+    if (debitoX === null) {
+      for (const item of items) {
+        if (/^d[eé]bito/i.test(item.text)) { debitoX = item.x; break; }
+      }
+    }
+
+    // Extrair lançamentos linha a linha
+    // Bradesco Celular usa 2 linhas por transação:
+    //   Linha 1 (título): data? + descrição (sem valores)
+    //   Linha 2 (detalhe): continuação da descrição + docto + crédito? + débito? + saldo
+    let pending = null;
+    let lastDate = null;
+
+    for (const row of rows) {
+      const first = row.items[0]?.text || "";
+      const isDateRow = IS_DATE.test(first);
+      const rowValues = row.items.filter(i => IS_VALUE.test(i.text));
+      const hasValues = rowValues.length > 0;
+
+      if (isDateRow) {
+        // Flush pending se estava completo
+        if (pending?.valor) { allTransactions.push(pending); pending = null; }
+        lastDate = first;
+
+        const afterDate = row.items.slice(1);
+        const firstValIdx = afterDate.findIndex(i => IS_VALUE.test(i.text));
+        const histItems = firstValIdx >= 0 ? afterDate.slice(0, firstValIdx) : afterDate;
+        const historico = histItems.map(i => i.text).join(" ").trim();
+
+        if (hasValues) {
+          // Formato linha única: data + desc + valores na mesma linha
+          const debitVal = pickDebit(rowValues, debitoX);
+          if (debitVal) allTransactions.push({ data: first, historico, valor: debitVal });
+          pending = null;
+        } else {
+          // Linha título: aguarda linha de detalhe com valores
+          pending = { data: first, historico, valor: null };
+        }
+
+      } else if (!hasValues) {
+        // Sem data, sem valores = linha de título/continuação
+        const text = row.items.map(i => i.text).join(" ").trim();
+        if (!text) continue;
+
+        if (pending?.valor) { allTransactions.push(pending); pending = null; }
+
+        if (pending) {
+          // Continuação do título pendente
+          pending.historico = (pending.historico + " " + text).trim();
+        } else if (lastDate) {
+          // Nova transação sem data própria — herda lastDate
+          pending = { data: lastDate, historico: text, valor: null };
+        }
+
+      } else {
+        // Tem valores = linha de detalhe
+        if (pending) {
+          // Texto antes do primeiro valor é parte do histórico
+          const firstValIdx = row.items.findIndex(i => IS_VALUE.test(i.text));
+          if (firstValIdx > 0) {
+            const extra = row.items.slice(0, firstValIdx).map(i => i.text).join(" ").trim();
+            if (extra) pending.historico = (pending.historico + " " + extra).trim();
+          }
+          const debitVal = pickDebit(rowValues, debitoX);
+          if (debitVal) { pending.valor = debitVal; allTransactions.push(pending); }
+          pending = null;
+        }
+        // Se pending é null: linha de detalhe órfã (transação de crédito) — ignorar
+      }
+    }
+
+    if (pending?.valor) { allTransactions.push(pending); pending = null; }
   }
 
   return {
     clientName: clientName || "Titular não identificado",
-    documento: documento || "—",
+    agencia,
+    conta,
+    banco: "Bradesco",
     periodo: periodo || "—",
     transactions: allTransactions,
   };
@@ -697,7 +913,7 @@ export default function App() {
                     <h2 style={{ fontSize:"2rem",fontWeight:900,color:"#f1f5f9",letterSpacing:"-1px",lineHeight:1.1 }}>{meta.clientName}</h2>
                   </div>
                   <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap" }}>
-                    {["LEX FINDER", meta.documento!=="—"?meta.documento:null, meta.periodo!=="—"?meta.periodo:null, fileName].filter(Boolean).map((tag,i)=>(
+                    {[meta.banco||"Bradesco", meta.agencia?`Ag. ${meta.agencia}`:null, meta.conta?`Cta. ${meta.conta}`:null, meta.periodo&&meta.periodo!=="—"?meta.periodo:null, fileName].filter(Boolean).map((tag,i)=>(
                       <span key={i} style={{ fontSize:"0.75rem",color:"#475569",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:6,padding:"3px 10px" }}>{tag}</span>
                     ))}
                   </div>
