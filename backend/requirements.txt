@@ -1,0 +1,29 @@
+# LEX FINDER — Dependências Python
+# Instale com: pip install -r requirements.txt
+#
+# ANTES: garanta que o Python está instalado.
+# Download: https://www.python.org/downloads/
+# Marque "Add Python to PATH" durante a instalação.
+#
+# Para instalar tudo de uma vez:
+#   pip install -r requirements.txt
+
+# ── Core (obrigatório para PDFs digitais) ─────────────────────────────────────
+pdfplumber>=0.10.0          # Extração de texto com coordenadas XY (parser Bradesco)
+PyMuPDF>=1.23.0             # Detecção digital vs escaneado (fitz)
+pypdf>=4.0.0                # Mesclagem de PDFs no output
+openpyxl>=3.1.0             # Geração de planilhas Excel
+
+# ── OCR (opcional — apenas para PDFs escaneados) ──────────────────────────────
+# Instale separadamente se precisar processar PDFs escaneados:
+#   pip install pytesseract opencv-python pdf2image Pillow
+#
+# Também requer Tesseract instalado no sistema:
+#   Windows: https://github.com/UB-Mannheim/tesseract/wiki
+#     → baixe o instalador, marque "Portuguese" durante instalação
+#   Linux:   sudo apt install tesseract-ocr tesseract-ocr-por
+#
+# pytesseract>=0.3.10
+# opencv-python>=4.8.0
+# pdf2image>=1.17.0
+# Pillow>=10.0.0
