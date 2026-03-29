@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from "react";
 
 /* ─────────────────────────────────────────────
    CATEGORIAS / MATCHING
-   TODO: Preencher com as categorias de descontos indevidos
 ───────────────────────────────────────────── */
 const THEME = {
   color: "#60a5fa",
@@ -144,7 +143,6 @@ const fmt = (v) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL
 
 /* ─────────────────────────────────────────────
    PDF PARSER
-   TODO: Implementar lógica de extração de descontos
 ───────────────────────────────────────────── */
 const PDFJS_VERSION = "3.11.174";
 
@@ -237,9 +235,30 @@ async function parseDocumentoPDF(file, onProgress) {
     // Extrair cabeçalho nas primeiras páginas
     if (pageNum <= 3) {
       if (!clientName) {
+        // Padrão 1: "Nome:" ou "Titular:" seguido de nome e depois agência/CPF/conta
         const m = flat.match(/nome\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+ag[eê]|\s+cpf|\s+conta|\s+cta\b|\d{3}\.)/i)
           || flat.match(/titular\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+ag[eê]|\s+cpf|\s+conta|\d{3}\.)/i);
         if (m) clientName = m[1].replace(/\s+/g, " ").trim();
+
+        // Padrão 2: nome em CAPS seguido de CPF (xxx.xxx.xxx-xx)
+        if (!clientName) {
+          const m2 = flat.match(/([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{5,60}?)\s+\d{3}\.\d{3}\.\d{3}[-.]?\d{2}/);
+          if (m2) clientName = m2[1].replace(/\s+/g, " ").trim();
+        }
+
+        // Padrão 3: scan row-by-row — linha com nome em CAPS (2+ palavras ≥3 letras)
+        if (!clientName) {
+          const SKIP_NAME = /extrato|conta\s*corrente|bradesco|dados|lan[cç]amento|saldo|data|hist[oó]rico|d[eé]bito|cr[eé]dito|per[ií]odo|ag[eê]ncia|cpf|documento|c[oó]digo|cliente|favorecido|banco|celular|internet/i;
+          for (const row of rows) {
+            const text = row.text.trim();
+            if (text.length < 8 || text.length > 60) continue;
+            if (SKIP_NAME.test(text)) continue;
+            if (/^[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{3,}\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{2,}(\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{2,})*$/.test(text)) {
+              clientName = text;
+              break;
+            }
+          }
+        }
       }
       if (!agencia) {
         const m = flat.match(/ag[eê]ncia\s*[:\-]?\s*(\d{3,6}(?:[-]\d)?)/i)
