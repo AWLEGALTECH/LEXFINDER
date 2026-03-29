@@ -21,10 +21,21 @@ const CATEGORIAS = [
     sublabel: "Cobranças por serviços avulsos",
     icon: "!",
     ...THEME,
-    keywords: ["tarifa bancaria", "saqueterminal", "saquecorrespondente", "saquepessoal", "saquetermi", "saquecorre", "pend.tarifas bancaria", "adiant.depositante", "tar adiant.depositante"],
+    keywords: ["tarifa bancaria", "saqueterminal", "saquecorrespondente", "saquepessoal", "saquetermi", "saquecorre", "pend.tarifas bancaria"],
     fundamento: "Art. 3º, Res. CMN 3.919/10; Súmula 297 STJ",
     acao: "Pleitear restituição em dobro das tarifas cobradas sem prévia contratação expressa (Art. 42, CDC). Verificar se houve autorização expressa em contrato.",
     descricao: "Tarifa Bancária Avulsa",
+  },
+  {
+    id: "adiantamento",
+    label: "Adiantamento ao Depositante",
+    sublabel: "Cobranças por adiantamento ao depositante",
+    icon: "!",
+    ...THEME,
+    keywords: ["vr.parcial adiant.depositant", "tar adiant.depositante", "adiant.depositante", "adiantamento depositante", "adiantamento ao depositante"],
+    fundamento: "Art. 52 e 422, CC; Res. CMN 3.919/10",
+    acao: "Verificar se houve efetiva utilização do adiantamento. Cobranças de adiantamento ao depositante sem solicitação expressa são passíveis de repetição de indébito.",
+    descricao: "Adiantamento ao Depositante",
   },
   {
     id: "cesta",
@@ -199,6 +210,8 @@ function parseValor(s) {
 
 const IS_DATE = /^\d{2}\/\d{2}\/\d{4}$/;
 const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
+// Detecta linhas de cabeçalho/rodapé de página que NÃO são transações
+const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc/i;
 
 function pickDebit(rowValues, cols) {
   if (!rowValues.length) return null;
@@ -300,7 +313,7 @@ async function parseDocumentoPDF(file, onProgress) {
         if (m2) clientName = m2[1].replace(/\s+/g, " ").trim();
       }
       if (!clientName) {
-        const SKIP_NAME = /extrato|conta\s*corrente|bradesco|dados|lan[cç]amento|saldo|data|hist[oó]rico|d[eé]bito|cr[eé]dito|per[ií]odo|ag[eê]ncia|cpf|documento|c[oó]digo|cliente|favorecido|banco|celular|internet/i;
+        const SKIP_NAME = /extrato|conta\s*corrente|bradesco|dados|lan[cç]amento|saldo|data|hist[oó]rico|d[eé]bito|cr[eé]dito|per[ií]odo|ag[eê]ncia|cpf|documento|c[oó]digo|cliente|favorecido|banco|celular|internet|saque|recibo|transf|deposito|pagamento|pix|ted|doc\b|boleto|parcela|tarifa|cesta|opera[cç]|encargo|mora\b|seguro|capitalizacao|adiant|emissao/i;
         for (const row of rows) {
           const text = row.text.trim();
           if (text.length < 8 || text.length > 60) continue;
@@ -389,18 +402,16 @@ async function parseDocumentoPDF(file, onProgress) {
       // Sem data, sem valores = título ou continuação
       const text = row.items.map(i => i.text).join(" ").trim();
       if (!text) continue;
+      // Ignorar linhas de cabeçalho/rodapé de página
+      if (IS_HEADER.test(text)) continue;
 
       if (pending?.valor) { emit(pending); pending = null; }
 
       if (pending) {
         // Continuação do título pendente
         pending.historico = (pending.historico + " " + text).trim();
-      } else if (lastPushed) {
-        // Continuação do último lançamento (formato linha única com desc abaixo)
-        lastPushed.historico = (lastPushed.historico + " " + text).trim();
-      } else if (buffer.length > 0 && layout === "inferior") {
-        buffer[buffer.length - 1].historico = (buffer[buffer.length - 1].historico + " " + text).trim();
       } else {
+        // Linha texto-only após transação completa = NOVA transação (não continuação)
         const date = layout === "superior" ? lastDate : null;
         if (date || layout === "inferior") {
           pending = { data: date, historico: text, valor: null };
