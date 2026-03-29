@@ -32,7 +32,7 @@ const CATEGORIAS = [
     sublabel: "Mensalidades de pacotes de serviços",
     icon: "!",
     ...THEME,
-    keywords: ["cesta", "vr.parcial cesta", "pacote de servicos", "pacote servico", "pacote", "padronizado prioritarios", "pserv", "binclub"],
+    keywords: ["vr.parcial cesta b.expresso", "cesta b.expresso", "vr.parcial cesta", "cesta", "pacote de servicos", "pacote servico", "pacote", "padronizado prioritarios", "pserv", "binclub"],
     fundamento: "Art. 3º e 4º, Res. CMN 3.919/10; Art. 39, CDC",
     acao: "Verificar se o cliente efetivamente contratou o pacote. Em caso negativo, pleitear restituição de todos os valores cobrados nos últimos 5 anos.",
     descricao: "Pacote/Cesta de Serviços",
@@ -76,7 +76,7 @@ const CATEGORIAS = [
     sublabel: "Empréstimos, financiamentos e operações vencidas",
     icon: "!",
     ...THEME,
-    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "bx.ant.financ/emp", "bx.ant.fin/emp", "bx ant", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "jbcred", "crefisa", "sudacred", "agiplan", "easycob", "eagle", "bx"],
+    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "bx.ant.financ/emp", "bx.ant.fin/emp", "bx ant", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "jbcred", "crefisa", "sudacred", "agiplan", "easycob", "eagle"],
     fundamento: "Art. 52, CDC; Lei 10.931/04; Res. CMN 4.559/17",
     acao: "Solicitar demonstrativo completo da operação. Verificar CET e taxa de juros. Contestar cobranças acima do contratado ou sem autorização expressa.",
     descricao: "Operação de Crédito Pessoal",
@@ -120,12 +120,20 @@ function matchCategoria(historico) {
   const h = normalizeText(historico);
   // REM: = remetente de PIX/TED, DES: = destinatário — nunca são tarifas bancárias
   if (/\brem\s*:/.test(h) || /\bdes\s*:/.test(h)) return null;
+  // Busca o match com keyword MAIS LONGA (mais específica) entre todas as categorias.
+  // Evita que "tarifa bancaria" (genérico) vença "cesta b.expresso" (específico).
+  let bestCat = null;
+  let bestLen = 0;
   for (const cat of CATEGORIAS) {
     for (const kw of cat.keywords) {
-      if (h.includes(normalizeText(kw))) return cat;
+      const nkw = normalizeText(kw);
+      if (h.includes(nkw) && nkw.length > bestLen) {
+        bestLen = nkw.length;
+        bestCat = cat;
+      }
     }
   }
-  return null;
+  return bestCat;
 }
 
 function analyzeAll(transactions) {

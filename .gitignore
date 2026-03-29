@@ -1,5 +1,32 @@
+# ── Node / Frontend ──────────────────────────
 node_modules/
 dist/
-.vercel/
 *.local
 .DS_Store
+
+# ── Vercel ───────────────────────────────────
+.vercel/
+
+# ── Python / Backend ─────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+.eggs/
+venv/
+.venv/
+env/
+.env
+*.whl
+
+# ── IDEs ─────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ───────────────────────────────────────
+Thumbs.db
+Desktop.ini
