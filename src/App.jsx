@@ -17,14 +17,14 @@ function normalizeText(text) {
 const CATEGORIAS = [
   {
     id: "tarifas",
-    label: "Tarifas Avulsas",
-    sublabel: "Cobranças por serviços avulsos",
+    label: "Cobranças Indevidas",
+    sublabel: "Tarifas bancárias cobradas indevidamente",
     icon: "!",
     ...THEME,
     keywords: ["tarifa bancaria", "saqueterminal", "saquecorrespondente", "saquepessoal", "saquetermi", "saquecorre", "pend.tarifas bancaria"],
     fundamento: "Art. 3º, Res. CMN 3.919/10; Súmula 297 STJ",
     acao: "Pleitear restituição em dobro das tarifas cobradas sem prévia contratação expressa (Art. 42, CDC). Verificar se houve autorização expressa em contrato.",
-    descricao: "Tarifa Bancária Avulsa",
+    descricao: "Cobrança Indevida",
   },
   {
     id: "adiantamento",
@@ -72,25 +72,25 @@ const CATEGORIAS = [
   },
   {
     id: "seguros",
-    label: "Seguros e Previdência",
-    sublabel: "Prêmios e mensalidades de seguros",
+    label: "Título de Capitalização",
+    sublabel: "Seguros, previdência e títulos de capitalização",
     icon: "!",
     ...THEME,
     keywords: ["bradesco vida e previdencia", "bradesco vida e prev", "bradesco vida prev", "prev-seg", "vida e previdencia", "bradesco seg-resid", "bradesco capitalizacao", "sabemi", "seguro prestamista", "seguro protecao financeira", "seguro mais protegido", "seg protecao cheque", "seguro cart deb bradesco", "servico cartao protegido", "seguradora secon", "aspecir", "odontoprev", "mbm previdencia", "previplan", "aquisicao/devolucao-seg", "liberty seguros", "titulo de capitalizacao"],
     fundamento: "Art. 39, III, CDC; Súmula 473 STJ; Art. 757, CC",
     acao: "Verificar se o seguro foi contratado voluntariamente. Seguros vinculados a financiamentos sem opção de recusa são abusivos (Súmula 473 STJ). Pleitear cancelamento e devolução.",
-    descricao: "Seguro ou Previdência",
+    descricao: "Título de Capitalização",
   },
   {
     id: "credito",
-    label: "Crédito Pessoal",
-    sublabel: "Empréstimos, financiamentos e operações vencidas",
+    label: "Parcela de Crédito Pessoal",
+    sublabel: "Parcelas de empréstimos e operações de crédito",
     icon: "!",
     ...THEME,
     keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "bx.ant.financ/emp", "bx.ant.fin/emp", "bx ant", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "jbcred", "crefisa", "sudacred", "agiplan", "easycob", "eagle"],
     fundamento: "Art. 52, CDC; Lei 10.931/04; Res. CMN 4.559/17",
     acao: "Solicitar demonstrativo completo da operação. Verificar CET e taxa de juros. Contestar cobranças acima do contratado ou sem autorização expressa.",
-    descricao: "Operação de Crédito Pessoal",
+    descricao: "Parcela de Crédito Pessoal",
   },
   {
     id: "anuidade",
@@ -305,8 +305,8 @@ async function parseDocumentoPDF(file, onProgress) {
   for (let i = 0; i < Math.min(3, pageData.length); i++) {
     const { flat, rows } = pageData[i];
     if (!clientName) {
-      const m = flat.match(/nome\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+ag[eê]|\s+cpf|\s+conta|\s+cta\b|\d{3}\.)/i)
-        || flat.match(/titular\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+ag[eê]|\s+cpf|\s+conta|\d{3}\.)/i);
+      const m = flat.match(/nome\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+extrato|\s+ag[eê]|\s+cpf|\s+conta|\s+cta\b|\d{3}\.)/i)
+        || flat.match(/titular\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+extrato|\s+ag[eê]|\s+cpf|\s+conta|\d{3}\.)/i);
       if (m) clientName = m[1].replace(/\s+/g, " ").trim();
       if (!clientName) {
         const m2 = flat.match(/([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{5,60}?)\s+\d{3}\.\d{3}\.\d{3}[-.]?\d{2}/);
