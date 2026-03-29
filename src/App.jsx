@@ -186,23 +186,62 @@ function parseValor(s) {
   if (!s) return null;
   const clean = s.replace(/[DC]$/i, "").replace(/\./g, "").replace(",", ".");
   const v = parseFloat(clean);
-  return isNaN(v) || v <= 0 ? null : v;
+  return isNaN(v) || v === 0 ? null : Math.abs(v);
 }
 
 const IS_DATE = /^\d{2}\/\d{2}\/\d{4}$/;
-const IS_VALUE = /^\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
+const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
 
 function pickDebit(rowValues, debitoX) {
-  // Last value is almost always saldo — exclude it when 2+ values exist
   const candidates = rowValues.length >= 2 ? rowValues.slice(0, -1) : rowValues;
   if (!candidates.length) return null;
   if (debitoX !== null) {
     const best = candidates.reduce((b, c) =>
       Math.abs(c.x - debitoX) < Math.abs(b.x - debitoX) ? c : b, candidates[0]);
+    // Rejeitar se muito longe da coluna Débito (provavelmente é crédito ou saldo)
+    if (candidates.length === 1 && Math.abs(best.x - debitoX) > 60) return null;
     return parseValor(best.text);
   }
-  // Fallback: last candidate (debit follows credit in column order)
   return parseValor(candidates[candidates.length - 1].text);
+}
+
+// Detecta layout: "superior" (data no topo do grupo) vs "inferior" (data no final do grupo)
+function detectLayout(allRows) {
+  let beforeCount = 0, afterCount = 0;
+  const dateIndices = [];
+  for (let i = 0; i < allRows.length; i++) {
+    if (IS_DATE.test(allRows[i].items[0]?.text || "")) dateIndices.push(i);
+  }
+  if (dateIndices.length < 2) return "superior";
+  for (const di of dateIndices) {
+    // Linha imediatamente ANTES da data tem valores sem data?
+    if (di > 0) {
+      const prev = allRows[di - 1];
+      const prevHasDate = IS_DATE.test(prev.items[0]?.text || "");
+      const prevHasValues = prev.items.some(it => IS_VALUE.test(it.text));
+      if (!prevHasDate && prevHasValues) beforeCount++;
+    }
+    // Linha imediatamente DEPOIS da data tem valores sem data?
+    if (di < allRows.length - 1) {
+      const next = allRows[di + 1];
+      const nextHasDate = IS_DATE.test(next.items[0]?.text || "");
+      const nextHasValues = next.items.some(it => IS_VALUE.test(it.text));
+      if (!nextHasDate && nextHasValues) afterCount++;
+    }
+  }
+  return beforeCount > afterCount ? "inferior" : "superior";
+}
+
+// Extrai histórico e valor de débito de uma row
+function extractFromRow(row, debitoX, skipDate) {
+  const startIdx = skipDate ? 1 : 0;
+  const afterStart = row.items.slice(startIdx);
+  const firstValIdx = afterStart.findIndex(i => IS_VALUE.test(i.text));
+  const histItems = firstValIdx >= 0 ? afterStart.slice(0, firstValIdx) : afterStart;
+  const historico = histItems.map(i => i.text).join(" ").trim();
+  const rowValues = row.items.filter(i => IS_VALUE.test(i.text));
+  const debitVal = rowValues.length > 0 ? pickDebit(rowValues, debitoX) : null;
+  return { historico, debitVal };
 }
 
 async function parseDocumentoPDF(file, onProgress) {
@@ -210,148 +249,172 @@ async function parseDocumentoPDF(file, onProgress) {
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
 
-  let clientName = "";
-  let agencia = "";
-  let conta = "";
-  let periodo = "";
-  const allTransactions = [];
+  // ── Fase 1: Extrair todas as páginas ──
+  const pageData = [];
   let debitoX = null;
-
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     onProgress && onProgress(pageNum, pdf.numPages);
     const page = await pdf.getPage(pageNum);
     const tc = await page.getTextContent();
-    const items = tc.items
-      .filter(it => it.str.trim())
-      .map(it => ({
-        text: it.str.trim(),
-        x: it.transform[4],
-        y: it.transform[5],
-      }));
-
+    const items = tc.items.filter(it => it.str.trim())
+      .map(it => ({ text: it.str.trim(), x: it.transform[4], y: it.transform[5] }));
     const rows = groupByY(items);
     const flat = items.map(i => i.text).join(" ");
-
-    // Extrair cabeçalho nas primeiras páginas
-    if (pageNum <= 3) {
-      if (!clientName) {
-        // Padrão 1: "Nome:" ou "Titular:" seguido de nome e depois agência/CPF/conta
-        const m = flat.match(/nome\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+ag[eê]|\s+cpf|\s+conta|\s+cta\b|\d{3}\.)/i)
-          || flat.match(/titular\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+ag[eê]|\s+cpf|\s+conta|\d{3}\.)/i);
-        if (m) clientName = m[1].replace(/\s+/g, " ").trim();
-
-        // Padrão 2: nome em CAPS seguido de CPF (xxx.xxx.xxx-xx)
-        if (!clientName) {
-          const m2 = flat.match(/([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{5,60}?)\s+\d{3}\.\d{3}\.\d{3}[-.]?\d{2}/);
-          if (m2) clientName = m2[1].replace(/\s+/g, " ").trim();
-        }
-
-        // Padrão 3: scan row-by-row — linha com nome em CAPS (2+ palavras ≥3 letras)
-        if (!clientName) {
-          const SKIP_NAME = /extrato|conta\s*corrente|bradesco|dados|lan[cç]amento|saldo|data|hist[oó]rico|d[eé]bito|cr[eé]dito|per[ií]odo|ag[eê]ncia|cpf|documento|c[oó]digo|cliente|favorecido|banco|celular|internet/i;
-          for (const row of rows) {
-            const text = row.text.trim();
-            if (text.length < 8 || text.length > 60) continue;
-            if (SKIP_NAME.test(text)) continue;
-            if (/^[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{3,}\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{2,}(\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{2,})*$/.test(text)) {
-              clientName = text;
-              break;
-            }
-          }
-        }
-      }
-      if (!agencia) {
-        const m = flat.match(/ag[eê]ncia\s*[:\-]?\s*(\d{3,6}(?:[-]\d)?)/i)
-          || flat.match(/\bag\.?\s+(\d{3,6})\b/i);
-        if (m) agencia = m[1];
-      }
-      if (!conta) {
-        const m = flat.match(/conta\s*[:\-]?\s*([\d]{4,8}[-][\d])/i)
-          || flat.match(/cta\.?\s*[:\-]?\s*([\d]{4,8}[-][\d])/i)
-          || flat.match(/c\/c\s*[:\-]?\s*([\d]{4,8}[-][\d])/i);
-        if (m) conta = m[1];
-      }
-      if (!periodo) {
-        const m = flat.match(/entre\s+([\d\/]+)\s+e\s+([\d\/]+)/i)
-          || flat.match(/per[ií]odo\s*[:\-]?\s*([\d\/]+)\s+a\s+([\d\/]+)/i);
-        if (m) periodo = `${m[1]} a ${m[2]}`;
-      }
-    }
-
-    // Detectar posição X da coluna "Débito"
     if (debitoX === null) {
       for (const item of items) {
         if (/^d[eé]bito/i.test(item.text)) { debitoX = item.x; break; }
       }
     }
+    pageData.push({ rows, flat, items });
+  }
 
-    // Extrair lançamentos linha a linha
-    // Bradesco Celular usa 2 linhas por transação:
-    //   Linha 1 (título): data? + descrição (sem valores)
-    //   Linha 2 (detalhe): continuação da descrição + docto + crédito? + débito? + saldo
-    let pending = null;
-    let lastDate = null;
-
-    for (const row of rows) {
-      const first = row.items[0]?.text || "";
-      const isDateRow = IS_DATE.test(first);
-      const rowValues = row.items.filter(i => IS_VALUE.test(i.text));
-      const hasValues = rowValues.length > 0;
-
-      if (isDateRow) {
-        // Flush pending se estava completo
-        if (pending?.valor) { allTransactions.push(pending); pending = null; }
-        lastDate = first;
-
-        const afterDate = row.items.slice(1);
-        const firstValIdx = afterDate.findIndex(i => IS_VALUE.test(i.text));
-        const histItems = firstValIdx >= 0 ? afterDate.slice(0, firstValIdx) : afterDate;
-        const historico = histItems.map(i => i.text).join(" ").trim();
-
-        if (hasValues) {
-          // Formato linha única: data + desc + valores na mesma linha
-          const debitVal = pickDebit(rowValues, debitoX);
-          if (debitVal) allTransactions.push({ data: first, historico, valor: debitVal });
-          pending = null;
-        } else {
-          // Linha título: aguarda linha de detalhe com valores
-          pending = { data: first, historico, valor: null };
-        }
-
-      } else if (!hasValues) {
-        // Sem data, sem valores = linha de título/continuação
-        const text = row.items.map(i => i.text).join(" ").trim();
-        if (!text) continue;
-
-        if (pending?.valor) { allTransactions.push(pending); pending = null; }
-
-        if (pending) {
-          // Continuação do título pendente
-          pending.historico = (pending.historico + " " + text).trim();
-        } else if (lastDate) {
-          // Nova transação sem data própria — herda lastDate
-          pending = { data: lastDate, historico: text, valor: null };
-        }
-
-      } else {
-        // Tem valores = linha de detalhe
-        if (pending) {
-          // Texto antes do primeiro valor é parte do histórico
-          const firstValIdx = row.items.findIndex(i => IS_VALUE.test(i.text));
-          if (firstValIdx > 0) {
-            const extra = row.items.slice(0, firstValIdx).map(i => i.text).join(" ").trim();
-            if (extra) pending.historico = (pending.historico + " " + extra).trim();
+  // ── Fase 2: Extrair cabeçalho (primeiras 3 páginas) ──
+  let clientName = "", agencia = "", conta = "", periodo = "";
+  for (let i = 0; i < Math.min(3, pageData.length); i++) {
+    const { flat, rows } = pageData[i];
+    if (!clientName) {
+      const m = flat.match(/nome\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+ag[eê]|\s+cpf|\s+conta|\s+cta\b|\d{3}\.)/i)
+        || flat.match(/titular\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+ag[eê]|\s+cpf|\s+conta|\d{3}\.)/i);
+      if (m) clientName = m[1].replace(/\s+/g, " ").trim();
+      if (!clientName) {
+        const m2 = flat.match(/([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{5,60}?)\s+\d{3}\.\d{3}\.\d{3}[-.]?\d{2}/);
+        if (m2) clientName = m2[1].replace(/\s+/g, " ").trim();
+      }
+      if (!clientName) {
+        const SKIP_NAME = /extrato|conta\s*corrente|bradesco|dados|lan[cç]amento|saldo|data|hist[oó]rico|d[eé]bito|cr[eé]dito|per[ií]odo|ag[eê]ncia|cpf|documento|c[oó]digo|cliente|favorecido|banco|celular|internet/i;
+        for (const row of rows) {
+          const text = row.text.trim();
+          if (text.length < 8 || text.length > 60) continue;
+          if (SKIP_NAME.test(text)) continue;
+          if (/^[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{3,}\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{2,}(\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{2,})*$/.test(text)) {
+            clientName = text;
+            break;
           }
-          const debitVal = pickDebit(rowValues, debitoX);
-          if (debitVal) { pending.valor = debitVal; allTransactions.push(pending); }
-          pending = null;
         }
-        // Se pending é null: linha de detalhe órfã (transação de crédito) — ignorar
       }
     }
-
-    if (pending?.valor) { allTransactions.push(pending); pending = null; }
+    if (!agencia) {
+      const m = flat.match(/ag[eê]ncia\s*[:\-]?\s*(\d{3,6}(?:[-]\d)?)/i)
+        || flat.match(/\bag\.?\s+(\d{3,6})\b/i);
+      if (m) agencia = m[1];
+    }
+    if (!conta) {
+      const m = flat.match(/conta\s*[:\-]?\s*([\d]{4,8}[-][\d])/i)
+        || flat.match(/cta\.?\s*[:\-]?\s*([\d]{4,8}[-][\d])/i)
+        || flat.match(/c\/c\s*[:\-]?\s*([\d]{4,8}[-][\d])/i);
+      if (m) conta = m[1];
+    }
+    if (!periodo) {
+      const m = flat.match(/entre\s+([\d\/]+)\s+e\s+([\d\/]+)/i)
+        || flat.match(/per[ií]odo\s*[:\-]?\s*([\d\/]+)\s+a\s+([\d\/]+)/i);
+      if (m) periodo = `${m[1]} a ${m[2]}`;
+    }
   }
+
+  // ── Fase 3: Detectar layout ──
+  const allRows = pageData.flatMap(p => p.rows);
+  const layout = detectLayout(allRows);
+
+  // ── Fase 4: Parsear transações ──
+  const allTransactions = [];
+  const buffer = []; // usado no modo "inferior" para transações sem data ainda
+  let pending = null;
+  let lastDate = null;
+  let lastPushed = null; // última transação completada (para continuações)
+
+  function emit(t) {
+    if (layout === "inferior" && !t.data) {
+      buffer.push(t);
+    } else {
+      allTransactions.push(t);
+      lastPushed = t;
+    }
+  }
+
+  function flushBuffer(date) {
+    for (const t of buffer) { if (!t.data) t.data = date; }
+    allTransactions.push(...buffer);
+    if (buffer.length > 0) lastPushed = buffer[buffer.length - 1];
+    buffer.length = 0;
+  }
+
+  for (const row of allRows) {
+    const first = row.items[0]?.text || "";
+    const isDateRow = IS_DATE.test(first);
+    const rowValues = row.items.filter(i => IS_VALUE.test(i.text));
+    const hasValues = rowValues.length > 0;
+
+    if (isDateRow) {
+      // Flush pending completo
+      if (pending?.valor) { emit(pending); pending = null; }
+
+      // No modo inferior, a data se aplica a todas as transações no buffer
+      if (layout === "inferior") flushBuffer(first);
+      lastDate = first;
+
+      const { historico, debitVal } = extractFromRow(row, debitoX, true);
+
+      if (hasValues && debitVal) {
+        const t = { data: first, historico, valor: debitVal };
+        allTransactions.push(t);
+        lastPushed = t;
+        pending = null;
+      } else if (hasValues) {
+        // Tem valores mas nenhum é débito (ex: só crédito) — ignorar
+        pending = null;
+      } else {
+        pending = { data: first, historico, valor: null };
+      }
+
+    } else if (!hasValues) {
+      // Sem data, sem valores = título ou continuação
+      const text = row.items.map(i => i.text).join(" ").trim();
+      if (!text) continue;
+
+      if (pending?.valor) { emit(pending); pending = null; }
+
+      if (pending) {
+        // Continuação do título pendente
+        pending.historico = (pending.historico + " " + text).trim();
+      } else if (lastPushed) {
+        // Continuação do último lançamento (formato linha única com desc abaixo)
+        lastPushed.historico = (lastPushed.historico + " " + text).trim();
+      } else if (buffer.length > 0 && layout === "inferior") {
+        buffer[buffer.length - 1].historico = (buffer[buffer.length - 1].historico + " " + text).trim();
+      } else {
+        const date = layout === "superior" ? lastDate : null;
+        if (date || layout === "inferior") {
+          pending = { data: date, historico: text, valor: null };
+        }
+      }
+
+    } else {
+      // Tem valores = linha de detalhe ou transação standalone
+      if (pending) {
+        // Fechar pending com os valores desta linha
+        const firstValIdx = row.items.findIndex(i => IS_VALUE.test(i.text));
+        if (firstValIdx > 0) {
+          const extra = row.items.slice(0, firstValIdx).map(i => i.text).join(" ").trim();
+          if (extra) pending.historico = (pending.historico + " " + extra).trim();
+        }
+        const debitVal = pickDebit(rowValues, debitoX);
+        if (debitVal) { pending.valor = debitVal; emit(pending); }
+        pending = null;
+      } else {
+        // Transação standalone (valores na mesma linha que descrição)
+        const { historico, debitVal } = extractFromRow(row, debitoX, false);
+        if (debitVal) {
+          const date = layout === "superior" ? lastDate : null;
+          const t = { data: date, historico, valor: debitVal };
+          emit(t);
+        }
+      }
+    }
+  }
+
+  // Flush final
+  if (pending?.valor) emit(pending);
+  if (buffer.length > 0) flushBuffer(lastDate || "—");
 
   return {
     clientName: clientName || "Titular não identificado",
