@@ -87,7 +87,7 @@ const CATEGORIAS = [
     sublabel: "Títulos de capitalização cobrados indevidamente",
     icon: "!",
     ...THEME,
-    keywords: ["bradesco capitalizacao", "titulo de capitalizacao", "capitalizacao"],
+    keywords: ["titulo de capitalizacao", "bradesco capitalizacao", "resg.tit.capitalizacao"],
     fundamento: "Art. 39, I e V, CDC; Súmula 473 STJ",
     acao: "Verificar se houve contratação voluntária do título de capitalização. Títulos vinculados a abertura de conta ou crédito sem consentimento são abusivos. Pleitear cancelamento e restituição integral.",
     descricao: "Título de Capitalização",
@@ -364,6 +364,7 @@ async function parseDocumentoPDF(file, onProgress) {
   let pending = null;
   let lastDate = null;
   let lastPushed = null; // última transação completada (para continuações)
+  let justEmitted = false; // flag: a linha anterior fechou uma transação com valores
 
   function emit(t) {
     if (layout === "inferior" && !t.data) {
@@ -390,6 +391,7 @@ async function parseDocumentoPDF(file, onProgress) {
     if (isDateRow) {
       // Flush pending completo
       if (pending?.valor) { emit(pending); pending = null; }
+      justEmitted = false;
 
       // No modo inferior, a data se aplica a todas as transações no buffer
       if (layout === "inferior") flushBuffer(first);
@@ -402,6 +404,7 @@ async function parseDocumentoPDF(file, onProgress) {
         allTransactions.push(t);
         lastPushed = t;
         pending = null;
+        justEmitted = true;
       } else if (hasValues) {
         // Tem valores mas nenhum é débito (ex: só crédito) — ignorar
         pending = null;
@@ -416,17 +419,22 @@ async function parseDocumentoPDF(file, onProgress) {
       // Ignorar linhas de cabeçalho/rodapé de página
       if (IS_HEADER.test(text)) continue;
 
-      if (pending?.valor) { emit(pending); pending = null; }
+      if (pending?.valor) { emit(pending); pending = null; justEmitted = true; }
 
       if (pending) {
         // Continuação do título pendente
         pending.historico = (pending.historico + " " + text).trim();
+      } else if (justEmitted && lastPushed) {
+        // Detalhe pós-valores: linha de texto que vem DEPOIS da linha de valores
+        // Ex: "TARIFA BANCARIA" + valores → emitido, depois "CESTA B.EXPRESSO" → anexar
+        lastPushed.historico = (lastPushed.historico + " " + text).trim();
       } else {
-        // Linha texto-only após transação completa = NOVA transação (não continuação)
+        // Linha texto-only = início de nova transação
         const date = layout === "superior" ? lastDate : null;
         if (date || layout === "inferior") {
           pending = { data: date, historico: text, valor: null };
         }
+        justEmitted = false;
       }
 
     } else {
@@ -439,9 +447,10 @@ async function parseDocumentoPDF(file, onProgress) {
           if (extra) pending.historico = (pending.historico + " " + extra).trim();
         }
         const debitVal = pickDebit(rowValues, cols);
-        if (debitVal) { pending.valor = debitVal; emit(pending); }
+        if (debitVal) { pending.valor = debitVal; emit(pending); justEmitted = true; }
         pending = null;
       } else {
+        justEmitted = false;
         // Transação standalone (valores na mesma linha que descrição)
         const { historico, debitVal } = extractFromRow(row, cols, false);
         if (debitVal) {
