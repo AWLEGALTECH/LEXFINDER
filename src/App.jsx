@@ -21,7 +21,7 @@ const CATEGORIAS = [
     sublabel: "Tarifas bancárias cobradas indevidamente",
     icon: "!",
     ...THEME,
-    keywords: ["tarifa bancaria", "saqueterminal", "saquecorrespondente", "saquepessoal", "saquetermi", "saquecorre", "pend.tarifas bancaria"],
+    keywords: ["tarifa bancaria", "saqueterminal", "saquecorrespondente", "saquepessoal", "saquetermi", "saquecorre", "pend.tarifas bancaria", "lancamento a debito", "recebimento fornecedor"],
     fundamento: "Art. 3º, Res. CMN 3.919/10; Súmula 297 STJ",
     acao: "Pleitear restituição em dobro das tarifas cobradas sem prévia contratação expressa (Art. 42, CDC). Verificar se houve autorização expressa em contrato.",
     descricao: "Cobrança Indevida",
@@ -43,7 +43,7 @@ const CATEGORIAS = [
     sublabel: "Mensalidades de pacotes de serviços",
     icon: "!",
     ...THEME,
-    keywords: ["vr.parcial cesta b.expresso", "cesta b.expresso", "vr.parcial cesta", "cesta", "pacote de servicos", "pacote servico", "pacote", "padronizado prioritarios", "pserv", "binclub"],
+    keywords: ["vr.parcial cesta b.expresso", "cesta b.expresso", "vr.parcial cesta facil", "vr.parcial cesta", "cesta facil economica", "cesta facil master", "cesta facil super", "cesta facil mais", "cesta facil", "cesta exclusive", "cesta exclus mais", "cesta exclus. max", "cesta classic mais", "cesta classic", "cesta prime classica", "cesta poupanca", "cesta universitaria", "cesta beneficiario", "cesta benefic", "cesta bradesco expre", "cesta celular", "cesta expresso", "cesta", "pacote de servicos", "pacote servico padro", "pacote servico", "pacote servicos", "pacote", "padronizado prioritarios ii", "padronizado prioritarios i", "padronizado prioritarios", "pserv", "binclub servicos", "binclub", "pagto eletron cobranca (pserv)"],
     fundamento: "Art. 3º e 4º, Res. CMN 3.919/10; Art. 39, CDC",
     acao: "Verificar se o cliente efetivamente contratou o pacote. Em caso negativo, pleitear restituição de todos os valores cobrados nos últimos 5 anos.",
     descricao: "Pacote/Cesta de Serviços",
@@ -54,7 +54,7 @@ const CATEGORIAS = [
     sublabel: "Encargos sobre limite de crédito e IOF",
     icon: "!",
     ...THEME,
-    keywords: ["encargos limite de cred", "encargos limite credito", "encargos descoberto", "encargos saldo vinculado", "encargo saldo vinculado", "encargos excesso limite", "encargos", "iof s/ utilizacao limite", "iof s/utilizacao", "iof s/"],
+    keywords: ["encargos limite de cred", "encargos limite credito", "encargos descoberto cc", "encargos descoberto", "encargos saldo vinculado", "encargo saldo vinculado", "encargos excesso limite", "encargos", "iof s/ utilizacao limite", "iof s/utilizacao", "iof s/"],
     fundamento: "Art. 52 e 422, CC; Res. CMN 3.919/10; Dec. 6.306/07",
     acao: "Verificar se houve efetiva utilização do limite. Encargos e IOF cobrados sem utilização ou em duplicidade são passíveis de repetição de indébito.",
     descricao: "Encargo sobre Limite / IOF",
@@ -65,7 +65,7 @@ const CATEGORIAS = [
     sublabel: "Juros de mora em operações de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["mora credito pessoal", "mora cred pess", "mora conta de telefone", "mora cta telef", "mora de operacao", "mora operacao de credito", "mora cartao de credito", "mora cartao", "mora encargos", "mora vida e previdencia"],
+    keywords: ["mora credito pessoal", "mora cred pess", "mora conta de telefone", "mora cta telef", "mora de operacao", "mora operacao de credito", "mora cartao de credito", "mora cartao", "mora encargos", "mora vida e previdencia", "mora enc descoberto", "mora enc descoberto c.c"],
     fundamento: "Art. 52, §1º, CDC; Súmula 379 STJ",
     acao: "Verificar legalidade da cobrança. Mora decorrente de cobranças indevidas é igualmente indevida. Pleitear cancelamento da mora sobre débitos contestados.",
     descricao: "Mora de Crédito",
@@ -76,7 +76,7 @@ const CATEGORIAS = [
     sublabel: "Seguros e previdência cobrados indevidamente",
     icon: "!",
     ...THEME,
-    keywords: ["bradesco vida e previdencia", "bradesco vida e prev", "bradesco vida prev", "prev-seg", "vida e previdencia", "bradesco seg-resid", "sabemi", "seguro prestamista", "seguro protecao financeira", "seguro mais protegido", "seg protecao cheque", "seguro cart deb bradesco", "servico cartao protegido", "seguradora secon", "aspecir", "odontoprev", "mbm previdencia", "previplan", "aquisicao/devolucao-seg", "liberty seguros"],
+    keywords: ["bradesco vida e previdencia s/a", "bradesco vida e previdencia", "bradesco vida e prev", "bradesco vida prev-seg", "bradesco vida prev", "bradesco seg-resid/outros", "bradesco seg-resid", "prev-seg", "vida e previdencia", "sabemi segurado", "sabemi", "seguro prestamista", "seguro protecao financeira", "seguro mais protegido", "seg protecao cheque esp", "seg protecao cheque", "seguro cart deb bradesco", "servico cartao protegido", "seguradora secon", "aspecir - uniao seguradora", "aspecir", "odontoprev s/a", "odontoprev", "mbm previdencia complementar", "mbm previdencia", "previplan clube", "previplan", "aquisicao/devolucao-seg", "liberty seguros", "viza prev seguros", "sebraseg clube de beneficios", "sebraseg", "sudamerica clube de servicos", "sudamerica clube", "previsul", "crefisa sa credito financiamento", "pagto eletron cobranca (brades resi)", "pagto eletron cobranca (vida pre)", "pagto eletron cobranca (dental saude)", "pagto eletron cobranca (ace seguradora", "pagto eletron cobranca (centro de assistencia)", "pagto eletron cobranca cenasp"],
     fundamento: "Art. 39, III, CDC; Súmula 473 STJ; Art. 757, CC",
     acao: "Verificar se o seguro foi contratado voluntariamente. Seguros vinculados a financiamentos sem opção de recusa são abusivos (Súmula 473 STJ). Pleitear cancelamento e devolução.",
     descricao: "Seguro",
@@ -87,7 +87,7 @@ const CATEGORIAS = [
     sublabel: "Títulos de capitalização cobrados indevidamente",
     icon: "!",
     ...THEME,
-    keywords: ["titulo de capitalizacao", "bradesco capitalizacao", "resg.tit.capitalizacao"],
+    keywords: ["titulo de capitalizacao", "bradesco capitalizacao", "resg.tit.capitalizacao", "capitalizacao 1171"],
     fundamento: "Art. 39, I e V, CDC; Súmula 473 STJ",
     acao: "Verificar se houve contratação voluntária do título de capitalização. Títulos vinculados a abertura de conta ou crédito sem consentimento são abusivos. Pleitear cancelamento e restituição integral.",
     descricao: "Título de Capitalização",
@@ -98,7 +98,7 @@ const CATEGORIAS = [
     sublabel: "Parcelas de empréstimos e operações de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "bx.ant.financ/emp", "bx.ant.fin/emp", "bx ant", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "jbcred", "crefisa", "sudacred", "agiplan", "easycob", "eagle"],
+    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "bx.ant.financ/emp", "bx.ant.fin/emp", "bx ant", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "divida em atraso", "jbcred sociedade", "jbcred", "crefisa", "sudacred", "suda", "agiplan financeira", "agiplan", "easycob", "eagle", "gasto e credito", "pagto eletron cobranca (eagle)"],
     fundamento: "Art. 52, CDC; Lei 10.931/04; Res. CMN 4.559/17",
     acao: "Solicitar demonstrativo completo da operação. Verificar CET e taxa de juros. Contestar cobranças acima do contratado ou sem autorização expressa.",
     descricao: "Parcela de Crédito Pessoal",
@@ -109,7 +109,7 @@ const CATEGORIAS = [
     sublabel: "Anuidades e tarifas de cartão de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["anuidade", "cartao credito anuidade", "gasto c/cartao de credito", "gastos cartao de credito", "gasto c credito", "provisao gasto cart cred"],
+    keywords: ["anuidade", "cartao credito anuidade", "gasto c/cartao de credito", "gastos cartao de credito", "gasto c credito", "provisao gasto cart cred", "gasto c/cartao"],
     fundamento: "Res. CMN 3.919/10; Art. 39, CDC",
     acao: "Verificar se a anuidade foi informada no momento da contratação. Anuidades cobradas sem previsão contratual expressa são indevidas.",
     descricao: "Anuidade/Tarifa de Cartão",
@@ -120,7 +120,7 @@ const CATEGORIAS = [
     sublabel: "Tarifas por extratos e segunda via",
     icon: "!",
     ...THEME,
-    keywords: ["emissao extrato", "tarifa emissao extrato", "extratomes", "extratomomovimento", "2via de extrato", "extrato unificado", "tar demonst.consolidade", "tar demonstr consolidado", "2 via cartaodebito", "tar 2 via cartao", "2 via"],
+    keywords: ["emissao extrato", "tarifa emissao extrato", "emissao extratos unificado", "extratomes", "extratomomovimento", "extratomovimento", "2via de extrato", "extrato unificado", "tar demonst.consolidade", "tar demonstr consolidado", "2 via cartaodebito", "tar 2 via cartao debito", "tar 2 via cartao", "2 via", "segunda via"],
     fundamento: "Art. 6º, VIII, CDC; Res. CMN 3.919/10",
     acao: "Emissão de extratos é direito do consumidor (Art. 6º, VIII, CDC). Cobrança por acesso à informação bancária é abusiva. Pleitear devolução dos valores.",
     descricao: "Emissão de Extrato/Documento",
@@ -131,7 +131,7 @@ const CATEGORIAS = [
     sublabel: "Cobranças irregulares diversas",
     icon: "!",
     ...THEME,
-    keywords: ["msg", "regularizacao manual", "regularizacao lancamento", "reorganizacao financeira"],
+    keywords: ["msg", "regularizacao manual", "regularizacao lancamento", "reorganizacao financeira", "debito automatico", "doc/ted internet"],
     fundamento: "Art. 39, CDC; Res. CMN 3.919/10",
     acao: "Verificar natureza da cobrança e se houve autorização contratual expressa. Solicitar memória de cálculo e contestar cobranças sem fundamento contratual.",
     descricao: "Cobrança Diversa",
@@ -143,15 +143,20 @@ function matchCategoria(historico) {
   // REM: = remetente de PIX/TED, DES: = destinatário — nunca são tarifas bancárias
   if (/\brem\s*:/.test(h) || /\bdes\s*:/.test(h)) return null;
   // Busca o match com keyword MAIS LONGA (mais específica) entre todas as categorias.
-  // Evita que "tarifa bancaria" (genérico) vença "cesta b.expresso" (específico).
+  // Desempate: keyword que aparece MAIS TARDE no texto é mais específica.
+  // Ex: "TARIFA BANCARIA CESTA B.EXPRESSO" → "cesta b.expresso" (pos 16) vence "tarifa bancaria" (pos 0)
   let bestCat = null;
   let bestLen = 0;
+  let bestPos = -1;
   for (const cat of CATEGORIAS) {
     for (const kw of cat.keywords) {
       const nkw = normalizeText(kw);
-      if (h.includes(nkw) && nkw.length > bestLen) {
+      const pos = h.indexOf(nkw);
+      if (pos === -1) continue;
+      if (nkw.length > bestLen || (nkw.length === bestLen && pos > bestPos)) {
         bestLen = nkw.length;
         bestCat = cat;
+        bestPos = pos;
       }
     }
   }
