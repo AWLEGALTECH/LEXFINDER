@@ -464,7 +464,7 @@ async function parseDocumentoPDF(file, onProgress) {
         const nextHasValues = nextRow && nextRow.items.some(i => IS_VALUE.test(i.text));
         const textCat = justEmitted === "standalone" && nextHasValues ? matchCategoria(text) : null;
         const lastCat = textCat ? matchCategoria(lastPushed.historico) : null;
-        if (textCat && lastCat && textCat.id !== lastCat.id) {
+        if (textCat && (!lastCat || textCat.id !== lastCat.id)) {
           // Nova transação: texto agora, valores na próxima linha
           const date = layout === "superior" ? lastDate : null;
           if (date || layout === "inferior") {
