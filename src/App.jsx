@@ -437,25 +437,25 @@ async function parseDocumentoPDF(file, onProgress) {
       if (IS_HEADER.test(text)) continue;
       if (IS_SUMMARY.test(text)) { pending = null; justEmitted = false; continue; }
 
-      if (pending?.valor) { emit(pending); pending = null; justEmitted = true; }
+      if (pending?.valor) { emit(pending); pending = null; justEmitted = "pending-close"; }
 
       if (pending) {
         // Continuação do título pendente — mas não anexar se o pending virou sumário
         if (IS_SUMMARY.test(pending.historico)) { pending = null; continue; }
         pending.historico = (pending.historico + " " + text).trim();
       } else if (justEmitted && lastPushed) {
-        // Detalhe pós-valores: linha de texto que vem DEPOIS da linha de valores
-        // Se o texto casa com uma categoria, é nova transação (não detalhe)
-        const textCat = matchCategoria(text);
-        if (textCat) {
+        // Detalhe pós-valores: decisão baseada na ORIGEM do justEmitted
+        if (justEmitted === "pending-close" || !lastPushed.historico) {
+          // Pending-close: sempre anexar (2-line pattern Bradesco Celular)
+          // Standalone values-only: próxima linha é descrição, anexar
+          lastPushed.historico = (lastPushed.historico + " " + text).trim();
+        } else {
+          // Standalone text+valores: já tem descrição, próxima linha é nova transação
           const date = layout === "superior" ? lastDate : null;
           if (date || layout === "inferior") {
             pending = { data: date, historico: text, valor: null };
           }
           justEmitted = false;
-        } else {
-          // Ex: "02/01 A 31/01", "BRADESCO" → detalhe, anexar
-          lastPushed.historico = (lastPushed.historico + " " + text).trim();
         }
       } else {
         // Linha texto-only = início de nova transação
@@ -476,7 +476,7 @@ async function parseDocumentoPDF(file, onProgress) {
           if (extra) pending.historico = (pending.historico + " " + extra).trim();
         }
         const debitVal = pickDebit(rowValues, cols);
-        if (debitVal) { pending.valor = debitVal; emit(pending); justEmitted = firstValIdx === 0; }
+        if (debitVal) { pending.valor = debitVal; emit(pending); justEmitted = firstValIdx === 0 ? "pending-close" : false; }
         pending = null;
       } else {
         // Transação standalone (valores na mesma linha que descrição)
@@ -485,11 +485,11 @@ async function parseDocumentoPDF(file, onProgress) {
           const date = layout === "superior" ? lastDate : null;
           const t = { data: date, historico, valor: debitVal };
           emit(t);
-          justEmitted = true;
+          justEmitted = "standalone";
         } else {
           // Crédito standalone — phantom para absorver detalhes
           lastPushed = { data: layout === "superior" ? lastDate : null, historico, valor: null };
-          justEmitted = true;
+          justEmitted = "standalone";
         }
       }
     }
