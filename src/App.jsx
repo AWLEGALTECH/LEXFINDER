@@ -466,7 +466,7 @@ async function parseDocumentoPDF(file, onProgress) {
           if (extra) pending.historico = (pending.historico + " " + extra).trim();
         }
         const debitVal = pickDebit(rowValues, cols);
-        if (debitVal) { pending.valor = debitVal; emit(pending); justEmitted = true; }
+        if (debitVal) { pending.valor = debitVal; emit(pending); justEmitted = false; }
         pending = null;
       } else {
         // Transação standalone (valores na mesma linha que descrição)
@@ -475,7 +475,7 @@ async function parseDocumentoPDF(file, onProgress) {
           const date = layout === "superior" ? lastDate : null;
           const t = { data: date, historico, valor: debitVal };
           emit(t);
-          justEmitted = true;
+          justEmitted = false;
         } else {
           // Crédito standalone — phantom para absorver detalhes
           lastPushed = { data: layout === "superior" ? lastDate : null, historico, valor: null };
