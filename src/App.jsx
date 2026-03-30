@@ -227,7 +227,9 @@ function parseValor(s) {
 const IS_DATE = /^\d{2}\/\d{2}\/\d{4}$/;
 const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
 // Detecta linhas de cabeçalho/rodapé de página que NÃO são transações
-const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc/i;
+const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:/i;
+// Detecta linhas de TOTAL / sumário do extrato — não são transações reais
+const IS_SUMMARY = /^\s*total\b|[uú]ltimos\s+lan[cç]amentos/i;
 
 function pickDebit(rowValues, cols) {
   if (!rowValues.length) return null;
@@ -372,6 +374,8 @@ async function parseDocumentoPDF(file, onProgress) {
   let justEmitted = false; // flag: a linha anterior fechou uma transação com valores
 
   function emit(t) {
+    // Filtrar linhas de sumário/total que não são transações reais
+    if (IS_SUMMARY.test(t.historico)) return;
     if (layout === "inferior" && !t.data) {
       buffer.push(t);
     } else {
@@ -404,6 +408,9 @@ async function parseDocumentoPDF(file, onProgress) {
 
       const { historico, debitVal } = extractFromRow(row, cols, true);
 
+      // Filtrar linhas de sumário que começam com data (ex: "28/12/2018 Total ...")
+      if (IS_SUMMARY.test(historico)) { pending = null; justEmitted = false; continue; }
+
       if (hasValues && debitVal) {
         const t = { data: first, historico, valor: debitVal };
         allTransactions.push(t);
@@ -424,13 +431,15 @@ async function parseDocumentoPDF(file, onProgress) {
       // Sem data, sem valores = título ou continuação
       const text = row.items.map(i => i.text).join(" ").trim();
       if (!text) continue;
-      // Ignorar linhas de cabeçalho/rodapé de página
+      // Ignorar linhas de cabeçalho/rodapé de página e sumários
       if (IS_HEADER.test(text)) continue;
+      if (IS_SUMMARY.test(text)) { pending = null; justEmitted = false; continue; }
 
       if (pending?.valor) { emit(pending); pending = null; justEmitted = true; }
 
       if (pending) {
-        // Continuação do título pendente
+        // Continuação do título pendente — mas não anexar se o pending virou sumário
+        if (IS_SUMMARY.test(pending.historico)) { pending = null; continue; }
         pending.historico = (pending.historico + " " + text).trim();
       } else if (justEmitted && lastPushed) {
         // Detalhe pós-valores: linha de texto que vem DEPOIS da linha de valores
