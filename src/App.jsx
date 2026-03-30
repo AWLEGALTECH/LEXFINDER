@@ -475,7 +475,7 @@ async function parseDocumentoPDF(file, onProgress) {
           const date = layout === "superior" ? lastDate : null;
           const t = { data: date, historico, valor: debitVal };
           emit(t);
-          justEmitted = false;
+          justEmitted = true;
         } else {
           // Crédito standalone — phantom para absorver detalhes
           lastPushed = { data: layout === "superior" ? lastDate : null, historico, valor: null };
