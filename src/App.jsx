@@ -466,7 +466,7 @@ async function parseDocumentoPDF(file, onProgress) {
           if (extra) pending.historico = (pending.historico + " " + extra).trim();
         }
         const debitVal = pickDebit(rowValues, cols);
-        if (debitVal) { pending.valor = debitVal; emit(pending); justEmitted = false; }
+        if (debitVal) { pending.valor = debitVal; emit(pending); justEmitted = firstValIdx === 0; }
         pending = null;
       } else {
         // Transação standalone (valores na mesma linha que descrição)
