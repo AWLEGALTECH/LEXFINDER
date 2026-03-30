@@ -227,7 +227,7 @@ function parseValor(s) {
 const IS_DATE = /^\d{2}\/\d{2}\/\d{4}$/;
 const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
 // Detecta linhas de cabeçalho/rodapé de página que NÃO são transações
-const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:/i;
+const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:|^data\s*:\s*\d{2}\/\d{2}\/\d{4}|^nome\s*:\s*[A-Z]/i;
 // Detecta linhas de TOTAL / sumário do extrato — não são transações reais
 const IS_SUMMARY = /^\s*total\b|[uú]ltimos\s+lan[cç]amentos/i;
 
@@ -315,6 +315,8 @@ async function parseDocumentoPDF(file, onProgress) {
         if (/^saldo/i.test(item.text) && cols.saldoX === null) cols.saldoX = item.x;
       }
     }
+    // Pular páginas de "Últimos Lançamentos" (resumo que repete última transação)
+    if (/[uú]ltimos\s+lan[cç]amentos/i.test(flat)) continue;
     pageData.push({ rows, flat, items });
   }
 
