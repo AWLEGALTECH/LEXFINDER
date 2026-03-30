@@ -393,7 +393,8 @@ async function parseDocumentoPDF(file, onProgress) {
     buffer.length = 0;
   }
 
-  for (const row of allRows) {
+  for (let ri = 0; ri < allRows.length; ri++) {
+    const row = allRows[ri];
     const first = row.items[0]?.text || "";
     const isDateRow = IS_DATE.test(first);
     const rowValues = row.items.filter(i => IS_VALUE.test(i.text));
@@ -444,18 +445,21 @@ async function parseDocumentoPDF(file, onProgress) {
         if (IS_SUMMARY.test(pending.historico)) { pending = null; continue; }
         pending.historico = (pending.historico + " " + text).trim();
       } else if (justEmitted && lastPushed) {
-        // Detalhe pós-valores: decisão baseada na ORIGEM do justEmitted
-        if (justEmitted === "pending-close" || !lastPushed.historico) {
-          // Pending-close: sempre anexar (2-line pattern Bradesco Celular)
-          // Standalone values-only: próxima linha é descrição, anexar
-          lastPushed.historico = (lastPushed.historico + " " + text).trim();
-        } else {
-          // Standalone text+valores: já tem descrição, próxima linha é nova transação
+        // Detalhe pós-valores: lookahead para decidir se é detalhe ou nova transação
+        // Se a PRÓXIMA row tem valores, este texto é título de nova transação (2-line pattern)
+        // Se não, é detalhe do que acabou de ser emitido
+        const nextRow = ri + 1 < allRows.length ? allRows[ri + 1] : null;
+        const nextHasValues = nextRow && nextRow.items.some(i => IS_VALUE.test(i.text));
+        if (justEmitted === "standalone" && nextHasValues) {
+          // Nova transação: texto agora, valores na próxima linha
           const date = layout === "superior" ? lastDate : null;
           if (date || layout === "inferior") {
             pending = { data: date, historico: text, valor: null };
           }
           justEmitted = false;
+        } else {
+          // Detalhe: anexar ao lastPushed
+          lastPushed.historico = (lastPushed.historico + " " + text).trim();
         }
       } else {
         // Linha texto-only = início de nova transação
