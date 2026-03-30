@@ -412,7 +412,10 @@ async function parseDocumentoPDF(file, onProgress) {
         justEmitted = true;
       } else if (hasValues) {
         // Tem valores mas nenhum é débito (ex: só crédito) — ignorar
+        // Usar "phantom" para absorver linhas de detalhe do crédito (ex: BCO:237 AGE:...)
         pending = null;
+        lastPushed = { data: first, historico, valor: null };
+        justEmitted = true;
       } else {
         pending = { data: first, historico, valor: null };
       }
@@ -455,13 +458,17 @@ async function parseDocumentoPDF(file, onProgress) {
         if (debitVal) { pending.valor = debitVal; emit(pending); justEmitted = true; }
         pending = null;
       } else {
-        justEmitted = false;
         // Transação standalone (valores na mesma linha que descrição)
         const { historico, debitVal } = extractFromRow(row, cols, false);
         if (debitVal) {
           const date = layout === "superior" ? lastDate : null;
           const t = { data: date, historico, valor: debitVal };
           emit(t);
+          justEmitted = true;
+        } else {
+          // Crédito standalone — phantom para absorver detalhes
+          lastPushed = { data: layout === "superior" ? lastDate : null, historico, valor: null };
+          justEmitted = true;
         }
       }
     }
