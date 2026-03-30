@@ -98,7 +98,7 @@ const CATEGORIAS = [
     sublabel: "Parcelas de empréstimos e operações de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "bx.ant.financ/emp", "bx.ant.fin/emp", "bx ant", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "divida em atraso", "jbcred sociedade", "jbcred", "crefisa", "sudacred", "suda", "agiplan financeira", "agiplan", "easycob", "eagle", "gasto e credito", "pagto eletron cobranca (eagle)"],
+    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "bx.ant.financ/emp", "bx.ant.fin/emp", "bx.ant.financ", "bx ant financ", "bx ant fin", "bx ant", "bx.antecipacao", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "divida em atraso", "jbcred sociedade", "jbcred", "crefisa", "sudacred", "suda", "agiplan financeira", "agiplan", "easycob", "eagle", "gasto e credito", "pagto eletron cobranca (eagle)"],
     fundamento: "Art. 52, CDC; Lei 10.931/04; Res. CMN 4.559/17",
     acao: "Solicitar demonstrativo completo da operação. Verificar CET e taxa de juros. Contestar cobranças acima do contratado ou sem autorização expressa.",
     descricao: "Parcela de Crédito Pessoal",
@@ -109,7 +109,7 @@ const CATEGORIAS = [
     sublabel: "Anuidades e tarifas de cartão de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["anuidade", "cartao credito anuidade", "gasto c/cartao de credito", "gastos cartao de credito", "gasto c credito", "provisao gasto cart cred", "gasto c/cartao"],
+    keywords: ["anuidade", "cartao credito anuidade", "gasto c/cartao de credito", "gastos cartao de credito", "gastos cartao credito", "gasto c credito", "gasto cartao de credito", "gasto cartao credito", "provisao gasto cart cred", "gasto c/cartao", "gastos c/cartao", "gasto cart cred"],
     fundamento: "Res. CMN 3.919/10; Art. 39, CDC",
     acao: "Verificar se a anuidade foi informada no momento da contratação. Anuidades cobradas sem previsão contratual expressa são indevidas.",
     descricao: "Anuidade/Tarifa de Cartão",
@@ -124,6 +124,18 @@ const CATEGORIAS = [
     fundamento: "Art. 6º, VIII, CDC; Res. CMN 3.919/10",
     acao: "Emissão de extratos é direito do consumidor (Art. 6º, VIII, CDC). Cobrança por acesso à informação bancária é abusiva. Pleitear devolução dos valores.",
     descricao: "Emissão de Extrato/Documento",
+  },
+  {
+    id: "invest_facil",
+    label: "Invest Fácil",
+    sublabel: "Aplicações compulsórias sem rendimento real",
+    icon: "⚠",
+    ...THEME,
+    keywords: ["aplic.invest facil", "invest facil", "aplicacao invest facil", "aplic invest facil", "aplic.invest", "investfacil", "invest.facil"],
+    fundamento: "Art. 39, IV, CDC; Art. 422, CC; Art. 187, CC",
+    acao: "ATENÇÃO — Os valores de Invest Fácil NÃO são para reembolso direto. O dinheiro aplicado retorna ao cliente, porém sem rendimento real. A prática é abusiva por si só: o banco utiliza os recursos do cliente em benefício próprio, sem transparência sobre rentabilidade. Documentar a prática abusiva como fundamento adicional na ação principal.",
+    descricao: "Invest Fácil (prática abusiva)",
+    naoReembolsavel: true,
   },
   {
     id: "outros",
@@ -628,16 +640,21 @@ function Modal({ group, onClose, clientName, onExported }) {
 function CategoryCard({ cat, items, onClick, delay, downloaded }) {
   const [hov, setHov] = useState(false);
   const total = items.reduce((s,i)=>s+i.valor,0);
+  const isWarning = cat.naoReembolsavel;
+  const accentColor = isWarning ? "#f59e0b" : cat.color;
+  const accentBorder = isWarning ? "rgba(245,158,11,0.25)" : cat.border;
+  const accentGlow = isWarning ? "rgba(245,158,11,0.15)" : cat.glow;
+  const accentGradient = isWarning ? "linear-gradient(135deg, rgba(245,158,11,0.06), transparent 60%)" : cat.gradient;
   return (
-    <div onClick={onClick} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)} style={{ background:"rgba(12,19,35,0.7)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${hov?cat.color:cat.border}`,borderRadius:12,padding:"1.1rem 1.6rem",cursor:"pointer",transition:"all 0.22s cubic-bezier(0.4,0,0.2,1)",boxShadow:hov?`0 0 36px ${cat.glow},0 8px 28px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.05)`:"0 2px 12px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.03)",transform:hov?"translateY(-2px)":"translateY(0)",position:"relative",overflow:"hidden",animation:`cIn 0.38s ease ${delay}s both`,fontFamily:"Inter,sans-serif",display:"flex",alignItems:"center",gap:"1.4rem" }}>
-      <div style={{ position:"absolute",inset:0,background:cat.gradient,opacity:hov?1:0.5,transition:"opacity 0.22s",borderRadius:12,pointerEvents:"none" }}/>
-      <div style={{ position:"absolute",right:-24,top:"50%",transform:"translateY(-50%)",width:70,height:70,borderRadius:"50%",background:cat.color,opacity:hov?0.14:0.05,filter:"blur(24px)",transition:"opacity 0.3s",pointerEvents:"none" }}/>
-      <div style={{ position:"relative",zIndex:1,flexShrink:0,width:40,height:40,borderRadius:9,background:"rgba(59,130,246,0.08)",border:`1px solid ${hov?cat.color:"rgba(59,130,246,0.2)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:900,color:cat.color,fontFamily:"Inter,sans-serif",boxShadow:hov?`0 0 12px ${cat.glow}`:"none",transition:"all 0.22s" }}>!</div>
+    <div onClick={onClick} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)} style={{ background:"rgba(12,19,35,0.7)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${hov?accentColor:accentBorder}`,borderRadius:12,padding:"1.1rem 1.6rem",cursor:"pointer",transition:"all 0.22s cubic-bezier(0.4,0,0.2,1)",boxShadow:hov?`0 0 36px ${accentGlow},0 8px 28px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.05)`:"0 2px 12px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.03)",transform:hov?"translateY(-2px)":"translateY(0)",position:"relative",overflow:"hidden",animation:`cIn 0.38s ease ${delay}s both`,fontFamily:"Inter,sans-serif",display:"flex",alignItems:"center",gap:"1.4rem" }}>
+      <div style={{ position:"absolute",inset:0,background:accentGradient,opacity:hov?1:0.5,transition:"opacity 0.22s",borderRadius:12,pointerEvents:"none" }}/>
+      <div style={{ position:"absolute",right:-24,top:"50%",transform:"translateY(-50%)",width:70,height:70,borderRadius:"50%",background:accentColor,opacity:hov?0.14:0.05,filter:"blur(24px)",transition:"opacity 0.3s",pointerEvents:"none" }}/>
+      <div style={{ position:"relative",zIndex:1,flexShrink:0,width:40,height:40,borderRadius:9,background:isWarning?"rgba(245,158,11,0.08)":"rgba(59,130,246,0.08)",border:`1px solid ${hov?accentColor:isWarning?"rgba(245,158,11,0.2)":"rgba(59,130,246,0.2)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:900,color:accentColor,fontFamily:"Inter,sans-serif",boxShadow:hov?`0 0 12px ${accentGlow}`:"none",transition:"all 0.22s" }}>{isWarning?"⚠":"!"}</div>
       <div style={{ position:"relative",zIndex:1,flex:1,minWidth:0 }}>
         <div style={{ fontWeight:700,fontSize:"0.92rem",color:"#e2e8f0",letterSpacing:"-0.2px",marginBottom:2 }}>{cat.label}</div>
         <div style={{ fontSize:"0.72rem",color:"#475569",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{cat.sublabel}</div>
       </div>
-      <div style={{ position:"relative",zIndex:1,flexShrink:0,background:"rgba(255,255,255,0.05)",border:`1px solid ${cat.border}`,borderRadius:20,padding:"4px 12px",fontSize:"0.68rem",fontWeight:700,color:cat.color,whiteSpace:"nowrap" }}>{items.length} ocorr.</div>
+      <div style={{ position:"relative",zIndex:1,flexShrink:0,background:"rgba(255,255,255,0.05)",border:`1px solid ${accentBorder}`,borderRadius:20,padding:"4px 12px",fontSize:"0.68rem",fontWeight:700,color:accentColor,whiteSpace:"nowrap" }}>{items.length} ocorr.</div>
       {downloaded && (
         <div style={{ position:"relative",zIndex:1,flexShrink:0,display:"flex",alignItems:"center",gap:5,background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:20,padding:"4px 11px",fontSize:"0.65rem",fontWeight:700,color:"#4ade80",whiteSpace:"nowrap" }}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Baixado
@@ -646,9 +663,10 @@ function CategoryCard({ cat, items, onClick, delay, downloaded }) {
       <div style={{ position:"relative",zIndex:1,flexShrink:0,width:1,height:32,background:"rgba(255,255,255,0.06)" }}/>
       <div style={{ position:"relative",zIndex:1,flexShrink:0,textAlign:"right" }}>
         <div style={{ fontSize:"0.55rem",fontWeight:700,letterSpacing:"2px",textTransform:"uppercase",color:"#334155",marginBottom:3 }}>Valor</div>
-        <div style={{ fontWeight:800,fontSize:"1.25rem",color:cat.color,letterSpacing:"-0.8px" }}>{fmt(total)}</div>
+        <div style={{ fontWeight:800,fontSize:"1.25rem",color:accentColor,letterSpacing:"-0.8px" }}>{fmt(total)}</div>
+        {isWarning && <div style={{ fontSize:"0.55rem",fontWeight:700,color:"#f59e0b",letterSpacing:"0.5px",marginTop:2 }}>NÃO REEMBOLSÁVEL</div>}
       </div>
-      <div style={{ position:"relative",zIndex:1,flexShrink:0,width:30,height:30,borderRadius:"50%",background:hov?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.03)",border:`1px solid ${hov?cat.color:"rgba(255,255,255,0.07)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:hov?cat.color:"#334155",transition:"all 0.22s",transform:hov?"rotate(-45deg)":"rotate(0)" }}>→</div>
+      <div style={{ position:"relative",zIndex:1,flexShrink:0,width:30,height:30,borderRadius:"50%",background:hov?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.03)",border:`1px solid ${hov?accentColor:"rgba(255,255,255,0.07)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:hov?accentColor:"#334155",transition:"all 0.22s",transform:hov?"rotate(-45deg)":"rotate(0)" }}>→</div>
     </div>
   );
 }
@@ -704,8 +722,9 @@ const CustomCountTooltip = ({ active, payload, label }) => {
 };
 
 function AnalyticsDashboard({ groups }) {
-  const allItems = groups.flatMap(g => g.items.map(it => ({ ...it, cat: g.cat })));
-  const byCategory = groups.map(g => ({ name:g.cat.label.replace(" de ","\nde "), shortName:g.cat.label.split(" ")[0], valor:parseFloat(g.items.reduce((s,i)=>s+i.valor,0).toFixed(2)), ocorrencias:g.items.length }));
+  const reemb = groups.filter(g => !g.cat.naoReembolsavel);
+  const allItems = reemb.flatMap(g => g.items.map(it => ({ ...it, cat: g.cat })));
+  const byCategory = reemb.map(g => ({ name:g.cat.label.replace(" de ","\nde "), shortName:g.cat.label.split(" ")[0], valor:parseFloat(g.items.reduce((s,i)=>s+i.valor,0).toFixed(2)), ocorrencias:g.items.length }));
   const monthly = {};
   for (const item of allItems) {
     const parts = item.data.split("/");
@@ -858,8 +877,9 @@ export default function App() {
   }, []);
 
   const groups = Object.values(grouped);
-  const totalOcorrencias = groups.reduce((s,g)=>s+g.items.length,0);
-  const totalValor = groups.reduce((s,g)=>s+g.items.reduce((ss,i)=>ss+i.valor,0),0);
+  const reembolsaveis = groups.filter(g => !g.cat.naoReembolsavel);
+  const totalOcorrencias = reembolsaveis.reduce((s,g)=>s+g.items.length,0);
+  const totalValor = reembolsaveis.reduce((s,g)=>s+g.items.reduce((ss,i)=>ss+i.valor,0),0);
 
   return (
     <>
@@ -1131,7 +1151,13 @@ export default function App() {
                     <CategoryCard key={group.cat.id} cat={group.cat} items={group.items} delay={idx*0.07} downloaded={downloadedCats.has(group.cat.id)} onClick={()=>setActiveModal(group)} />
                   ))}
                 </div>
-                <div style={{ marginTop:"1.5rem",padding:"0.9rem 1.2rem",background:"rgba(59,130,246,0.04)",border:"1px solid rgba(59,130,246,0.1)",borderRadius:10,display:"flex",alignItems:"center",gap:10,fontSize:"0.77rem",color:"#475569" }}>
+                {groups.some(g => g.cat.naoReembolsavel) && (
+                  <div style={{ marginTop:"1rem",padding:"0.9rem 1.2rem",background:"rgba(245,158,11,0.06)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:10,display:"flex",alignItems:"flex-start",gap:10,fontSize:"0.77rem",color:"#d97706" }}>
+                    <span style={{ fontSize:14,flexShrink:0,marginTop:1 }}>⚠</span>
+                    <div><strong>Invest Fácil — Prática abusiva identificada.</strong> Os valores destacados em amarelo NÃO são para reembolso direto (o dinheiro retorna ao cliente). A irregularidade está na prática em si: o banco aplica os recursos do cliente sem rendimento real, em benefício próprio. Documentar como fundamento adicional na ação.</div>
+                  </div>
+                )}
+                <div style={{ marginTop:"1rem",padding:"0.9rem 1.2rem",background:"rgba(59,130,246,0.04)",border:"1px solid rgba(59,130,246,0.1)",borderRadius:10,display:"flex",alignItems:"center",gap:10,fontSize:"0.77rem",color:"#475569" }}>
                   <span style={{ fontSize:14,flexShrink:0 }}>💡</span>
                   Clique em qualquer card para ver os lançamentos detalhados, com data, rubrica, valor e fundamentação jurídica.
                 </div>
