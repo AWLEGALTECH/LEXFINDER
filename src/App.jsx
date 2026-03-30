@@ -445,8 +445,18 @@ async function parseDocumentoPDF(file, onProgress) {
         pending.historico = (pending.historico + " " + text).trim();
       } else if (justEmitted && lastPushed) {
         // Detalhe pós-valores: linha de texto que vem DEPOIS da linha de valores
-        // Ex: "TARIFA BANCARIA" + valores → emitido, depois "CESTA B.EXPRESSO" → anexar
-        lastPushed.historico = (lastPushed.historico + " " + text).trim();
+        // Se o texto casa com uma categoria, é nova transação (não detalhe)
+        const textCat = matchCategoria(text);
+        if (textCat) {
+          const date = layout === "superior" ? lastDate : null;
+          if (date || layout === "inferior") {
+            pending = { data: date, historico: text, valor: null };
+          }
+          justEmitted = false;
+        } else {
+          // Ex: "02/01 A 31/01", "BRADESCO" → detalhe, anexar
+          lastPushed.historico = (lastPushed.historico + " " + text).trim();
+        }
       } else {
         // Linha texto-only = início de nova transação
         const date = layout === "superior" ? lastDate : null;
@@ -475,7 +485,7 @@ async function parseDocumentoPDF(file, onProgress) {
           const date = layout === "superior" ? lastDate : null;
           const t = { data: date, historico, valor: debitVal };
           emit(t);
-          justEmitted = !historico;
+          justEmitted = true;
         } else {
           // Crédito standalone — phantom para absorver detalhes
           lastPushed = { data: layout === "superior" ? lastDate : null, historico, valor: null };
