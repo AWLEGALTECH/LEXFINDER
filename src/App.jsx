@@ -208,6 +208,60 @@ async function loadPdfJs() {
   return window.__pdfjsLib;
 }
 
+/* ── OCR Fallback (PDFs com texto renderizado como paths vetoriais) ── */
+const OCR_SCALE = 4; // 4x = ~288 DPI — mais pixels entre rows, melhor segmentacao
+
+async function loadTesseract() {
+  if (window.__tesseractWorker) return window.__tesseractWorker;
+  const { createWorker } = await import("tesseract.js");
+  const worker = await createWorker("por");
+  // PSM 3 = "Fully automatic page segmentation" — default, melhor para pagina completa
+  // A separação de linhas é feita pelo strip detection, não pelo Tesseract
+  await worker.setParameters({ tessedit_pageseg_mode: "3" });
+  window.__tesseractWorker = worker;
+  return worker;
+}
+
+function ocrCleanText(text) {
+  if (!text) return "";
+  text = text.trim();
+  // Colapsar espacos dentro de sequencias numericas: "1. 234,56" → "1.234,56"
+  text = text.replace(/(\d)\s*\.\s*(\d)/g, "$1.$2");
+  text = text.replace(/(\d)\s*,\s*(\d)/g, "$1,$2");
+  text = text.replace(/^-\s+(\d)/, "-$1");
+  return text;
+}
+
+async function ocrPage(pdfPage, worker, scale = OCR_SCALE) {
+  const viewport = pdfPage.getViewport({ scale });
+  const canvas = document.createElement("canvas");
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext("2d");
+  await pdfPage.render({ canvasContext: ctx, viewport }).promise;
+  const { data } = await worker.recognize(canvas, {}, { blocks: true });
+  canvas.width = 0; canvas.height = 0;
+
+  // Word-level com Y central — groupByY com tolerance tight separa rows
+  const words = (data.blocks || [])
+    .flatMap(b => (b.paragraphs || []))
+    .flatMap(p => (p.lines || []))
+    .flatMap(l => (l.words || []));
+
+  const items = [];
+  for (const word of words) {
+    const text = ocrCleanText(word.text);
+    if (!text) continue;
+    const centerY = (word.bbox.y0 + word.bbox.y1) / 2;
+    items.push({
+      text,
+      x: word.bbox.x0 / scale,
+      y: (viewport.height - centerY) / scale,
+    });
+  }
+  return items;
+}
+
 function groupByY(items, tolerance = 4) {
   const rows = [];
   const used = new Set();
@@ -241,7 +295,7 @@ const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
 // Detecta linhas de cabeçalho/rodapé de página que NÃO são transações
 const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:|^data\s*:\s*\d{2}\/\d{2}\/\d{4}|^nome\s*:\s*[A-Z]/i;
 // Detecta linhas de TOTAL / sumário do extrato — não são transações reais
-const IS_SUMMARY = /^\s*total\b|[uú]ltimos\s+lan[cç]amentos/i;
+const IS_SUMMARY = /^\s*total\b|\btotal\s*$|[uú]ltimos\s+lan[cç]amentos/i;
 
 function pickDebit(rowValues, cols) {
   if (!rowValues.length) return null;
@@ -308,16 +362,36 @@ async function parseDocumentoPDF(file, onProgress) {
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
 
-  // ── Fase 1: Extrair todas as páginas ──
+  // ── Fase 1: Extrair todas as páginas (com fallback OCR) ──
   const pageData = [];
   const cols = { debitoX: null, creditoX: null, saldoX: null };
+  let needsOCR = false;
+  let ocrWorker = null;
+
+  // Tentar extração de texto na página 1 para decidir o path
+  const firstPage = await pdf.getPage(1);
+  const firstTc = await firstPage.getTextContent();
+  const firstItems = firstTc.items.filter(it => it.str.trim());
+  if (firstItems.length < 10) {
+    // PDF sem texto extraível — ativar OCR
+    needsOCR = true;
+    ocrWorker = await loadTesseract();
+  }
+
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-    onProgress && onProgress(pageNum, pdf.numPages);
-    const page = await pdf.getPage(pageNum);
-    const tc = await page.getTextContent();
-    const items = tc.items.filter(it => it.str.trim())
-      .map(it => ({ text: it.str.trim(), x: it.transform[4], y: it.transform[5] }));
-    const rows = groupByY(items);
+    onProgress && onProgress(pageNum, pdf.numPages, needsOCR);
+    const page = pageNum === 1 ? firstPage : await pdf.getPage(pageNum);
+
+    let items;
+    if (needsOCR) {
+      items = await ocrPage(page, ocrWorker, OCR_SCALE);
+    } else {
+      const tc = pageNum === 1 ? firstTc : await page.getTextContent();
+      items = tc.items.filter(it => it.str.trim())
+        .map(it => ({ text: it.str.trim(), x: it.transform[4], y: it.transform[5] }));
+    }
+
+    const rows = groupByY(items, needsOCR ? 3 : 4); // OCR: tight tolerance (line-level Y já normaliza same-line words)
     const flat = items.map(i => i.text).join(" ");
     // Detectar posições X das 3 colunas de valores no cabeçalho da tabela
     if (cols.debitoX === null) {
@@ -446,8 +520,9 @@ async function parseDocumentoPDF(file, onProgress) {
       // Sem data, sem valores = título ou continuação
       const text = row.items.map(i => i.text).join(" ").trim();
       if (!text) continue;
-      // Ignorar linhas de cabeçalho/rodapé de página e sumários
-      if (IS_HEADER.test(text)) continue;
+      // Ignorar linhas de cabeçalho/rodapé — MAS preservar se contém keyword de categoria
+      // (OCR pode mesclar header text com transaction text na mesma row)
+      if (IS_HEADER.test(text) && !matchCategoria(text)) continue;
       if (IS_SUMMARY.test(text)) { pending = null; justEmitted = false; continue; }
 
       if (pending?.valor) { emit(pending); pending = null; justEmitted = "pending-close"; }
@@ -465,17 +540,32 @@ async function parseDocumentoPDF(file, onProgress) {
         const textCat = justEmitted === "standalone" && nextHasValues ? matchCategoria(text) : null;
         const lastCat = textCat ? matchCategoria(lastPushed.historico) : null;
         if (textCat && (!lastCat || textCat.id !== lastCat.id)) {
-          // Nova transação: texto agora, valores na próxima linha
-          const date = layout === "superior" ? lastDate : null;
-          if (date || layout === "inferior") {
-            pending = { data: date, historico: text, valor: null };
+          // Exceção: CESTA é sub-descrição de TARIFA (ex: "TARIFA BANCARIA" → "CESTA FACIL ECONOMICA")
+          if (lastCat && textCat.id === "cesta" && lastCat.id === "tarifas") {
+            lastPushed.historico = (lastPushed.historico + " " + text).trim();
+          } else {
+            // Nova transação: texto agora, valores na próxima linha
+            const date = layout === "superior" ? lastDate : null;
+            if (date || layout === "inferior") {
+              pending = { data: date, historico: text, valor: null };
+            }
+            justEmitted = false;
           }
-          justEmitted = false;
         } else {
           // Detalhe: anexar ao lastPushed
           lastPushed.historico = (lastPushed.historico + " " + text).trim();
         }
       } else {
+        // Antes de criar novo pending, verificar se é sub-descrição da última emissão
+        // Ex: "CESTA FACIL ECONOMICA" após "TARIFA BANCARIA" é detalhe, não nova transação
+        if (lastPushed && lastPushed.valor) {
+          const lCat = matchCategoria(lastPushed.historico);
+          const tCat = matchCategoria(text);
+          if (lCat?.id === "tarifas" && tCat?.id === "cesta") {
+            lastPushed.historico = (lastPushed.historico + " " + text).trim();
+            continue;
+          }
+        }
         // Linha texto-only = início de nova transação
         const date = layout === "superior" ? lastDate : null;
         if (date || layout === "inferior") {
@@ -855,7 +945,7 @@ export default function App() {
     const results = [];
     for (let i=0; i<files.length; i++) {
       const file = files[i]; setFileName(file.name);
-      try { const result = await parseDocumentoPDF(file,(page,total)=>setParseProgress({page,total})); results.push({result,file}); }
+      try { const result = await parseDocumentoPDF(file,(page,total,ocr)=>setParseProgress({page,total,ocr})); results.push({result,file}); }
       catch(err) { console.error(err); }
     }
     if (!results.length) { setErrorMsg("Não foi possível processar nenhum PDF. Verifique se os arquivos são documentos válidos."); setPhase("error"); return; }
@@ -992,7 +1082,7 @@ export default function App() {
             <div style={{ width:54,height:54,borderRadius:"50%",border:"2px solid rgba(59,130,246,0.12)",borderTop:"2px solid #3b82f6",animation:"spin 0.85s linear infinite",boxShadow:"0 0 24px rgba(59,130,246,0.3)" }}/>
             <div style={{ textAlign:"center" }}>
               <p style={{ fontSize:"1.05rem",fontWeight:700,color:"#e2e8f0",marginBottom:6 }}>Lendo Documento</p>
-              <p style={{ fontSize:"0.72rem",color:"#475569",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"1.5rem" }}>{parseProgress.total>0?`Página ${parseProgress.page} de ${parseProgress.total}`:"Carregando motor de leitura…"}</p>
+              <p style={{ fontSize:"0.72rem",color:"#475569",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"1.5rem" }}>{parseProgress.total>0?(parseProgress.ocr?`OCR · Página ${parseProgress.page} de ${parseProgress.total}`:`Página ${parseProgress.page} de ${parseProgress.total}`):"Carregando motor de leitura…"}</p>
               {parseProgress.total>0 && <div style={{ width:280,height:4,background:"rgba(255,255,255,0.06)",borderRadius:4,overflow:"hidden" }}><div style={{ height:"100%",background:"#3b82f6",borderRadius:4,width:`${(parseProgress.page/parseProgress.total)*100}%`,transition:"width 0.3s ease",boxShadow:"0 0 8px rgba(59,130,246,0.6)" }}/></div>}
             </div>
             <p style={{ fontSize:"0.72rem",color:"#334155" }}>{fileName}</p>
