@@ -1,15 +1,15 @@
 {
   "clientName": "CLAUDIA NAYARA LIRA LEMOS",
-  "totalOcorrencias": 84,
-  "totalValor": 6366.30,
+  "totalOcorrencias": 116,
+  "totalValor": 7857.77,
   "categorias": {
     "outros": { "count": 1, "valor": 498.58 },
-    "encargos": { "count": 52, "valor": 3092.68 },
-    "seguros": { "count": 18, "valor": 147.01 },
-    "cesta": { "count": 2, "valor": 233.01 },
+    "encargos": { "count": 61, "valor": 3018.57 },
+    "seguros": { "count": 23, "valor": 197.60 },
+    "cesta": { "count": 2, "valor": 41.90 },
     "invest_facil": { "count": 15, "valor": 11579.81 },
     "extrato": { "count": 1, "valor": 3.35 },
-    "credito": { "count": 5, "valor": 1782.14 },
-    "mora": { "count": 5, "valor": 609.53 }
+    "credito": { "count": 8, "valor": 2159.36 },
+    "mora": { "count": 20, "valor": 1938.41 }
   }
 }

@@ -117,21 +117,23 @@ O parser detecta as posições X de 3 colunas do cabeçalho da tabela:
 
 ## justEmitted — Controle de Fluxo do Parser
 
-O parser usa `justEmitted` tipado (`"pending-close"` vs `"standalone"`) para resolver a tensão entre:
-- **Abel Mota** (formato 2-line): detalhes devem ser anexados à transação anterior
-- **Adailton** (formato regular): textos pós-standalone são novas transações
+O parser usa `justEmitted` tipado (`true`, `"pending-close"`, `"standalone"`) com check bidirecional de categoria:
+- Quando `justEmitted` é truthy e o próximo row tem valores, verifica a categoria do texto
+- Se a categoria do texto difere da do lastEmitted → cria novo pending (nova transação)
+- Exceção: `cesta` após `tarifas` → append como detalhe (sub-descrição)
+- O branch `pending` também verifica: texto categorizado substitui pending sem valor/categoria
 
-**CUIDADO:** Qualquer mudança no parser DEVE ser testada com AMBOS os cases. Foram 7+ commits iterativos para equilibrar.
+**CUIDADO:** Qualquer mudança no parser DEVE ser testada com TODOS os 5 cases. O equilíbrio Abel (2-line) vs Adailton (regular) vs Claudia (phantoms) é crítico.
 
-## Test Cases Validados (v2)
+## Test Cases Validados (v3 — fix bidirectional category check)
 
 | Case | Páginas | Ocorrências | Valor | Categorias | PDF |
 |------|---------|-------------|-------|------------|-----|
-| ABEL MOTA NOGUEIRA | 7 processos | 92 | R$ 9.727,61 | 8 | `Z:\...\ABEL MOTA NOGUEIRA\` (15033-15039) |
-| ADAILTON DA SILVA PEREIRA | 59 pgs | 392 | R$ 36.308,30 | 10 | `Z:\...\21054-BANCO BRADESCO S.A- MORA\` |
-| ALCILENE PEREIRA PINHEIRO | OCR | 52 | R$ 7.338,04 | 7 | `Z:\...\ALCILENE PEREIRA PINHEIRO\` |
-| ALEXANDRE LUIS BARBOSA NOGUEIRA | 36 pgs | 56 | R$ 2.373,53 | 6 | `Z:\...\ALEXANDRE LUIS BARBOSA NOGUEIRA\` (23358) |
-| CLAUDIA NAYARA LIRA LEMOS | 69 pgs | 84 | R$ 6.366,30 | 8 | `Z:\...\CLAUDIA NAYARA LIRA LEMOS\` (11339) |
+| ABEL MOTA NOGUEIRA | 7 processos | 97 | R$ 6.077,68 | 7 | `Z:\...\ABEL MOTA NOGUEIRA\` (15033-15039) |
+| ADAILTON DA SILVA PEREIRA | 59 pgs | 401 | R$ 40.165,90 | 10 | `Z:\...\21054-BANCO BRADESCO S.A- MORA\` |
+| ALCILENE PEREIRA PINHEIRO | OCR | 51 | R$ 7.379,31 | 7 | `Z:\...\ALCILENE PEREIRA PINHEIRO\` |
+| ALEXANDRE LUIS BARBOSA NOGUEIRA | 36 pgs | 55 | R$ 2.603,64 | 6 | `Z:\...\ALEXANDRE LUIS BARBOSA NOGUEIRA\` (23358) |
+| CLAUDIA NAYARA LIRA LEMOS | 69 pgs | 116 | R$ 7.857,77 | 8 | `Z:\...\CLAUDIA NAYARA LIRA LEMOS\` (11339) |
 
 Baselines em `tests/baselines/*.json`. Fixtures em `tests/fixtures/*.pdf`.
 

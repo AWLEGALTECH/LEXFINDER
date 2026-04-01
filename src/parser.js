@@ -565,6 +565,11 @@ function assembleTransactions(classified, layout) {
           pending = { data: pending.data, historico: c.text, valor: null };
           continue;
         }
+        // Guard: text has recognized category but pending has no value and no category → start new pending
+        if (c.categoria && !pending.valor && !matchCategoria(pending.historico)) {
+          pending = { data: pending.data, historico: c.text, valor: null };
+          continue;
+        }
         pending.historico = (pending.historico + " " + c.text).trim();
       } else if (justEmitted && lastEmitted) {
         // BIDIRECTIONAL DECISION: Is this text a detail of lastEmitted, or title of a new transaction?
@@ -573,8 +578,8 @@ function assembleTransactions(classified, layout) {
         const nextNonText = lookAhead(i);
         const nextHasValues = nextNonText && (nextNonText.type === "values" || (nextNonText.type === "date" && nextNonText.hasValues));
 
-        // Check categories
-        const textCat = justEmitted === "standalone" && nextHasValues ? c.categoria : null;
+        // Check categories (any justEmitted state, not just "standalone")
+        const textCat = justEmitted && nextHasValues ? c.categoria : null;
         const lastCat = textCat ? matchCategoria(lastEmitted.historico) : null;
 
         // Case 1: standalone-emitted + next has values + different category → new transaction

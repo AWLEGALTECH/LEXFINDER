@@ -1,13 +1,13 @@
 {
   "clientName": "ALEXANDRE LUIS BARBOSA NOGUEIRA",
-  "totalOcorrencias": 56,
-  "totalValor": 2373.53,
+  "totalOcorrencias": 55,
+  "totalValor": 2603.64,
   "categorias": {
-    "cesta": { "count": 25, "valor": 774.60 },
-    "extrato": { "count": 10, "valor": 126.85 },
-    "credito": { "count": 3, "valor": 10.57 },
-    "mora": { "count": 8, "valor": 1322.51 },
-    "tarifas": { "count": 4, "valor": 18.39 },
+    "cesta": { "count": 24, "valor": 792.84 },
+    "extrato": { "count": 11, "valor": 150.10 },
+    "credito": { "count": 2, "valor": 7.57 },
+    "mora": { "count": 9, "valor": 1519.13 },
+    "tarifas": { "count": 3, "valor": 13.39 },
     "encargos": { "count": 6, "valor": 120.61 }
   }
 }
