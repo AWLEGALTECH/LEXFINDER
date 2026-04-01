@@ -343,7 +343,7 @@ const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
 const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:|^data\s*:\s*\d{2}\/\d{2}\/\d{4}|^nome\s*:\s*[A-Z]/i;
 // Detecta linhas de TOTAL / sumário do extrato — não são transações reais
 const IS_SUMMARY = /^\s*total\b|\btotal\s*$|[uú]ltimos\s+lan[cç]amentos/i;
-const IS_SEPARATE_TX = /\b(transfer[eê]ncia\s*pix|pix\s+(enviado|recebido|qrcode)|compra\s*(elo|visa|master|d[eé]bito|cr[eé]dito)|saque\s*(dinheiro|terminal|compartilhado|bradesco|pessoal|correspon)|ted\s|dep[oó]sito\s|pagamento\s+(de\s+)?titulo|pagto\s|cr[eé]dito\s+de\s+sal[aá]rio|credito\s+salario|pgto\s+fornecedor)\b/i;
+const IS_SEPARATE_TX = /\b(transfer[eê]ncia\s*pix|pix\s+(enviado|recebido|qrcode)|compra\s*(elo|visa|master|d[eé]bito|cr[eé]dito)|saque\s*(dinheiro|terminal|compartilhado|bradesco|pessoal|correspon|caixa)|ted\s|dep[oó]sito\s|pagamento\s+(de\s+)?titulo|pagto\s|cr[eé]dito\s+de\s+sal[aá]rio|credito\s+salario|pgto\s+fornecedor)\b/i;
 
 function pickDebit(rowValues, cols) {
   if (!rowValues.length) return null;
@@ -536,7 +536,18 @@ function assembleTransactions(classified, layout) {
       if (layout === "inferior") flushBuffer(c.date);
       lastDate = c.date;
 
-      if (c.hasValues && c.debitVal) {
+      // Fix: pending without value + date-row with debit → close pending with date-row data
+      // Only when: pending has recognized category AND date-row historico is docto-only (no text content)
+      const dateHistIsDocto = !c.historico || /^\d[\d\s]*$/.test(c.historico.trim());
+      if (pending && !pending.valor && c.hasValues && c.debitVal && matchCategoria(pending.historico) && dateHistIsDocto) {
+        pending.data = c.date;
+        if (c.historico) pending.historico = (pending.historico + " " + c.historico).trim();
+        pending.valor = c.debitVal;
+        emit(pending);
+        lastEmitted = pending;
+        pending = null;
+        justEmitted = true;
+      } else if (c.hasValues && c.debitVal) {
         // Complete transaction on one line
         const t = { data: c.date, historico: c.historico, valor: c.debitVal };
         emit(t);
@@ -560,8 +571,8 @@ function assembleTransactions(classified, layout) {
         // Continue building pending's historico
         if (IS_SUMMARY.test(pending.historico)) { pending = null; continue; }
         // Guard: if pending already has a value AND text is a separate transaction, close pending
-        if (IS_SEPARATE_TX.test(c.text) && pending.valor) {
-          emit(pending); lastEmitted = pending;
+        if (IS_SEPARATE_TX.test(c.text) && (pending.valor || matchCategoria(pending.historico))) {
+          if (pending.valor) { emit(pending); lastEmitted = pending; }
           pending = { data: pending.data, historico: c.text, valor: null };
           continue;
         }

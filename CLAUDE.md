@@ -123,17 +123,18 @@ O parser usa `justEmitted` tipado (`true`, `"pending-close"`, `"standalone"`) co
 - Exceção: `cesta` após `tarifas` → append como detalhe (sub-descrição)
 - O branch `pending` também verifica: texto categorizado substitui pending sem valor/categoria
 
-**CUIDADO:** Qualquer mudança no parser DEVE ser testada com TODOS os 5 cases. O equilíbrio Abel (2-line) vs Adailton (regular) vs Claudia (phantoms) é crítico.
+**CUIDADO:** Qualquer mudança no parser DEVE ser testada com TODOS os 6 cases. O equilíbrio Abel (2-line) vs Adailton (regular) vs Claudia (phantoms) vs Zeildo (93 pgs, 9 períodos) é crítico.
 
-## Test Cases Validados (v3 — fix bidirectional category check)
+## Test Cases Validados (v4 — fix date-row absorption + IS_SEPARATE_TX)
 
 | Case | Páginas | Ocorrências | Valor | Categorias | PDF |
 |------|---------|-------------|-------|------------|-----|
-| ABEL MOTA NOGUEIRA | 7 processos | 97 | R$ 6.077,68 | 7 | `Z:\...\ABEL MOTA NOGUEIRA\` (15033-15039) |
-| ADAILTON DA SILVA PEREIRA | 59 pgs | 401 | R$ 40.165,90 | 10 | `Z:\...\21054-BANCO BRADESCO S.A- MORA\` |
-| ALCILENE PEREIRA PINHEIRO | OCR | 51 | R$ 7.379,31 | 7 | `Z:\...\ALCILENE PEREIRA PINHEIRO\` |
-| ALEXANDRE LUIS BARBOSA NOGUEIRA | 36 pgs | 55 | R$ 2.603,64 | 6 | `Z:\...\ALEXANDRE LUIS BARBOSA NOGUEIRA\` (23358) |
-| CLAUDIA NAYARA LIRA LEMOS | 69 pgs | 116 | R$ 7.857,77 | 8 | `Z:\...\CLAUDIA NAYARA LIRA LEMOS\` (11339) |
+| ABEL MOTA NOGUEIRA | 7 processos | 105 | R$ 6.067,90 | 7 | `Z:\...\ABEL MOTA NOGUEIRA\` (15033-15039) |
+| ADAILTON DA SILVA PEREIRA | 59 pgs | 443 | R$ 39.984,86 | 10 | `Z:\...\21054-BANCO BRADESCO S.A- MORA\` |
+| ALCILENE PEREIRA PINHEIRO | OCR | 58 | R$ 7.455,35 | 7 | `Z:\...\ALCILENE PEREIRA PINHEIRO\` |
+| ALEXANDRE LUIS BARBOSA NOGUEIRA | 36 pgs | 58 | R$ 2.579,95 | 6 | `Z:\...\ALEXANDRE LUIS BARBOSA NOGUEIRA\` (23358) |
+| CLAUDIA NAYARA LIRA LEMOS | 69 pgs | 128 | R$ 6.828,09 | 9 | `Z:\...\CLAUDIA NAYARA LIRA LEMOS\` (11339) |
+| ZEILDO ALMEIDA FREITAS | 93 pgs | 467 | R$ 30.974,44 | 7 | `Z:\...\ZEILDO ALMEIDA FREITAS\` (17435) |
 
 Baselines em `tests/baselines/*.json`. Fixtures em `tests/fixtures/*.pdf`.
 

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { CATEGORIAS, THEME, matchCategoria, analyzeAll, parseDocumentoPDF } from "./parser.js";
 
-const fmt = (v) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmt = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 /* ─────────────────────────────────────────────
    MODAL
