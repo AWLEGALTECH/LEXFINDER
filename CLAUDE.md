@@ -131,6 +131,7 @@ O parser usa `justEmitted` tipado (`"pending-close"` vs `"standalone"`) para res
 | ADAILTON DA SILVA PEREIRA | 59 pgs | 392 | R$ 36.308,30 | 10 | `Z:\...\21054-BANCO BRADESCO S.A- MORA\` |
 | ALCILENE PEREIRA PINHEIRO | OCR | 52 | R$ 7.338,04 | 7 | `Z:\...\ALCILENE PEREIRA PINHEIRO\` |
 | ALEXANDRE LUIS BARBOSA NOGUEIRA | 36 pgs | 56 | R$ 2.373,53 | 6 | `Z:\...\ALEXANDRE LUIS BARBOSA NOGUEIRA\` (23358) |
+| CLAUDIA NAYARA LIRA LEMOS | 69 pgs | 84 | R$ 6.366,30 | 8 | `Z:\...\CLAUDIA NAYARA LIRA LEMOS\` (11339) |
 
 Baselines em `tests/baselines/*.json`. Fixtures em `tests/fixtures/*.pdf`.
 
