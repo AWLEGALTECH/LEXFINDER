@@ -343,6 +343,7 @@ const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
 const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:|^data\s*:\s*\d{2}\/\d{2}\/\d{4}|^nome\s*:\s*[A-Z]/i;
 // Detecta linhas de TOTAL / sumário do extrato — não são transações reais
 const IS_SUMMARY = /^\s*total\b|\btotal\s*$|[uú]ltimos\s+lan[cç]amentos/i;
+const IS_SEPARATE_TX = /\b(transfer[eê]ncia\s*pix|pix\s+(enviado|recebido|qrcode)|compra\s*(elo|visa|master|d[eé]bito|cr[eé]dito)|saque\s*(dinheiro|terminal|compartilhado|bradesco|pessoal|correspon)|ted\s|dep[oó]sito\s|pagamento\s+(de\s+)?titulo|pagto\s|cr[eé]dito\s+de\s+sal[aá]rio|credito\s+salario|pgto\s+fornecedor)\b/i;
 
 function pickDebit(rowValues, cols) {
   if (!rowValues.length) return null;
@@ -558,6 +559,12 @@ function assembleTransactions(classified, layout) {
       if (pending) {
         // Continue building pending's historico
         if (IS_SUMMARY.test(pending.historico)) { pending = null; continue; }
+        // Guard: if pending already has a value AND text is a separate transaction, close pending
+        if (IS_SEPARATE_TX.test(c.text) && pending.valor) {
+          emit(pending); lastEmitted = pending;
+          pending = { data: pending.data, historico: c.text, valor: null };
+          continue;
+        }
         pending.historico = (pending.historico + " " + c.text).trim();
       } else if (justEmitted && lastEmitted) {
         // BIDIRECTIONAL DECISION: Is this text a detail of lastEmitted, or title of a new transaction?
@@ -583,11 +590,15 @@ function assembleTransactions(classified, layout) {
             justEmitted = false;
           }
         } else {
-          // BIDIRECTIONAL CHECK: Look backward — if lastEmitted has a weak historico
-          // (just a docto number, no category match) and THIS text matches a category,
-          // PREPEND the keyword to lastEmitted instead of appending
-          if (c.categoria && lastEmitted.valor && !matchCategoria(lastEmitted.historico)) {
-            // lastEmitted has value but no recognized category — prepend keyword text
+          // Guard: separate transaction patterns should never be merged as details
+          if (IS_SEPARATE_TX.test(c.text)) {
+            const date = layout === "superior" ? lastDate : null;
+            if (date || layout === "inferior") {
+              pending = { data: date, historico: c.text, valor: null };
+            }
+            justEmitted = false;
+          } else if (c.categoria && lastEmitted.valor && !matchCategoria(lastEmitted.historico)) {
+            // BIDIRECTIONAL CHECK: lastEmitted has value but no recognized category — prepend keyword text
             lastEmitted.historico = (c.text + " " + lastEmitted.historico).trim();
           } else {
             // Default: append as detail

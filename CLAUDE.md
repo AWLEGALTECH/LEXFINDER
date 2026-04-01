@@ -123,13 +123,16 @@ O parser usa `justEmitted` tipado (`"pending-close"` vs `"standalone"`) para res
 
 **CUIDADO:** Qualquer mudança no parser DEVE ser testada com AMBOS os cases. Foram 7+ commits iterativos para equilibrar.
 
-## Test Cases Validados
+## Test Cases Validados (v2)
 
-| Case | Páginas | Ocorrências | Valor | PDF |
-|------|---------|-------------|-------|-----|
-| ABEL MOTA NOGUEIRA | 7 processos | ~107 baseline | — | `Z:\1. PROCESSOS CIVEIS\ABEL MOTA NOGUEIRA\` (15033-15039) |
-| ABRÃO GONÇALVES ARAUJO | 18 pgs | 56 | R$ 4.235 | `Z:\...\(11834) BANCO BRADESCO - MORA\` |
-| ADAILTON DA SILVA PEREIRA | 59 pgs | 391 + 8 Invest Fácil | R$ 36.026,99 | `Z:\...\21054-BANCO BRADESCO S.A- MORA\` |
+| Case | Páginas | Ocorrências | Valor | Categorias | PDF |
+|------|---------|-------------|-------|------------|-----|
+| ABEL MOTA NOGUEIRA | 7 processos | 92 | R$ 9.727,61 | 8 | `Z:\...\ABEL MOTA NOGUEIRA\` (15033-15039) |
+| ADAILTON DA SILVA PEREIRA | 59 pgs | 392 | R$ 36.308,30 | 10 | `Z:\...\21054-BANCO BRADESCO S.A- MORA\` |
+| ALCILENE PEREIRA PINHEIRO | OCR | 52 | R$ 7.338,04 | 7 | `Z:\...\ALCILENE PEREIRA PINHEIRO\` |
+| ALEXANDRE LUIS BARBOSA NOGUEIRA | 36 pgs | 56 | R$ 2.373,53 | 6 | `Z:\...\ALEXANDRE LUIS BARBOSA NOGUEIRA\` (23358) |
+
+Baselines em `tests/baselines/*.json`. Fixtures em `tests/fixtures/*.pdf`.
 
 ## Optijus Infla Valores (Descoberta Crítica)
 
@@ -139,13 +142,17 @@ O Optijus processa páginas "Últimos Lançamentos" como transações reais (dup
 
 O Optijus (optijus.com.br) é o sistema concorrente/referência. O LEX FINDER deve produzir resultados idênticos ou melhores — zero falsos positivos, zero detecções perdidas.
 
+## IS_SEPARATE_TX — Guard contra Line-Merge
+
+O parser usa `IS_SEPARATE_TX` regex para impedir que textos de transações legítimas (PIX, COMPRA, SAQUE, TED, etc.) sejam merged como detalhes de transações categorizadas. O guard atua em dois pontos:
+- Na branch `justEmitted` de `assembleTransactions()` — impede append ao lastEmitted
+- Na branch `pending` — só separa se pending já tiver valor (para não quebrar 2-line format do Abel)
+
 ## Pendências
 
-1. Re-testar ABEL MOTA — commit b0fa8e6 pode ter regredido de 107 para ~96 ocorrências
-2. Testes com PDFs mais variados
-3. Expandir keywords (~120 → mais perto das 265 do Optijus)
-4. Exportação Excel/PDF
-5. Testes automatizados (sem test runner configurado)
+1. Testes com mais PDFs variados (outros clientes)
+2. Exportação Excel/PDF aprimorada
+3. Implementar parsers para outros bancos (Itaú, BB, Caixa, Santander) — stubs já criados
 
 ## Documentação
 

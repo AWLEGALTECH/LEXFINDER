@@ -1,7 +1,7 @@
 {
   "clientName": "ADAILTON DA SILVA PEREIRA",
   "totalOcorrencias": 392,
-  "totalValor": 36325.33,
+  "totalValor": 36308.30,
   "categorias": {
     "cesta": { "count": 79, "valor": 3059.64 },
     "tarifas": { "count": 6, "valor": 246.92 },
@@ -11,7 +11,7 @@
     "invest_facil": { "count": 8, "valor": 3770.52 },
     "anuidade": { "count": 48, "valor": 2631.27 },
     "mora": { "count": 97, "valor": 13512.72 },
-    "extrato": { "count": 20, "valor": 222.64 },
+    "extrato": { "count": 20, "valor": 205.61 },
     "adiantamento": { "count": 25, "valor": 1024.53 }
   }
 }
