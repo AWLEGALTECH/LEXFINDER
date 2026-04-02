@@ -1,10 +1,10 @@
 {
   "clientName": "ALCILENE PEREIRA PINHEIRO",
-  "totalOcorrencias": 58,
-  "totalValor": 7455.35,
+  "totalOcorrencias": 59,
+  "totalValor": 7476.95,
   "categorias": {
     "credito": { "count": 11, "valor": 884.30 },
-    "cesta": { "count": 11, "valor": 222.50 },
+    "cesta": { "count": 12, "valor": 244.10 },
     "seguros": { "count": 4, "valor": 8.43 },
     "encargos": { "count": 9, "valor": 111.24 },
     "mora": { "count": 8, "valor": 1570.27 },

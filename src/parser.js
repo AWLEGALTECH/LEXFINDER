@@ -21,10 +21,21 @@ const CATEGORIAS = [
     sublabel: "Tarifas bancárias cobradas indevidamente",
     icon: "!",
     ...THEME,
-    keywords: ["tarifa bancaria", "saqueterminal", "saquecorrespondente", "saquepessoal", "saquetermi", "saquecorre", "pend.tarifas bancaria", "lancamento a debito", "recebimento fornecedor", "tar bancaria", "tar saqueterminal", "tar saquecorre", "tar receb fornecedor", "saque bradesco", "saque compartilhado", "saque terminal", "tar manut conta", "manutencao de conta", "tar renovacao cartao", "tar transferencia"],
+    keywords: ["tarifa bancaria", "pend.tarifas bancaria", "lancamento a debito", "recebimento fornecedor", "tar bancaria", "tar receb fornecedor", "tar manut conta", "manutencao de conta", "tar renovacao cartao", "tar transferencia"],
     fundamento: "Art. 3º, Res. CMN 3.919/10; Súmula 297 STJ",
     acao: "Pleitear restituição em dobro das tarifas cobradas sem prévia contratação expressa (Art. 42, CDC). Verificar se houve autorização expressa em contrato.",
     descricao: "Cobrança Indevida",
+  },
+  {
+    id: "saque_terminal",
+    label: "Saque Terminal",
+    sublabel: "Tarifas cobradas por saque em terminal bancário",
+    icon: "!",
+    ...THEME,
+    keywords: ["tarifa bancaria saqueterminal", "tarifa bancaria saquecorrespondente", "tarifa bancaria saquepessoal", "tarifa bancaria saque terminal", "tarifa bancaria saque bradesco", "tarifa bancaria saque compartilhado", "saqueterminal tarifa bancaria", "vr.parcial saqueterminal tarifa bancaria", "vr.parcial saqueterminal", "vr.parcial saquecorrespondente", "vr.parcial saquepessoal", "tar saqueterminal", "tar saquecorre", "saqueterminal", "saquecorrespondente", "saquepessoal", "saquetermi", "saquecorre", "saque terminal", "saque bradesco", "saque compartilhado"],
+    fundamento: "Art. 3º, Res. CMN 3.919/10; Súmula 297 STJ",
+    acao: "Tarifa cobrada por saque em terminal bancário. Verificar se houve contratação expressa do serviço. Pleitear restituição em dobro (Art. 42, CDC).",
+    descricao: "Tarifa de Saque Terminal",
   },
   {
     id: "adiantamento",
@@ -171,6 +182,12 @@ function matchCategoria(historico) {
         bestPos = pos;
       }
     }
+  }
+  // Reclassificação: "TARIFA BANCARIA 0000001 SAQUEterminal" → saque_terminal
+  // O docto entre "tarifa bancaria" e "saqueterminal" impede keyword composta de casar.
+  if (bestCat && bestCat.id === "tarifas" && /saque\s*(terminal|termi|correspondente|corre|pessoal|compartilhado|bradesco)/i.test(h)) {
+    const sq = CATEGORIAS.find(c => c.id === "saque_terminal");
+    if (sq) return sq;
   }
   return bestCat;
 }
@@ -344,6 +361,10 @@ const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data
 // Detecta linhas de TOTAL / sumário do extrato — não são transações reais
 const IS_SUMMARY = /^\s*total\b|\btotal\s*$|[uú]ltimos\s+lan[cç]amentos/i;
 const IS_SEPARATE_TX = /\b(transfer[eê]ncia\s*pix|pix\s+(enviado|recebido|qrcode)|compra\s*(elo|visa|master|d[eé]bito|cr[eé]dito)|saque\s*(dinheiro|terminal|compartilhado|bradesco|pessoal|correspon|caixa)|ted\s|dep[oó]sito\s|pagamento\s+(de\s+)?titulo|pagto\s|cr[eé]dito\s+de\s+sal[aá]rio|credito\s+salario|pgto\s+fornecedor)\b/i;
+// "SAQUEterminal", "SAQUEcorrespondente", etc. após "TARIFA BANCARIA" são DESCRITORES de tarifa,
+// não transações de saque real. Permitir merge nesse contexto.
+const IS_SAQUE_DESCRIPTOR = /\bsaque\s*(terminal|termi|correspondente|corre|pessoal|compartilhado|bradesco|dinheiro|caixa)/i;
+const IS_TARIFA_PREFIX = /^(vr\.parcial\s+)?(tarifa bancaria|tar\s)/i;
 
 function pickDebit(rowValues, cols) {
   if (!rowValues.length) return null;
@@ -522,6 +543,8 @@ function assembleTransactions(classified, layout) {
   for (let i = 0; i < classified.length; i++) {
     const c = classified[i];
 
+
+
     if (c.type === "empty" || c.type === "header" || c.type === "summary") {
       if (c.type === "summary") { pending = null; justEmitted = false; }
       continue;
@@ -571,7 +594,8 @@ function assembleTransactions(classified, layout) {
         // Continue building pending's historico
         if (IS_SUMMARY.test(pending.historico)) { pending = null; continue; }
         // Guard: if pending already has a value AND text is a separate transaction, close pending
-        if (IS_SEPARATE_TX.test(c.text) && (pending.valor || matchCategoria(pending.historico))) {
+        // Exception: SAQUEterminal etc. after TARIFA BANCARIA is a descriptor, not a separate tx
+        if (IS_SEPARATE_TX.test(c.text) && !(IS_SAQUE_DESCRIPTOR.test(c.text) && IS_TARIFA_PREFIX.test(pending.historico)) && (pending.valor || matchCategoria(pending.historico))) {
           if (pending.valor) { emit(pending); lastEmitted = pending; }
           pending = { data: pending.data, historico: c.text, valor: null };
           continue;
@@ -590,13 +614,13 @@ function assembleTransactions(classified, layout) {
         const nextHasValues = nextNonText && (nextNonText.type === "values" || (nextNonText.type === "date" && nextNonText.hasValues));
 
         // Check categories (any justEmitted state, not just "standalone")
-        const textCat = justEmitted && nextHasValues ? c.categoria : null;
+        const textCat = justEmitted && (nextHasValues || lastEmitted.valor == null) ? c.categoria : null;
         const lastCat = textCat ? matchCategoria(lastEmitted.historico) : null;
 
         // Case 1: standalone-emitted + next has values + different category → new transaction
         if (textCat && (!lastCat || textCat.id !== lastCat.id)) {
-          // Exception: CESTA is sub-description of TARIFA
-          if (lastCat && textCat.id === "cesta" && lastCat.id === "tarifas") {
+          // Exception: CESTA and SAQUE descriptors are sub-descriptions of TARIFA BANCARIA
+          if (lastCat && lastCat.id === "tarifas" && (textCat.id === "cesta" || (textCat.id === "saque_terminal" && IS_SAQUE_DESCRIPTOR.test(c.text)))) {
             lastEmitted.historico = (lastEmitted.historico + " " + c.text).trim();
           } else {
             const date = layout === "superior" ? lastDate : null;
@@ -607,7 +631,8 @@ function assembleTransactions(classified, layout) {
           }
         } else {
           // Guard: separate transaction patterns should never be merged as details
-          if (IS_SEPARATE_TX.test(c.text)) {
+          // Exception: SAQUEterminal etc. after TARIFA BANCARIA is a descriptor
+          if (IS_SEPARATE_TX.test(c.text) && !(IS_SAQUE_DESCRIPTOR.test(c.text) && IS_TARIFA_PREFIX.test(lastEmitted.historico))) {
             const date = layout === "superior" ? lastDate : null;
             if (date || layout === "inferior") {
               pending = { data: date, historico: c.text, valor: null };
@@ -626,7 +651,7 @@ function assembleTransactions(classified, layout) {
         if (lastEmitted && lastEmitted.valor) {
           const lCat = matchCategoria(lastEmitted.historico);
           const tCat = c.categoria;
-          if (lCat?.id === "tarifas" && tCat?.id === "cesta") {
+          if (lCat?.id === "tarifas" && (tCat?.id === "cesta" || (tCat?.id === "saque_terminal" && IS_SAQUE_DESCRIPTOR.test(c.text)))) {
             lastEmitted.historico = (lastEmitted.historico + " " + c.text).trim();
             continue;
           }
@@ -645,7 +670,15 @@ function assembleTransactions(classified, layout) {
         const firstValIdx = c.row.items.findIndex(it => IS_VALUE.test(it.text));
         if (firstValIdx > 0) {
           const extra = c.row.items.slice(0, firstValIdx).map(it => it.text).join(" ").trim();
-          if (extra) pending.historico = (pending.historico + " " + extra).trim();
+          if (extra) {
+            const extraCat = matchCategoria(extra);
+            if (extraCat && !matchCategoria(pending.historico)) {
+              // Extra has recognized category but pending doesn't (e.g. REM:/DES:) — separate
+              pending = { data: pending.data, historico: extra, valor: null };
+            } else {
+              pending.historico = (pending.historico + " " + extra).trim();
+            }
+          }
         }
         if (c.debitVal) {
           pending.valor = c.debitVal;

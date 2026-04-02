@@ -8,6 +8,6 @@
     "credito": { "count": 3, "valor": 9.77 },
     "mora": { "count": 9, "valor": 1519.13 },
     "encargos": { "count": 6, "valor": 120.61 },
-    "tarifas": { "count": 4, "valor": 20.14 }
+    "saque_terminal": { "count": 4, "valor": 20.14 }
   }
 }

@@ -5,7 +5,8 @@
   "categorias": {
     "encargos": { "count": 176, "valor": 1473.81 },
     "anuidade": { "count": 147, "valor": 22772.89 },
-    "tarifas": { "count": 9, "valor": 67.45 },
+    "tarifas": { "count": 2, "valor": 22.00 },
+    "saque_terminal": { "count": 7, "valor": 45.45 },
     "cesta": { "count": 88, "valor": 1922.50 },
     "credito": { "count": 10, "valor": 10.22 },
     "mora": { "count": 35, "valor": 4636.91 },

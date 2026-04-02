@@ -7,8 +7,9 @@
     "extrato": { "count": 5, "valor": 60.70 },
     "tit_cap": { "count": 31, "valor": 1283.49 },
     "credito": { "count": 10, "valor": 286.52 },
-    "mora": { "count": 31, "valor": 3868.35 },
+    "mora": { "count": 30, "valor": 3849.04 },
     "adiantamento": { "count": 11, "valor": 264.95 },
-    "encargos": { "count": 8, "valor": 65.19 }
+    "encargos": { "count": 8, "valor": 65.19 },
+    "seguros": { "count": 1, "valor": 19.31 }
   }
 }

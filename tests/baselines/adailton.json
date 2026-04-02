@@ -11,7 +11,8 @@
     "anuidade": { "count": 50, "valor": 2648.32 },
     "mora": { "count": 108, "valor": 16414.57 },
     "extrato": { "count": 21, "valor": 104.82 },
-    "tarifas": { "count": 3, "valor": 36.35 },
+    "tarifas": { "count": 1, "valor": 1.35 },
+    "saque_terminal": { "count": 2, "valor": 35.00 },
     "adiantamento": { "count": 26, "valor": 1005.61 }
   }
 }

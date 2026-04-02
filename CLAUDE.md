@@ -98,11 +98,12 @@ O parser detecta as posições X de 3 colunas do cabeçalho da tabela:
 - **Docto** (ex: "0090126") NÃO é valor monetário — não tem vírgula decimal, não casa com IS_VALUE
 - **Continuações** (ex: "CESTA B.EXPRESSO4" abaixo de "TARIFA BANCARIA") — `lastPushed` permite append ao histórico
 
-## Categorias de Descontos (12)
+## Categorias de Descontos (13)
 
 | ID | Label | Keywords principais |
 |----|-------|-------------------|
-| tarifas | Cobranças Indevidas | tarifa bancaria, saqueterminal, recebimento fornecedor |
+| tarifas | Cobranças Indevidas | tarifa bancaria, recebimento fornecedor, tar manut conta |
+| saque_terminal | Saque Terminal | saqueterminal, saquecorrespondente, saquepessoal, tarifa bancaria saqueterminal |
 | adiantamento | Adiantamento ao Depositante | adiant.depositante, tar adiant.depositante |
 | cesta | Pacotes e Cestas | cesta, pacote de servicos, pserv, binclub |
 | encargos | Encargos e IOF | encargos limite de cred, iof s/ |
@@ -120,21 +121,22 @@ O parser detecta as posições X de 3 colunas do cabeçalho da tabela:
 O parser usa `justEmitted` tipado (`true`, `"pending-close"`, `"standalone"`) com check bidirecional de categoria:
 - Quando `justEmitted` é truthy e o próximo row tem valores, verifica a categoria do texto
 - Se a categoria do texto difere da do lastEmitted → cria novo pending (nova transação)
-- Exceção: `cesta` após `tarifas` → append como detalhe (sub-descrição)
+- Exceção: `cesta` e `saque_terminal` após `tarifas` → append como detalhe (sub-descrição)
 - O branch `pending` também verifica: texto categorizado substitui pending sem valor/categoria
 
-**CUIDADO:** Qualquer mudança no parser DEVE ser testada com TODOS os 6 cases. O equilíbrio Abel (2-line) vs Adailton (regular) vs Claudia (phantoms) vs Zeildo (93 pgs, 9 períodos) é crítico.
+**CUIDADO:** Qualquer mudança no parser DEVE ser testada com TODOS os 7 cases. O equilíbrio Abel (2-line) vs Adailton (regular) vs Claudia (phantoms) vs Zeildo (93 pgs, 9 períodos) é crítico.
 
-## Test Cases Validados (v4 — fix date-row absorption + IS_SEPARATE_TX)
+## Test Cases Validados (v6 — saque_terminal como categoria separada)
 
 | Case | Páginas | Ocorrências | Valor | Categorias | PDF |
 |------|---------|-------------|-------|------------|-----|
-| ABEL MOTA NOGUEIRA | 7 processos | 105 | R$ 6.067,90 | 7 | `Z:\...\ABEL MOTA NOGUEIRA\` (15033-15039) |
-| ADAILTON DA SILVA PEREIRA | 59 pgs | 443 | R$ 39.984,86 | 10 | `Z:\...\21054-BANCO BRADESCO S.A- MORA\` |
-| ALCILENE PEREIRA PINHEIRO | OCR | 58 | R$ 7.455,35 | 7 | `Z:\...\ALCILENE PEREIRA PINHEIRO\` |
+| ABEL MOTA NOGUEIRA | 7 processos | 105 | R$ 6.067,90 | 8 | `Z:\...\ABEL MOTA NOGUEIRA\` (15033-15039) |
+| ADAILTON DA SILVA PEREIRA | 59 pgs | 443 | R$ 39.984,86 | 11 | `Z:\...\21054-BANCO BRADESCO S.A- MORA\` |
+| ALCILENE PEREIRA PINHEIRO | OCR | 59 | R$ 7.476,95 | 7 | `Z:\...\ALCILENE PEREIRA PINHEIRO\` |
 | ALEXANDRE LUIS BARBOSA NOGUEIRA | 36 pgs | 58 | R$ 2.579,95 | 6 | `Z:\...\ALEXANDRE LUIS BARBOSA NOGUEIRA\` (23358) |
-| CLAUDIA NAYARA LIRA LEMOS | 69 pgs | 128 | R$ 6.828,09 | 9 | `Z:\...\CLAUDIA NAYARA LIRA LEMOS\` (11339) |
-| ZEILDO ALMEIDA FREITAS | 93 pgs | 467 | R$ 30.974,44 | 7 | `Z:\...\ZEILDO ALMEIDA FREITAS\` (17435) |
+| CLAUDIA NAYARA LIRA LEMOS | 69 pgs | 129 | R$ 6.838,49 | 9 | `Z:\...\CLAUDIA NAYARA LIRA LEMOS\` (11339) |
+| ZEILDO ALMEIDA FREITAS | 93 pgs | 467 | R$ 30.974,44 | 8 | `Z:\...\ZEILDO ALMEIDA FREITAS\` (17435) |
+| LUIS CARLOS MARQUES DE ALMEIDA | 59 pgs | 207 | R$ 9.555,32 | 7 | `Z:\...\LUIS CARLOS MARQUES DE ALMEIDA\` (13108) |
 
 Baselines em `tests/baselines/*.json`. Fixtures em `tests/fixtures/*.pdf`.
 
