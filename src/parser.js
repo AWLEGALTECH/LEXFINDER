@@ -21,7 +21,15 @@ const CATEGORIAS = [
     sublabel: "Tarifas bancárias cobradas indevidamente",
     icon: "!",
     ...THEME,
-    keywords: ["tarifa bancaria", "pend.tarifas bancaria", "lancamento a debito", "recebimento fornecedor", "tar bancaria", "tar receb fornecedor", "tar manut conta", "manutencao de conta", "tar renovacao cartao", "tar transferencia"],
+    keywords: ["tarifa bancaria", "pend.tarifas bancaria", "lancamento a debito", "recebimento fornecedor", "tar bancaria", "tar receb fornecedor", "tar manut conta", "manutencao de conta", "tar renovacao cartao", "tar transferencia",
+      // Itau
+      "tar pacote itau", "tar pacote i mens", "tar pacote 3 mens", "tar pacote3.0", "tar maxconta exced", "tar cta exced", "tar lis", "tar comunicacao digital", "tar ordem pagamento", "tar transf. recurso", "tar ted in", "tarifa mensalidade pacote",
+      // BB
+      "tarifa pacote de servicos", "tarifa extrato mes anterior", "tarifa transferencia de recursos", "tarifa renovacao cadastro", "tar c/c", "cobranca referente", "tarifa msg", "tarifa sms",
+      // Caixa
+      "tar manut", "tar saque atm", "tar sq atm", "tar ex ect", "tar renov cadas",
+      // Santander
+      "tarifa mensalidade pacote servicos", "tarifa mensalidade", "tar mensalidade", "tarifa pagamentocontas", "tarifa aval.emerg.credito"],
     fundamento: "Art. 3º, Res. CMN 3.919/10; Súmula 297 STJ",
     acao: "Pleitear restituição em dobro das tarifas cobradas sem prévia contratação expressa (Art. 42, CDC). Verificar se houve autorização expressa em contrato.",
     descricao: "Cobrança Indevida",
@@ -32,7 +40,9 @@ const CATEGORIAS = [
     sublabel: "Tarifas cobradas por saque em terminal bancário",
     icon: "!",
     ...THEME,
-    keywords: ["tarifa bancaria saqueterminal", "tarifa bancaria saquecorrespondente", "tarifa bancaria saquepessoal", "tarifa bancaria saque terminal", "tarifa bancaria saque bradesco", "tarifa bancaria saque compartilhado", "saqueterminal tarifa bancaria", "vr.parcial saqueterminal tarifa bancaria", "vr.parcial saqueterminal", "vr.parcial saquecorrespondente", "vr.parcial saquepessoal", "tar saqueterminal", "tar saquecorre", "saqueterminal", "saquecorrespondente", "saquepessoal", "saquetermi", "saquecorre", "saque terminal", "saque bradesco", "saque compartilhado"],
+    keywords: ["tarifa bancaria saqueterminal", "tarifa bancaria saquecorrespondente", "tarifa bancaria saquepessoal", "tarifa bancaria saque terminal", "tarifa bancaria saque bradesco", "tarifa bancaria saque compartilhado", "saqueterminal tarifa bancaria", "vr.parcial saqueterminal tarifa bancaria", "vr.parcial saqueterminal", "vr.parcial saquecorrespondente", "vr.parcial saquepessoal", "tar saqueterminal", "tar saquecorre", "saqueterminal", "saquecorrespondente", "saquepessoal", "saquetermi", "saquecorre", "saque terminal", "saque bradesco", "saque compartilhado",
+      // Multi-banco
+      "saque corre", "saque pv", "saque taa", "saque atm", "tarifa saque terminal"],
     fundamento: "Art. 3º, Res. CMN 3.919/10; Súmula 297 STJ",
     acao: "Tarifa cobrada por saque em terminal bancário. Verificar se houve contratação expressa do serviço. Pleitear restituição em dobro (Art. 42, CDC).",
     descricao: "Tarifa de Saque Terminal",
@@ -43,7 +53,9 @@ const CATEGORIAS = [
     sublabel: "Cobranças por adiantamento ao depositante",
     icon: "!",
     ...THEME,
-    keywords: ["vr.parcial adiant.depositant", "tar adiant.depositante", "adiant.depositante", "adiantamento depositante", "adiantamento ao depositante", "tar adiant deposito", "adiant deposito", "adiantamento dep"],
+    keywords: ["vr.parcial adiant.depositant", "tar adiant.depositante", "adiant.depositante", "adiantamento depositante", "adiantamento ao depositante", "tar adiant deposito", "adiant deposito", "adiantamento dep",
+      // Itau/Santander
+      "aval. emerg credito", "aval emerg credito"],
     fundamento: "Art. 52 e 422, CC; Res. CMN 3.919/10",
     acao: "Verificar se houve efetiva utilização do adiantamento. Cobranças de adiantamento ao depositante sem solicitação expressa são passíveis de repetição de indébito.",
     descricao: "Adiantamento ao Depositante",
@@ -54,7 +66,11 @@ const CATEGORIAS = [
     sublabel: "Mensalidades de pacotes de serviços",
     icon: "!",
     ...THEME,
-    keywords: ["vr.parcial cesta b.expresso", "cesta b.expresso", "vr.parcial cesta facil", "vr.parcial cesta", "cesta facil economica", "cesta facil master", "cesta facil super", "cesta facil mais", "cesta facil", "cesta exclusive", "cesta exclus mais", "cesta exclus. max", "cesta classic mais", "cesta classic", "cesta prime classica", "cesta poupanca", "cesta universitaria", "cesta beneficiario", "cesta benefic", "cesta bradesco expre", "cesta celular", "cesta expresso", "cesta", "pacote de servicos", "pacote servico padro", "pacote servico", "pacote servicos", "pacote", "padronizado prioritarios ii", "padronizado prioritarios i", "padronizado prioritarios", "pserv", "binclub servicos", "binclub", "pagto eletron cobranca (pserv)", "cesta smart", "cesta digital", "cesta basica", "cesta plus", "cesta master plus", "cesta classic super", "cesta exclusive plus", "cesta especial", "cesta personalizada", "pacote de servicos essencial"],
+    keywords: ["vr.parcial cesta b.expresso", "cesta b.expresso", "vr.parcial cesta facil", "vr.parcial cesta", "cesta facil economica", "cesta facil master", "cesta facil super", "cesta facil mais", "cesta facil", "cesta exclusive", "cesta exclus mais", "cesta exclus. max", "cesta classic mais", "cesta classic", "cesta prime classica", "cesta poupanca", "cesta universitaria", "cesta beneficiario", "cesta benefic", "cesta bradesco expre", "cesta celular", "cesta expresso", "cesta", "pacote de servicos", "pacote servico padro", "pacote servico", "pacote servicos", "pacote", "padronizado prioritarios ii", "padronizado prioritarios i", "padronizado prioritarios", "pserv", "binclub servicos", "binclub", "pagto eletron cobranca (pserv)", "cesta smart", "cesta digital", "cesta basica", "cesta plus", "cesta master plus", "cesta classic super", "cesta exclusive plus", "cesta especial", "cesta personalizada", "pacote de servicos essencial",
+      // BB
+      "cesta bb", "cesta familia", "cesta estilo", "bompratodos",
+      // Caixa
+      "cesta caixa", "deb cesta", "cesta mais valor", "cesta padrao i", "cesta padrao ii"],
     fundamento: "Art. 3º e 4º, Res. CMN 3.919/10; Art. 39, CDC",
     acao: "Verificar se o cliente efetivamente contratou o pacote. Em caso negativo, pleitear restituição de todos os valores cobrados nos últimos 5 anos.",
     descricao: "Pacote/Cesta de Serviços",
@@ -65,7 +81,9 @@ const CATEGORIAS = [
     sublabel: "Encargos sobre limite de crédito e IOF",
     icon: "!",
     ...THEME,
-    keywords: ["encargos limite de cred", "encargos limite credito", "encargos descoberto cc", "encargos descoberto", "encargos saldo vinculado", "encargo saldo vinculado", "encargos excesso limite", "encargos", "iof s/ utilizacao limite", "iof s/utilizacao", "iof s/", "encargos cheque especial", "encargos conta garantida", "encargos atraso", "encargos financeiros", "iof complementar"],
+    keywords: ["encargos limite de cred", "encargos limite credito", "encargos descoberto cc", "encargos descoberto", "encargos saldo vinculado", "encargo saldo vinculado", "encargos excesso limite", "encargos", "iof s/ utilizacao limite", "iof s/utilizacao", "iof s/", "encargos cheque especial", "encargos conta garantida", "encargos atraso", "encargos financeiros", "iof complementar",
+      // Multi-banco
+      "sob med encargos", "juros saldo devedor", "enc lis", "enc ch esp", "juros saldo utiliz ate limite", "juros cheque especial", "enc limite"],
     fundamento: "Art. 52 e 422, CC; Res. CMN 3.919/10; Dec. 6.306/07",
     acao: "Verificar se houve efetiva utilização do limite. Encargos e IOF cobrados sem utilização ou em duplicidade são passíveis de repetição de indébito.",
     descricao: "Encargo sobre Limite / IOF",
@@ -87,7 +105,15 @@ const CATEGORIAS = [
     sublabel: "Seguros e previdência cobrados indevidamente",
     icon: "!",
     ...THEME,
-    keywords: ["bradesco vida e previdencia s/a", "bradesco vida e previdencia", "bradesco vida e prev", "bradesco vida prev-seg", "bradesco vida prev", "bradesco seg-resid/outros", "bradesco seg-resid", "prev-seg", "vida e previdencia", "sabemi segurado", "sabemi", "seguro prestamista", "seguro protecao financeira", "seguro mais protegido", "seg protecao cheque esp", "seg protecao cheque", "seguro cart deb bradesco", "servico cartao protegido", "seguradora secon", "aspecir - uniao seguradora", "aspecir", "odontoprev s/a", "odontoprev", "mbm previdencia complementar", "mbm previdencia", "previplan clube", "previplan", "aquisicao/devolucao-seg", "liberty seguros", "viza prev seguros", "sebraseg clube de beneficios", "sebraseg", "sudamerica clube de servicos", "sudamerica clube", "previsul", "crefisa sa credito financiamento", "pagto eletron cobranca (brades resi)", "pagto eletron cobranca (vida pre)", "pagto eletron cobranca (dental saude)", "pagto eletron cobranca (ace seguradora", "pagto eletron cobranca (centro de assistencia)", "pagto eletron cobranca cenasp", "bradesco auto", "bradesco saude", "bradesco dental", "seguro residencial", "seguro vida", "seguro acidentes pessoais", "seguro desemprego", "seguro perda involuntaria", "zurich seguros", "mapfre seguros", "porto seguro", "pagto eletron cobranca (mapfre)", "pagto eletron cobranca (zurich)"],
+    keywords: ["bradesco vida e previdencia s/a", "bradesco vida e previdencia", "bradesco vida e prev", "bradesco vida prev-seg", "bradesco vida prev", "bradesco seg-resid/outros", "bradesco seg-resid", "prev-seg", "vida e previdencia", "sabemi segurado", "sabemi", "seguro prestamista", "seguro protecao financeira", "seguro mais protegido", "seg protecao cheque esp", "seg protecao cheque", "seguro cart deb bradesco", "servico cartao protegido", "seguradora secon", "aspecir - uniao seguradora", "aspecir", "odontoprev s/a", "odontoprev", "mbm previdencia complementar", "mbm previdencia", "previplan clube", "previplan", "aquisicao/devolucao-seg", "liberty seguros", "viza prev seguros", "sebraseg clube de beneficios", "sebraseg", "sudamerica clube de servicos", "sudamerica clube", "previsul", "crefisa sa credito financiamento", "pagto eletron cobranca (brades resi)", "pagto eletron cobranca (vida pre)", "pagto eletron cobranca (dental saude)", "pagto eletron cobranca (ace seguradora", "pagto eletron cobranca (centro de assistencia)", "pagto eletron cobranca cenasp", "bradesco auto", "bradesco saude", "bradesco dental", "seguro residencial", "seguro vida", "seguro acidentes pessoais", "seguro desemprego", "seguro perda involuntaria", "zurich seguros", "mapfre seguros", "porto seguro", "pagto eletron cobranca (mapfre)", "pagto eletron cobranca (zurich)",
+      // Itau
+      "itau seg vida pf", "itau seg ap pf", "itau seg vida ap pf", "seguro residencia", "seguro cartao itau", "seguro lis", "seguro itau viva", "seguro bolsa protegida",
+      // BB
+      "seguro bb credito", "seguro credito protegido", "protecao ouro", "bb seguros", "bb seg", "bb prev", "bb previdencia", "brasilprev",
+      // Caixa
+      "caixa seg", "caixa seguradora", "caixa vida", "caixa previdencia",
+      // Santander
+      "mensalidade de seguro", "santander seguros", "santander seg", "zurich santander"],
     fundamento: "Art. 39, III, CDC; Súmula 473 STJ; Art. 757, CC",
     acao: "Verificar se o seguro foi contratado voluntariamente. Seguros vinculados a financiamentos sem opção de recusa são abusivos (Súmula 473 STJ). Pleitear cancelamento e devolução.",
     descricao: "Seguro",
@@ -98,7 +124,15 @@ const CATEGORIAS = [
     sublabel: "Títulos de capitalização cobrados indevidamente",
     icon: "!",
     ...THEME,
-    keywords: ["titulo de capitalizacao", "bradesco capitalizacao", "resg.tit.capitalizacao", "capitalizacao 1171", "tit capitalizacao", "titulo cap", "cap periodica", "bradesco cap"],
+    keywords: ["titulo de capitalizacao", "bradesco capitalizacao", "resg.tit.capitalizacao", "capitalizacao 1171", "tit capitalizacao", "titulo cap", "cap periodica", "bradesco cap",
+      // Itau
+      "itaucap", "pic 100", "pic itau", "cap itau", "capitalizacao",
+      // BB
+      "ourocap", "ourocap pm", "ourocap pu", "brasilcap", "bb capitalizacao", "capitalizacao estilo",
+      // Caixa
+      "ideal cap", "super x cap", "caixa cap",
+      // Santander
+      "super cap", "santander capitalizacao", "pic santander", "dindin"],
     fundamento: "Art. 39, I e V, CDC; Súmula 473 STJ",
     acao: "Verificar se houve contratação voluntária do título de capitalização. Títulos vinculados a abertura de conta ou crédito sem consentimento são abusivos. Pleitear cancelamento e restituição integral.",
     descricao: "Título de Capitalização",
@@ -109,7 +143,9 @@ const CATEGORIAS = [
     sublabel: "Parcelas de empréstimos e operações de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "bx.ant.financ/emp", "bx.ant.fin/emp", "bx.ant.financ", "bx ant financ", "bx ant fin", "bx ant", "bx.antecipacao", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "divida em atraso", "jbcred sociedade", "jbcred", "crefisa", "sudacred", "suda", "agiplan financeira", "agiplan", "easycob", "eagle", "gasto e credito", "pagto eletron cobranca (eagle)", "parcela emprestimo", "parcela financiamento", "amort emprestimo", "amortizacao emprestimo", "prestacao credito", "parcela consignado", "parcela cdc", "cdc credito"],
+    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "bx.ant.financ/emp", "bx.ant.fin/emp", "bx.ant.financ", "bx ant financ", "bx ant fin", "bx ant", "bx.antecipacao", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "divida em atraso", "jbcred sociedade", "jbcred", "crefisa", "sudacred", "suda", "agiplan financeira", "agiplan", "easycob", "eagle", "gasto e credito", "pagto eletron cobranca (eagle)", "parcela emprestimo", "parcela financiamento", "amort emprestimo", "amortizacao emprestimo", "prestacao credito", "parcela consignado", "parcela cdc", "cdc credito",
+      // Multi-banco
+      "cred pessoal", "bb cred", "consignado bb", "parcela cred", "consignado caixa", "siemp", "consignado santander"],
     fundamento: "Art. 52, CDC; Lei 10.931/04; Res. CMN 4.559/17",
     acao: "Solicitar demonstrativo completo da operação. Verificar CET e taxa de juros. Contestar cobranças acima do contratado ou sem autorização expressa.",
     descricao: "Parcela de Crédito Pessoal",
@@ -120,7 +156,11 @@ const CATEGORIAS = [
     sublabel: "Anuidades e tarifas de cartão de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["anuidade", "cartao credito anuidade", "gasto c/cartao de credito", "gastos cartao de credito", "gastos cartao credito", "gasto c credito", "gasto cartao de credito", "gasto cartao credito", "provisao gasto cart cred", "gasto c/cartao", "gastos c/cartao", "gasto cart cred", "anuidade cartao visa", "anuidade cartao master", "anuidade cartao elo", "anuidade internacional", "anuidade platinum", "anuidade gold", "gasto cartao debito", "compra cartao debito"],
+    keywords: ["anuidade", "cartao credito anuidade", "gasto c/cartao de credito", "gastos cartao de credito", "gastos cartao credito", "gasto c credito", "gasto cartao de credito", "gasto cartao credito", "provisao gasto cart cred", "gasto c/cartao", "gastos c/cartao", "gasto cart cred", "anuidade cartao visa", "anuidade cartao master", "anuidade cartao elo", "anuidade internacional", "anuidade platinum", "anuidade gold", "gasto cartao debito", "compra cartao debito",
+      // BB
+      "ourocard", "ourocard anuidade", "ourocard facil",
+      // Santander
+      "anuidade visa", "anuidade master"],
     fundamento: "Res. CMN 3.919/10; Art. 39, CDC",
     acao: "Verificar se a anuidade foi informada no momento da contratação. Anuidades cobradas sem previsão contratual expressa são indevidas.",
     descricao: "Anuidade/Tarifa de Cartão",
@@ -131,7 +171,9 @@ const CATEGORIAS = [
     sublabel: "Tarifas por extratos e segunda via",
     icon: "!",
     ...THEME,
-    keywords: ["emissao extrato", "tarifa emissao extrato", "emissao extratos unificado", "extratomes", "extratomomovimento", "extratomovimento", "2via de extrato", "extrato unificado", "tar demonst.consolidade", "tar demonstr consolidado", "2 via cartaodebito", "tar 2 via cartao debito", "tar 2 via cartao", "2 via", "segunda via", "tarifa emissao doc", "tarifa 2via cartao", "tarifa 2via senha", "emissao comprovante", "emissao informe rendimentos"],
+    keywords: ["emissao extrato", "tarifa emissao extrato", "emissao extratos unificado", "extratomes", "extratomomovimento", "extratomovimento", "2via de extrato", "extrato unificado", "tar demonst.consolidade", "tar demonstr consolidado", "2 via cartaodebito", "tar 2 via cartao debito", "tar 2 via cartao", "2 via", "segunda via", "tarifa emissao doc", "tarifa 2via cartao", "tarifa 2via senha", "emissao comprovante", "emissao informe rendimentos",
+      // Caixa
+      "extmeselet"],
     fundamento: "Art. 6º, VIII, CDC; Res. CMN 3.919/10",
     acao: "Emissão de extratos é direito do consumidor (Art. 6º, VIII, CDC). Cobrança por acesso à informação bancária é abusiva. Pleitear devolução dos valores.",
     descricao: "Emissão de Extrato/Documento",
@@ -142,7 +184,9 @@ const CATEGORIAS = [
     sublabel: "Aplicações compulsórias sem rendimento real",
     icon: "⚠",
     ...THEME,
-    keywords: ["aplic.invest facil", "invest facil", "aplicacao invest facil", "aplic invest facil", "aplic.invest", "investfacil", "invest.facil", "resgate invest facil", "aplicacao automatica", "invest facil auto"],
+    keywords: ["aplic.invest facil", "invest facil", "aplicacao invest facil", "aplic invest facil", "aplic.invest", "investfacil", "invest.facil", "resgate invest facil", "aplicacao automatica", "invest facil auto",
+      // Santander
+      "remuneracao aplicacao automatica"],
     fundamento: "Art. 39, IV, CDC; Art. 422, CC; Art. 187, CC",
     acao: "ATENÇÃO — Os valores de Invest Fácil NÃO são para reembolso direto. O dinheiro aplicado retorna ao cliente, porém sem rendimento real. A prática é abusiva por si só: o banco utiliza os recursos do cliente em benefício próprio, sem transparência sobre rentabilidade. Documentar a prática abusiva como fundamento adicional na ação principal.",
     descricao: "Invest Fácil (prática abusiva)",
@@ -360,7 +404,7 @@ const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
 const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:|^data\s*:\s*\d{2}\/\d{2}\/\d{4}|^nome\s*:\s*[A-Z]/i;
 // Detecta linhas de TOTAL / sumário do extrato — não são transações reais
 const IS_SUMMARY = /^\s*total\b|\btotal\s*$|[uú]ltimos\s+lan[cç]amentos/i;
-const IS_SEPARATE_TX = /\b(transfer[eê]ncia\s*pix|pix\s+(enviado|recebido|qrcode)|compra\s*(elo|visa|master|d[eé]bito|cr[eé]dito)|saque\s*(dinheiro|terminal|compartilhado|bradesco|pessoal|correspon|caixa)|ted\s|dep[oó]sito\s|pagamento\s+(de\s+)?titulo|pagto\s|cr[eé]dito\s+de\s+sal[aá]rio|credito\s+salario|pgto\s+fornecedor)\b/i;
+const IS_SEPARATE_TX = /\b(transfer[eê]ncia\s*pix|pix\s+(enviado|recebido|qrcode)|compra\s*(elo|visa|master|d[eé]bito|cr[eé]dito)|saque\s*(dinheiro|terminal|compartilhado|bradesco|pessoal|correspon|caixa|atm|taa|pv)|ted\s|dep[oó]sito\s|pagamento\s+(de\s+)?titulo|pagto\s|cr[eé]dito\s+de\s+sal[aá]rio|credito\s+salario|pgto\s+fornecedor)\b/i;
 // "SAQUEterminal", "SAQUEcorrespondente", etc. após "TARIFA BANCARIA" são DESCRITORES de tarifa,
 // não transações de saque real. Permitir merge nesse contexto.
 const IS_SAQUE_DESCRIPTOR = /\bsaque\s*(terminal|termi|correspondente|corre|pessoal|compartilhado|bradesco|dinheiro|caixa)/i;

@@ -6,7 +6,7 @@ const fmt = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currenc
 /* ─────────────────────────────────────────────
    MODAL
 ───────────────────────────────────────────── */
-function Modal({ group, onClose, clientName, onExported }) {
+function Modal({ group, onClose, clientName, onExported, buildSheet, loadXLSX }) {
   const { cat, items } = group;
   const total = items.reduce((s, i) => s + i.valor, 0);
   const [exporting, setExporting] = useState(false);
@@ -20,25 +20,8 @@ function Modal({ group, onClose, clientName, onExported }) {
   const exportXLS = useCallback(async () => {
     setExporting(true);
     try {
-      if (!window.XLSX) {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement("script");
-          s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
-          s.onload = resolve; s.onerror = reject;
-          document.head.appendChild(s);
-        });
-      }
-      const XLSX = window.XLSX;
-      const header = ["Data/Ref.", "Rubrica", "Histórico Original", "Valor (R$)", "Fundamento Jurídico", "Ação Recomendada"];
-      const rows = items.map(item => [item.data, cat.descricao, item.historico, item.valor, cat.fundamento, cat.acao]);
-      const wsData = [header, ...rows];
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws["!cols"] = [{ wch:12 },{ wch:28 },{ wch:46 },{ wch:14 },{ wch:30 },{ wch:60 }];
-      const range = XLSX.utils.decode_range(ws["!ref"]);
-      for (let C = range.s.c; C <= range.e.c; C++) {
-        const cell = ws[XLSX.utils.encode_cell({ r:0, c:C })];
-        if (cell) cell.s = { font:{ bold:true } };
-      }
+      const XLSX = await loadXLSX();
+      const ws = buildSheet(XLSX, cat, items);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, cat.label.slice(0, 31));
       const safeName = (clientName || "cliente").replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_");
@@ -52,7 +35,7 @@ function Modal({ group, onClose, clientName, onExported }) {
       onExported && onExported(cat.id);
     } catch (err) { console.error("Erro ao exportar:", err); }
     finally { setExporting(false); }
-  }, [items, cat, clientName]);
+  }, [items, cat, clientName, buildSheet, loadXLSX]);
 
   return (
     <div onClick={onClose} style={{ position:"fixed",inset:0,zIndex:1000,background:"rgba(2,6,23,0.88)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem",animation:"mFadeIn 0.18s ease" }}>
@@ -115,7 +98,7 @@ function Modal({ group, onClose, clientName, onExported }) {
 /* ─────────────────────────────────────────────
    CATEGORY CARD
 ───────────────────────────────────────────── */
-function CategoryCard({ cat, items, onClick, delay, downloaded }) {
+function CategoryCard({ cat, items, onClick, delay, downloaded, selected, onToggleSelect }) {
   const [hov, setHov] = useState(false);
   const total = items.reduce((s,i)=>s+i.valor,0);
   const isWarning = cat.naoReembolsavel;
@@ -124,27 +107,31 @@ function CategoryCard({ cat, items, onClick, delay, downloaded }) {
   const accentGlow = isWarning ? "rgba(245,158,11,0.15)" : cat.glow;
   const accentGradient = isWarning ? "linear-gradient(135deg, rgba(245,158,11,0.06), transparent 60%)" : cat.gradient;
   return (
-    <div onClick={onClick} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)} style={{ background:"rgba(12,19,35,0.7)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${hov?accentColor:accentBorder}`,borderRadius:12,padding:"1.1rem 1.6rem",cursor:"pointer",transition:"all 0.22s cubic-bezier(0.4,0,0.2,1)",boxShadow:hov?`0 0 36px ${accentGlow},0 8px 28px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.05)`:"0 2px 12px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.03)",transform:hov?"translateY(-2px)":"translateY(0)",position:"relative",overflow:"hidden",animation:`cIn 0.38s ease ${delay}s both`,fontFamily:"Inter,sans-serif",display:"flex",alignItems:"center",gap:"1.4rem" }}>
+    <div onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)} style={{ background:"rgba(12,19,35,0.7)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${selected?"#3b82f6":hov?accentColor:accentBorder}`,borderRadius:12,padding:"1.1rem 1.6rem",cursor:"pointer",transition:"all 0.22s cubic-bezier(0.4,0,0.2,1)",boxShadow:selected?`0 0 24px rgba(59,130,246,0.25),inset 0 1px 0 rgba(255,255,255,0.05)`:hov?`0 0 36px ${accentGlow},0 8px 28px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.05)`:"0 2px 12px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.03)",transform:hov?"translateY(-2px)":"translateY(0)",position:"relative",overflow:"hidden",animation:`cIn 0.38s ease ${delay}s both`,fontFamily:"Inter,sans-serif",display:"flex",alignItems:"center",gap:"1.4rem" }}>
       <div style={{ position:"absolute",inset:0,background:accentGradient,opacity:hov?1:0.5,transition:"opacity 0.22s",borderRadius:12,pointerEvents:"none" }}/>
       <div style={{ position:"absolute",right:-24,top:"50%",transform:"translateY(-50%)",width:70,height:70,borderRadius:"50%",background:accentColor,opacity:hov?0.14:0.05,filter:"blur(24px)",transition:"opacity 0.3s",pointerEvents:"none" }}/>
-      <div style={{ position:"relative",zIndex:1,flexShrink:0,width:40,height:40,borderRadius:9,background:isWarning?"rgba(245,158,11,0.08)":"rgba(59,130,246,0.08)",border:`1px solid ${hov?accentColor:isWarning?"rgba(245,158,11,0.2)":"rgba(59,130,246,0.2)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:900,color:accentColor,fontFamily:"Inter,sans-serif",boxShadow:hov?`0 0 12px ${accentGlow}`:"none",transition:"all 0.22s" }}>{isWarning?"⚠":"!"}</div>
-      <div style={{ position:"relative",zIndex:1,flex:1,minWidth:0 }}>
+      {/* Checkbox */}
+      <div onClick={e=>{e.stopPropagation();onToggleSelect&&onToggleSelect(cat.id);}} style={{ position:"relative",zIndex:1,flexShrink:0,width:22,height:22,borderRadius:5,background:selected?"#3b82f6":"rgba(255,255,255,0.04)",border:selected?"1px solid #3b82f6":"1px solid rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.18s",cursor:"pointer" }}>
+        {selected && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+      </div>
+      <div onClick={onClick} style={{ position:"relative",zIndex:1,flexShrink:0,width:40,height:40,borderRadius:9,background:isWarning?"rgba(245,158,11,0.08)":"rgba(59,130,246,0.08)",border:`1px solid ${hov?accentColor:isWarning?"rgba(245,158,11,0.2)":"rgba(59,130,246,0.2)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:900,color:accentColor,fontFamily:"Inter,sans-serif",boxShadow:hov?`0 0 12px ${accentGlow}`:"none",transition:"all 0.22s" }}>{isWarning?"⚠":"!"}</div>
+      <div onClick={onClick} style={{ position:"relative",zIndex:1,flex:1,minWidth:0 }}>
         <div style={{ fontWeight:700,fontSize:"0.92rem",color:"#e2e8f0",letterSpacing:"-0.2px",marginBottom:2 }}>{cat.label}</div>
         <div style={{ fontSize:"0.72rem",color:"#475569",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{cat.sublabel}</div>
       </div>
-      <div style={{ position:"relative",zIndex:1,flexShrink:0,background:"rgba(255,255,255,0.05)",border:`1px solid ${accentBorder}`,borderRadius:20,padding:"4px 12px",fontSize:"0.68rem",fontWeight:700,color:accentColor,whiteSpace:"nowrap" }}>{items.length} ocorr.</div>
+      <div onClick={onClick} style={{ position:"relative",zIndex:1,flexShrink:0,background:"rgba(255,255,255,0.05)",border:`1px solid ${accentBorder}`,borderRadius:20,padding:"4px 12px",fontSize:"0.68rem",fontWeight:700,color:accentColor,whiteSpace:"nowrap" }}>{items.length} ocorr.</div>
       {downloaded && (
         <div style={{ position:"relative",zIndex:1,flexShrink:0,display:"flex",alignItems:"center",gap:5,background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:20,padding:"4px 11px",fontSize:"0.65rem",fontWeight:700,color:"#4ade80",whiteSpace:"nowrap" }}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Baixado
         </div>
       )}
-      <div style={{ position:"relative",zIndex:1,flexShrink:0,width:1,height:32,background:"rgba(255,255,255,0.06)" }}/>
-      <div style={{ position:"relative",zIndex:1,flexShrink:0,textAlign:"right" }}>
+      <div onClick={onClick} style={{ position:"relative",zIndex:1,flexShrink:0,width:1,height:32,background:"rgba(255,255,255,0.06)" }}/>
+      <div onClick={onClick} style={{ position:"relative",zIndex:1,flexShrink:0,textAlign:"right" }}>
         <div style={{ fontSize:"0.55rem",fontWeight:700,letterSpacing:"2px",textTransform:"uppercase",color:"#334155",marginBottom:3 }}>Valor</div>
         <div style={{ fontWeight:800,fontSize:"1.25rem",color:accentColor,letterSpacing:"-0.8px" }}>{fmt(total)}</div>
         {isWarning && <div style={{ fontSize:"0.55rem",fontWeight:700,color:"#f59e0b",letterSpacing:"0.5px",marginTop:2 }}>NÃO REEMBOLSÁVEL</div>}
       </div>
-      <div style={{ position:"relative",zIndex:1,flexShrink:0,width:30,height:30,borderRadius:"50%",background:hov?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.03)",border:`1px solid ${hov?accentColor:"rgba(255,255,255,0.07)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:hov?accentColor:"#334155",transition:"all 0.22s",transform:hov?"rotate(-45deg)":"rotate(0)" }}>→</div>
+      <div onClick={onClick} style={{ position:"relative",zIndex:1,flexShrink:0,width:30,height:30,borderRadius:"50%",background:hov?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.03)",border:`1px solid ${hov?accentColor:"rgba(255,255,255,0.07)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:hov?accentColor:"#334155",transition:"all 0.22s",transform:hov?"rotate(-45deg)":"rotate(0)" }}>→</div>
     </div>
   );
 }
@@ -307,6 +294,8 @@ export default function App() {
   const [activeModal, setActiveModal] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadedCats, setDownloadedCats] = useState(new Set());
+  const [selectedCats, setSelectedCats] = useState(new Set());
+  const [batchExporting, setBatchExporting] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [multipleClientsWarning, setMultipleClientsWarning] = useState(null);
@@ -357,9 +346,90 @@ export default function App() {
 
   const reset = useCallback(() => {
     setGrouped({}); setMeta({}); setFileName(""); setUploadedFiles([]);
-    setDownloadedCats(new Set()); setShowDashboard(false); setConfirmReset(false);
-    setMultipleClientsWarning(null); setPhase("upload"); setErrorMsg("");
+    setDownloadedCats(new Set()); setSelectedCats(new Set()); setShowDashboard(false);
+    setConfirmReset(false); setMultipleClientsWarning(null); setPhase("upload"); setErrorMsg("");
   }, []);
+
+  const toggleSelectCat = useCallback((catId) => {
+    setSelectedCats(prev => { const next = new Set(prev); if (next.has(catId)) next.delete(catId); else next.add(catId); return next; });
+  }, []);
+
+  const selectAllCats = useCallback(() => {
+    setSelectedCats(new Set(Object.values(grouped).map(g => g.cat.id)));
+  }, [grouped]);
+
+  const clearSelection = useCallback(() => { setSelectedCats(new Set()); }, []);
+
+  // Extrai "Operação" do historico removendo a keyword da categoria
+  const extractOperacao = useCallback((historico, cat) => {
+    const h = historico.toUpperCase();
+    let bestKw = "";
+    for (const kw of cat.keywords) {
+      const nkw = kw.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const nh = h.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (nh.includes(nkw) && nkw.length > bestKw.length) bestKw = nkw;
+    }
+    if (!bestKw) return historico;
+    const nh = h.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const idx = nh.indexOf(bestKw.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+    const remainder = historico.substring(idx + bestKw.length).trim();
+    return remainder || "";
+  }, []);
+
+  const loadXLSX = useCallback(async () => {
+    if (!window.XLSX) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    return window.XLSX;
+  }, []);
+
+  const buildSheet = useCallback((XLSX, cat, items) => {
+    const fmtVal = (v) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const descricao = cat.descricao || cat.label;
+    const header = ["Data", "Descrição", "Operação", "Valor"];
+    const rows = items.map(item => {
+      const operacao = extractOperacao(item.historico, cat);
+      return [item.data, descricao, operacao, `R$\t${fmtVal(item.valor)}`];
+    });
+    const total = items.reduce((s, i) => s + i.valor, 0);
+    const totalRow = ["", "", "TOTAL:", `R$\t${fmtVal(total)}`];
+    const art42Row = ["", "", "ART. 42 CDC", `R$\t${fmtVal(total * 2)}`];
+    const wsData = [header, ...rows, [], totalRow, art42Row];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws["!cols"] = [{ wch: 14 }, { wch: 30 }, { wch: 36 }, { wch: 16 }];
+    return ws;
+  }, [extractOperacao]);
+
+  const batchExport = useCallback(async () => {
+    const selected = Object.values(grouped).filter(g => selectedCats.has(g.cat.id));
+    if (!selected.length) return;
+    setBatchExporting(true);
+    try {
+      const XLSX = await loadXLSX();
+      const wb = XLSX.utils.book_new();
+      for (const group of selected) {
+        const ws = buildSheet(XLSX, group.cat, group.items);
+        const sheetName = group.cat.label.slice(0, 31);
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      }
+      const safeName = (meta.clientName || "cliente").replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_");
+      const catIds = selected.map(g => g.cat.id).join("_");
+      const wbOut = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([wbOut], { type: "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `LexFinder_${safeName}_${selected.length > 1 ? "MULTIPLOS" : catIds}.xlsx`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      for (const g of selected) setDownloadedCats(prev => new Set([...prev, g.cat.id]));
+    } catch (err) { console.error("Erro ao exportar:", err); }
+    finally { setBatchExporting(false); }
+  }, [grouped, selectedCats, meta, loadXLSX, buildSheet]);
 
   const groups = Object.values(grouped);
   const reembolsaveis = groups.filter(g => !g.cat.naoReembolsavel);
@@ -630,10 +700,21 @@ export default function App() {
                 <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:"1rem" }}>
                   <span style={{ fontSize:"0.62rem",fontWeight:700,letterSpacing:"2.5px",textTransform:"uppercase",color:"#334155" }}>Drill-down por Categoria</span>
                   <div style={{ flex:1,height:1,background:"rgba(255,255,255,0.05)" }}/>
+                  <div style={{ display:"flex",alignItems:"center",gap:6 }}>
+                    <button onClick={selectedCats.size===groups.length?clearSelection:selectAllCats} style={{ background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:6,color:"#64748b",fontFamily:"Inter,sans-serif",fontSize:"0.62rem",fontWeight:600,letterSpacing:"1px",textTransform:"uppercase",padding:"5px 12px",cursor:"pointer",transition:"all 0.15s" }} onMouseEnter={e=>{e.currentTarget.style.color="#94a3b8";e.currentTarget.style.borderColor="rgba(255,255,255,0.2)";}} onMouseLeave={e=>{e.currentTarget.style.color="#64748b";e.currentTarget.style.borderColor="rgba(255,255,255,0.1)";}}>
+                      {selectedCats.size===groups.length?"Limpar Seleção":"Selecionar Todos"}
+                    </button>
+                    {selectedCats.size>0 && (
+                      <button onClick={batchExport} disabled={batchExporting} style={{ display:"flex",alignItems:"center",gap:6,background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.35)",borderRadius:6,color:"#4ade80",fontFamily:"Inter,sans-serif",fontSize:"0.62rem",fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",padding:"5px 14px",cursor:batchExporting?"wait":"pointer",transition:"all 0.15s" }} onMouseEnter={e=>{if(!batchExporting){e.currentTarget.style.background="rgba(34,197,94,0.18)";e.currentTarget.style.boxShadow="0 0 16px rgba(34,197,94,0.2)";}}} onMouseLeave={e=>{e.currentTarget.style.background="rgba(34,197,94,0.1)";e.currentTarget.style.boxShadow="none";}}>
+                        {batchExporting?<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation:"spin 0.8s linear infinite" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>:<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}
+                        {batchExporting?"Gerando…":`Extrair ${selectedCats.size} Relatório${selectedCats.size>1?"s":""}`}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div style={{ display:"flex",flexDirection:"column",gap:"0.75rem" }}>
                   {groups.map((group,idx)=>(
-                    <CategoryCard key={group.cat.id} cat={group.cat} items={group.items} delay={idx*0.07} downloaded={downloadedCats.has(group.cat.id)} onClick={()=>setActiveModal(group)} />
+                    <CategoryCard key={group.cat.id} cat={group.cat} items={group.items} delay={idx*0.07} downloaded={downloadedCats.has(group.cat.id)} selected={selectedCats.has(group.cat.id)} onToggleSelect={toggleSelectCat} onClick={()=>setActiveModal(group)} />
                   ))}
                 </div>
                 {groups.some(g => g.cat.naoReembolsavel) && (
@@ -659,7 +740,7 @@ export default function App() {
         )}
       </div>
 
-      {activeModal && <Modal group={activeModal} onClose={()=>setActiveModal(null)} clientName={meta.clientName} onExported={(catId)=>setDownloadedCats(prev=>new Set([...prev,catId]))} />}
+      {activeModal && <Modal group={activeModal} onClose={()=>setActiveModal(null)} clientName={meta.clientName} onExported={(catId)=>setDownloadedCats(prev=>new Set([...prev,catId]))} buildSheet={buildSheet} loadXLSX={loadXLSX} />}
     </>
   );
 }

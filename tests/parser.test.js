@@ -194,8 +194,8 @@ describe('IS_VALUE', () => {
 });
 
 describe('CATEGORIAS', () => {
-  it('has 12 categories', () => {
-    expect(CATEGORIAS).toHaveLength(12);
+  it('has 13 categories', () => {
+    expect(CATEGORIAS).toHaveLength(13);
   });
 
   it('all have required fields', () => {
