@@ -4,7 +4,8 @@
   "totalValor": 30974.44,
   "categorias": {
     "encargos": { "count": 176, "valor": 1473.81 },
-    "anuidade": { "count": 147, "valor": 22772.89 },
+    "anuidade": { "count": 5, "valor": 53.53 },
+    "gastos_cartao": { "count": 142, "valor": 22719.36 },
     "tarifas": { "count": 2, "valor": 22.00 },
     "saque_terminal": { "count": 7, "valor": 45.45 },
     "cesta": { "count": 88, "valor": 1922.50 },

@@ -98,23 +98,25 @@ O parser detecta as posições X de 3 colunas do cabeçalho da tabela:
 - **Docto** (ex: "0090126") NÃO é valor monetário — não tem vírgula decimal, não casa com IS_VALUE
 - **Continuações** (ex: "CESTA B.EXPRESSO4" abaixo de "TARIFA BANCARIA") — `lastPushed` permite append ao histórico
 
-## Categorias de Descontos (13)
+## Categorias de Descontos (15)
 
 | ID | Label | Keywords principais |
 |----|-------|-------------------|
 | tarifas | Cobranças Indevidas | tarifa bancaria, recebimento fornecedor, tar manut conta |
-| saque_terminal | Saque Terminal | saqueterminal, saquecorrespondente, saquepessoal, tarifa bancaria saqueterminal |
+| saque_terminal | Saque Terminal | saqueterminal, saquecorrespondente, saquepessoal |
 | adiantamento | Adiantamento ao Depositante | adiant.depositante, tar adiant.depositante |
 | cesta | Pacotes e Cestas | cesta, pacote de servicos, pserv, binclub |
 | encargos | Encargos e IOF | encargos limite de cred, iof s/ |
 | mora | Mora de Crédito | mora credito pessoal, mora cartao |
-| seguros | Seguros e Previdência | bradesco vida e previdencia, seguro prestamista |
+| seguros | Seguro | bradesco vida e previdencia, seguro prestamista |
 | tit_cap | Título de Capitalização | tit cap, titulo capitalizacao |
-| credito | Crédito Pessoal | emprestimo pessoal, parcela credito pessoal |
-| anuidade | Anuidade e Cartão | anuidade, gasto c/cartao de credito |
-| extrato | Emissão de Documentos | emissao extrato, 2via de extrato |
-| invest_facil | Invest Fácil | invest facil, bx ant financ |
-| outros | Outras Cobranças | msg, regularizacao manual |
+| credito | Parcela de Crédito Pessoal | emprestimo pessoal, parcela credito pessoal |
+| anuidade | Anuidade e Cartão | anuidade, cartao credito anuidade |
+| extrato | Emissão de Extrato | emissao extrato, extrato movimento, 2via de extrato |
+| invest_facil | Invest Fácil | invest facil, aplic.invest facil |
+| bx_ant_financ | BX Antecipação Financeira | bx.ant.financ/emp, bx ant financ, bx.antecipacao |
+| gastos_cartao | Gastos com Cartão | gasto c/cartao de credito, gastos cartao credito |
+| outros | Outras Cobranças | msg, regularizacao manual, doc/ted internet |
 
 ## justEmitted — Controle de Fluxo do Parser
 
@@ -126,19 +128,22 @@ O parser usa `justEmitted` tipado (`true`, `"pending-close"`, `"standalone"`) co
 
 **CUIDADO:** Qualquer mudança no parser DEVE ser testada com TODOS os 7 cases. O equilíbrio Abel (2-line) vs Adailton (regular) vs Claudia (phantoms) vs Zeildo (93 pgs, 9 períodos) é crítico.
 
-## Test Cases Validados (v6 — saque_terminal como categoria separada)
+## Test Cases Validados (v7 — 15 categorias, bx_ant_financ + gastos_cartao separados)
 
-| Case | Páginas | Ocorrências | Valor | Categorias | PDF |
-|------|---------|-------------|-------|------------|-----|
-| ABEL MOTA NOGUEIRA | 7 processos | 105 | R$ 6.067,90 | 8 | `Z:\...\ABEL MOTA NOGUEIRA\` (15033-15039) |
-| ADAILTON DA SILVA PEREIRA | 59 pgs | 443 | R$ 39.984,86 | 11 | `Z:\...\21054-BANCO BRADESCO S.A- MORA\` |
-| ALCILENE PEREIRA PINHEIRO | OCR | 59 | R$ 7.476,95 | 7 | `Z:\...\ALCILENE PEREIRA PINHEIRO\` |
-| ALEXANDRE LUIS BARBOSA NOGUEIRA | 36 pgs | 58 | R$ 2.579,95 | 6 | `Z:\...\ALEXANDRE LUIS BARBOSA NOGUEIRA\` (23358) |
-| CLAUDIA NAYARA LIRA LEMOS | 69 pgs | 129 | R$ 6.838,49 | 9 | `Z:\...\CLAUDIA NAYARA LIRA LEMOS\` (11339) |
-| ZEILDO ALMEIDA FREITAS | 93 pgs | 467 | R$ 30.974,44 | 8 | `Z:\...\ZEILDO ALMEIDA FREITAS\` (17435) |
-| LUIS CARLOS MARQUES DE ALMEIDA | 59 pgs | 207 | R$ 9.555,32 | 7 | `Z:\...\LUIS CARLOS MARQUES DE ALMEIDA\` (13108) |
+| Case | Ocorrências | Valor | Categorias |
+|------|-------------|-------|------------|
+| ABEL MOTA NOGUEIRA | 105 | R$ 6.067,90 | 8 |
+| ADAILTON DA SILVA PEREIRA | 443 | R$ 39.984,86 | 13 |
+| ALCILENE PEREIRA PINHEIRO | 58 | R$ 7.455,35 | 7 |
+| ALEXANDRE LUIS BARBOSA | 58 | R$ 2.579,95 | 6 |
+| CLAUDIA NAYARA LIRA LEMOS | 129 | R$ 6.838,49 | 9 |
+| DAVID PONCIANO DA SILVA | 8 | R$ 4.476,90 | 2 |
+| ZEILDO ALMEIDA FREITAS | 467 | R$ 30.974,44 | 9 |
+| LUIS CARLOS MARQUES | 207 | R$ 9.555,32 | 7 |
 
 Baselines em `tests/baselines/*.json`. Fixtures em `tests/fixtures/*.pdf`.
+
+**Teste em massa v7 (25 clientes):** Todos os 25 clientes Bradesco testados com zero keywords faltantes. Gaps encontrados são por PDFs diferentes entre pastas, não por falha do parser.
 
 ## Optijus Infla Valores (Descoberta Crítica)
 

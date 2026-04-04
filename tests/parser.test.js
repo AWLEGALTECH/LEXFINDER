@@ -55,8 +55,18 @@ describe('matchCategoria', () => {
   });
 
   it('matches anuidade', () => {
-    const cat = matchCategoria('GASTO C/CARTAO DE CREDITO');
+    const cat = matchCategoria('ANUIDADE CARTAO VISA');
     expect(cat.id).toBe('anuidade');
+  });
+
+  it('matches gastos_cartao', () => {
+    const cat = matchCategoria('GASTO C/CARTAO DE CREDITO');
+    expect(cat.id).toBe('gastos_cartao');
+  });
+
+  it('matches bx_ant_financ', () => {
+    const cat = matchCategoria('BX.ANT.FINANC/EMP');
+    expect(cat.id).toBe('bx_ant_financ');
   });
 
   it('matches seguros', () => {
@@ -194,8 +204,8 @@ describe('IS_VALUE', () => {
 });
 
 describe('CATEGORIAS', () => {
-  it('has 13 categories', () => {
-    expect(CATEGORIAS).toHaveLength(13);
+  it('has 15 categories', () => {
+    expect(CATEGORIAS).toHaveLength(15);
   });
 
   it('all have required fields', () => {
