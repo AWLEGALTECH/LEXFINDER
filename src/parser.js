@@ -1151,7 +1151,7 @@ async function parseDocumentoPDF(file, onProgress) {
   const firstPageText = firstItems.length > 0
     ? firstItems.map(it => it.str || it.text || "").join(" ")
     : (needsOCR ? "bradesco" : "");  // OCR fallback defaults to Bradesco
-  const bankProfile = detectBank(firstPageText);
+  let bankProfile = detectBank(firstPageText);
   if (!bankProfile.supported) {
     return {
       clientName: "—",
@@ -1200,6 +1200,18 @@ async function parseDocumentoPDF(file, onProgress) {
   // Fallback: se TODAS as páginas são "Últimos Lançamentos", usar como fonte (não há duplicata)
   if (pageData.length === 0 && ultimosPages.length > 0) {
     pageData.push(...ultimosPages);
+  }
+
+  // Re-detect bank from OCR text if initial detection defaulted to Bradesco on image PDFs
+  if (needsOCR && bankProfile.id === "bradesco" && pageData.length > 0) {
+    const ocrText = pageData.slice(0, 3).map(p => p.flat).join(" ");
+    const redetected = detectBank(ocrText);
+    if (redetected.id !== "bradesco") {
+      bankProfile = redetected;
+      if (!bankProfile.supported) {
+        return { clientName: "—", agencia: "", conta: "", banco: bankProfile.name, periodo: "—", transactions: [], unsupported: true };
+      }
+    }
   }
 
   // Column clustering fallback if header detection failed
