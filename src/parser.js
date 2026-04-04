@@ -67,6 +67,8 @@ const CATEGORIAS = [
     icon: "!",
     ...THEME,
     keywords: ["vr.parcial cesta b.expresso", "cesta b.expresso", "vr.parcial cesta facil", "vr.parcial cesta", "cesta facil economica", "cesta facil master", "cesta facil super", "cesta facil mais", "cesta facil", "cesta exclusive", "cesta exclus mais", "cesta exclus. max", "cesta classic mais", "cesta classic", "cesta prime classica", "cesta poupanca", "cesta universitaria", "cesta beneficiario", "cesta benefic", "cesta bradesco expre", "cesta celular", "cesta expresso", "cesta", "pacote de servicos", "pacote servico padro", "pacote servico", "pacote servicos", "pacote", "padronizado prioritarios ii", "padronizado prioritarios i", "padronizado prioritarios", "pserv", "binclub servicos", "binclub", "pagto eletron cobranca (pserv)", "cesta smart", "cesta digital", "cesta basica", "cesta plus", "cesta master plus", "cesta classic super", "cesta exclusive plus", "cesta especial", "cesta personalizada", "pacote de servicos essencial",
+      // Itau
+      "mensal combinaqui", "combinaqui", "mensal pacote itau",
       // BB
       "cesta bb", "cesta familia", "cesta estilo", "bompratodos",
       // Caixa
@@ -83,7 +85,7 @@ const CATEGORIAS = [
     ...THEME,
     keywords: ["encargos limite de cred", "encargos limite credito", "encargos descoberto cc", "encargos descoberto", "encargos saldo vinculado", "encargo saldo vinculado", "encargos excesso limite", "encargos", "iof s/ utilizacao limite", "iof s/utilizacao", "iof s/", "encargos cheque especial", "encargos conta garantida", "encargos atraso", "encargos financeiros", "iof complementar",
       // Multi-banco
-      "sob med encargos", "juros saldo devedor", "enc lis", "enc ch esp", "juros saldo utiliz ate limite", "juros cheque especial", "enc limite"],
+      "sob med encargos", "juros saldo devedor", "enc lis", "enc ch esp", "juros saldo utiliz ate limite", "juros saldo utiliz", "juros cheque especial", "enc limite", "iof imposto", "iof adicional", "iof"],
     fundamento: "Art. 52 e 422, CC; Res. CMN 3.919/10; Dec. 6.306/07",
     acao: "Verificar se houve efetiva utilização do limite. Encargos e IOF cobrados sem utilização ou em duplicidade são passíveis de repetição de indébito.",
     descricao: "Encargo sobre Limite / IOF",
@@ -94,7 +96,7 @@ const CATEGORIAS = [
     sublabel: "Juros de mora em operações de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["mora credito pessoal", "mora cred pess", "mora conta de telefone", "mora cta telef", "mora de operacao", "mora operacao de credito", "mora cartao de credito", "mora cartao", "mora encargos", "mora vida e previdencia", "mora enc descoberto", "mora enc descoberto c.c", "mora limite credito", "mora consignado", "mora financiamento", "mora cdc", "juros mora", "juros atraso"],
+    keywords: ["mora credito pessoal", "mora cred pess", "mora conta de telefone", "mora cta telef", "mora de operacao", "mora operacao de credito", "mora cartao de credito", "mora cartao", "mora encargos", "mora vida e previdencia", "mora enc descoberto", "mora enc descoberto c.c", "mora limite credito", "mora consignado", "mora financiamento", "mora cdc", "juros mora", "juros atraso", "juros de mora", "multa moratoria"],
     fundamento: "Art. 52, §1º, CDC; Súmula 379 STJ",
     acao: "Verificar legalidade da cobrança. Mora decorrente de cobranças indevidas é igualmente indevida. Pleitear cancelamento da mora sobre débitos contestados.",
     descricao: "Mora de Crédito",
@@ -107,7 +109,7 @@ const CATEGORIAS = [
     ...THEME,
     keywords: ["bradesco vida e previdencia s/a", "bradesco vida e previdencia", "bradesco vida e prev", "bradesco vida prev-seg", "bradesco vida prev", "bradesco seg-resid/outros", "bradesco seg-resid", "prev-seg", "vida e previdencia", "sabemi segurado", "sabemi", "seguro prestamista", "seguro protecao financeira", "seguro mais protegido", "seg protecao cheque esp", "seg protecao cheque", "seguro cart deb bradesco", "servico cartao protegido", "seguradora secon", "aspecir - uniao seguradora", "aspecir", "odontoprev s/a", "odontoprev", "mbm previdencia complementar", "mbm previdencia", "previplan clube", "previplan", "aquisicao/devolucao-seg", "liberty seguros", "viza prev seguros", "sebraseg clube de beneficios", "sebraseg", "sudamerica clube de servicos", "sudamerica clube", "previsul", "crefisa sa credito financiamento", "pagto eletron cobranca (brades resi)", "pagto eletron cobranca (vida pre)", "pagto eletron cobranca (dental saude)", "pagto eletron cobranca (ace seguradora", "pagto eletron cobranca (centro de assistencia)", "pagto eletron cobranca cenasp", "bradesco auto", "bradesco saude", "bradesco dental", "seguro residencial", "seguro vida", "seguro acidentes pessoais", "seguro desemprego", "seguro perda involuntaria", "zurich seguros", "mapfre seguros", "porto seguro", "pagto eletron cobranca (mapfre)", "pagto eletron cobranca (zurich)",
       // Itau
-      "itau seg vida pf", "itau seg ap pf", "itau seg vida ap pf", "seguro residencia", "seguro cartao itau", "seguro lis", "seguro itau viva", "seguro bolsa protegida",
+      "itau seg vida pf", "itau seg ap pf", "itau seg vida ap pf", "seguro residencia", "seguro cartao itau", "seguro cartao", "seguro lis", "seguro itau viva", "seguro bolsa protegida", "pagto itau seguros", "itau seguros",
       // BB
       "seguro bb credito", "seguro credito protegido", "protecao ouro", "bb seguros", "bb seg", "bb prev", "bb previdencia", "brasilprev",
       // Caixa
@@ -815,6 +817,314 @@ function validateWithBalance(transactions, allRows, cols) {
   return warnings;
 }
 
+/* ── Parser Itaú ──
+   Formato: 1 linha por transação, coluna "valor (R$)" com sinal (- = débito)
+   Sem multi-line, sem Docto, sem layout duplo
+*/
+function parseItauTransactions(pageData, bankProfile) {
+  const transactions = [];
+  let clientName = "", agencia = "", conta = "", periodo = "";
+
+  // Detectar posição X da coluna "valor" e "saldo"
+  let valorX = null, saldoX = null;
+  for (const pd of pageData) {
+    for (const item of pd.items) {
+      if (/^valor\s*\(r\$\)/i.test(item.text) && valorX === null) valorX = item.x;
+      if (/^saldo\s*\(r\$\)/i.test(item.text) && saldoX === null) saldoX = item.x;
+    }
+    if (valorX !== null) break;
+  }
+
+  // Extrair header info
+  for (let i = 0; i < Math.min(3, pageData.length); i++) {
+    const { flat } = pageData[i];
+    if (!clientName) {
+      const m = flat.match(/([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)\s+\d{3}\.\d{3}\.\d{3}[-.]?\d{2}/);
+      if (m) clientName = m[1].replace(/\s+/g, " ").trim();
+    }
+    if (!agencia) {
+      const m = flat.match(/ag[eê]ncia\s*[:\-]?\s*(\d{3,6})/i);
+      if (m) agencia = m[1];
+    }
+    if (!conta) {
+      const m = flat.match(/conta\s*[:\-]?\s*([\d]{4,8}[-][\d])/i);
+      if (m) conta = m[1];
+    }
+    if (!periodo) {
+      const m = flat.match(/per[ií]odo\s+de\s+visualiza[cç][aã]o\s*:\s*([\d\/]+)\s+at[eé]\s+([\d\/]+)/i);
+      if (m) periodo = `${m[1]} a ${m[2]}`;
+    }
+  }
+
+  const IS_ITAU_HEADER = bankProfile.headerPattern;
+  const IS_ITAU_SUMMARY = bankProfile.summaryPattern;
+
+  for (const pd of pageData) {
+    for (const row of pd.rows) {
+      const text = row.items.map(i => i.text).join(" ").trim();
+      if (!text) continue;
+      if (IS_ITAU_HEADER.test(text)) continue;
+      if (IS_ITAU_SUMMARY.test(text)) continue;
+
+      const first = row.items[0]?.text || "";
+      if (!IS_DATE.test(first)) continue;
+
+      // Extrair descrição: todos os items entre data e valor
+      const descItems = [];
+      let valor = null;
+      let isDebit = false;
+      for (let idx = 1; idx < row.items.length; idx++) {
+        const item = row.items[idx];
+        const isValue = IS_VALUE.test(item.text);
+        if (isValue) {
+          // Distinguir valor vs saldo pela posição X
+          if (saldoX !== null && Math.abs(item.x - saldoX) < 30) continue; // é saldo, pular
+          if (valorX !== null && Math.abs(item.x - valorX) > 80) continue; // muito longe de valor
+          isDebit = item.text.trim().startsWith("-");
+          valor = parseValor(item.text);
+        } else {
+          descItems.push(item.text);
+        }
+      }
+
+      const historico = descItems.join(" ").trim();
+      if (!historico || !valor) continue;
+      // Itaú: apenas débitos (valor negativo) são cobranças — créditos (positivos) são recebimentos
+      if (!isDebit) continue;
+      const cat = matchCategoria(historico);
+      if (!cat) continue;
+
+      transactions.push({
+        data: first,
+        historico,
+        valor,
+        categoria: cat.id,
+      });
+    }
+  }
+
+  // Dedup: Itaú PDFs may repeat sections across pages
+  const seen = new Set();
+  const deduped = transactions.filter(t => {
+    const key = `${t.data}|${t.historico}|${t.valor}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return { clientName: clientName || "Titular não identificado", agencia, conta, banco: bankProfile.name, periodo: periodo || "—", transactions: deduped };
+}
+
+/* ── Parser Santander ──
+   Formato: multi-line (desc + detalhe), datas DD/MM (curtas), "-" no final = débito
+   Colunas: date x~34, desc x~65, valores x~428-441, saldo x~513-526
+*/
+function parseSantanderTransactions(pageData, bankProfile) {
+  const transactions = [];
+  let clientName = "", agencia = "", conta = "", periodo = "";
+  const IS_SHORT_DATE = /^\d{2}\/\d{2}$/;
+  const IS_SANT_VALUE = /^[\d.,]+-?$/;
+
+  // Detectar posições X das colunas por análise de dados
+  let saldoX = null;
+  for (const pd of pageData) {
+    for (const item of pd.items) {
+      // Saldo column: rightmost value column (~x>500)
+      if (IS_SANT_VALUE.test(item.text) && item.x > 500 && saldoX === null) saldoX = item.x;
+    }
+    if (saldoX !== null) break;
+  }
+
+  // Extrair header info
+  for (let i = 0; i < Math.min(3, pageData.length); i++) {
+    const { flat, rows } = pageData[i];
+    if (!clientName) {
+      // Santander format: "Nome" on one row, name on next
+      for (let r = 0; r < rows.length - 1; r++) {
+        const rowText = rows[r].items.map(it => it.text).join(" ").trim();
+        if (/^nome$/i.test(rowText)) {
+          const nextText = rows[r + 1].items.map(it => it.text).join(" ").trim();
+          if (/^[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}$/.test(nextText)) {
+            clientName = nextText.replace(/\s+/g, " ").trim();
+          }
+        }
+      }
+    }
+    if (!agencia) {
+      const m = flat.match(/ag[eê]ncia\s*[:\-]?\s*(\d{3,6})/i);
+      if (m) agencia = m[1];
+    }
+    if (!conta) {
+      const m = flat.match(/conta\s+corrente\s*([\d.]+[-]\d)/i);
+      if (m) conta = m[1];
+    }
+    if (!periodo) {
+      // Try extracting from "EXTRATO CONSOLIDADO" + month/year
+      const m = flat.match(/extrato\s+consolidado\s+(\w+\/\d{4})/i);
+      if (m) periodo = m[1];
+    }
+  }
+
+  // Determine year from "EXTRATO CONSOLIDADO mês/ano" or "SALDO EM" sections
+  // We'll derive year per page from context
+  let currentYear = null;
+  for (const pd of pageData) {
+    const yearMatch = pd.flat.match(/(\w+)\/(\d{4})/);
+    if (yearMatch) { currentYear = yearMatch[2]; break; }
+  }
+  if (!currentYear) currentYear = new Date().getFullYear().toString();
+
+  // Collect all periods from page headers to map months to years
+  const monthYearMap = {};
+  for (const pd of pageData) {
+    const matches = pd.flat.matchAll(/(?:saldo\s+(?:de\s+contamax\s+)?em|extrato\s+consolidado)\s+(?:(\d{2})\/(\d{2})|\w+\/(\d{4}))/gi);
+    for (const m of matches) {
+      if (m[1] && m[2]) {
+        // "SALDO EM DD/MM" pattern — extract month
+      }
+      if (m[3]) currentYear = m[3];
+    }
+    // Also: "PERIODO: DD/MM A DD/MM/YY" or "dezembro/2021"
+    const periodMatch = pd.flat.match(/(janeiro|fevereiro|mar[cç]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\/(\d{4})/i);
+    if (periodMatch) {
+      const months = { janeiro: '01', fevereiro: '02', 'março': '03', marco: '03', abril: '04', maio: '05', junho: '06', julho: '07', agosto: '08', setembro: '09', outubro: '10', novembro: '11', dezembro: '12' };
+      const m = months[periodMatch[1].toLowerCase()] || '01';
+      monthYearMap[m] = periodMatch[2];
+    }
+  }
+
+  // Parse transactions
+  // Helper: extract value + debit flag from a row's items
+  function extractSantValue(items, startIdx) {
+    let valor = null, isDebit = false;
+    const descItems = [];
+    for (let idx = startIdx; idx < items.length; idx++) {
+      const item = items[idx];
+      const valText = item.text.trim();
+      if (IS_SANT_VALUE.test(valText) && item.x > 300) {
+        if (saldoX !== null && Math.abs(item.x - saldoX) < 30) continue;
+        if (valor === null) {
+          isDebit = valText.endsWith('-');
+          valor = parseValor(valText.replace(/-$/, ''));
+        }
+      } else if (!/^\d{6}$/.test(valText) && valText !== '-') {
+        descItems.push(valText);
+      }
+    }
+    return { valor, isDebit, descItems };
+  }
+
+  for (const pd of pageData) {
+    // Detect year for this page from EXTRATO CONSOLIDADO header
+    const pageYearMatch = pd.flat.match(/(janeiro|fevereiro|mar[cç]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\/(\d{4})/i);
+    let pageYear = pageYearMatch ? pageYearMatch[2] : currentYear;
+
+    // Also try "PERIODO: DD/MM A DD/MM/YY" format for more precise year
+    const periodoMatch = pd.flat.match(/PERIODO:\s*\d{2}\/\d{2}\s+A\s+\d{2}\/\d{2}\/(\d{2})/);
+    if (periodoMatch) {
+      const yy = periodoMatch[1];
+      pageYear = (parseInt(yy) > 50 ? '19' : '20') + yy;
+    }
+
+    let lastDate = null; // Track last seen date for rows without one
+
+    for (let ri = 0; ri < pd.rows.length; ri++) {
+      const row = pd.rows[ri];
+      const text = row.items.map(i => i.text).join(" ").trim();
+      if (!text) continue;
+
+      // Skip headers and summaries
+      if (bankProfile.headerPattern.test(text)) continue;
+      if (bankProfile.summaryPattern.test(text)) continue;
+
+      const first = row.items[0]?.text?.trim() || "";
+      let fullDate = null;
+
+      if (IS_SHORT_DATE.test(first)) {
+        const dateParts = first.split('/');
+        fullDate = `${dateParts[0]}/${dateParts[1]}/${pageYear}`;
+        lastDate = fullDate;
+      } else if (lastDate && first && row.items[0]?.x < 100) {
+        // Non-date row at description position — could be a charge without its own date
+        fullDate = lastDate;
+      } else {
+        continue;
+      }
+
+      // Extract description + value from this row
+      const startIdx = IS_SHORT_DATE.test(first) ? 1 : 0;
+      let { valor, isDebit, descItems } = extractSantValue(row.items, startIdx);
+
+      // Check next row for continuation (no date, no header/summary)
+      if (ri + 1 < pd.rows.length) {
+        const nextRow = pd.rows[ri + 1];
+        const nextFirst = nextRow.items[0]?.text?.trim() || "";
+        const nextText = nextRow.items.map(i => i.text).join(" ").trim();
+        if (!IS_SHORT_DATE.test(nextFirst) && !/^saldo/i.test(nextFirst)
+            && !bankProfile.headerPattern.test(nextText) && !bankProfile.summaryPattern.test(nextText)
+            && nextRow.items[0]?.x >= 50) {
+          const cont = extractSantValue(nextRow.items, 0);
+          if (valor === null && cont.valor !== null) {
+            valor = cont.valor;
+            isDebit = cont.isDebit;
+          }
+          descItems.push(...cont.descItems);
+          ri++;
+        }
+      }
+
+      // Deduplicate adjacent identical description fragments
+      const uniqueDesc = descItems.filter((d, i) => i === 0 || d !== descItems[i - 1]);
+      const historico = uniqueDesc.join(" ").trim();
+      if (!historico || !valor) continue;
+      if (!isDebit) continue;
+
+      // Refine year from PERIODO (e.g., "30/09/22") or month name (e.g., "OUTUBRO / 2022")
+      const yearRefine = historico.match(/(\d{2})\/(\d{2})\/(\d{2})\b/);
+      if (yearRefine) {
+        const yy = yearRefine[3];
+        const refinedYear = (parseInt(yy) > 50 ? '19' : '20') + yy;
+        const parts = fullDate.split('/');
+        fullDate = `${parts[0]}/${parts[1]}/${refinedYear}`;
+      } else {
+        const monthYearRef = historico.match(/(?:janeiro|fevereiro|mar[cç]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\s*\/?\s*(\d{4})/i);
+        if (monthYearRef) {
+          const parts = fullDate.split('/');
+          fullDate = `${parts[0]}/${parts[1]}/${monthYearRef[1]}`;
+        }
+      }
+
+      const cat = matchCategoria(historico);
+      if (!cat) continue;
+
+      transactions.push({
+        data: fullDate,
+        historico,
+        valor,
+        categoria: cat.id,
+      });
+    }
+  }
+
+  // Dedup
+  const seen = new Set();
+  const deduped = transactions.filter(t => {
+    const key = `${t.data}|${t.historico}|${t.valor}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  // Build periodo from first and last transaction dates
+  if (!periodo && deduped.length > 0) {
+    const first = deduped[0].data;
+    const last = deduped[deduped.length - 1].data;
+    periodo = `${last} a ${first}`;
+  }
+
+  return { clientName: clientName || "Titular não identificado", agencia, conta, banco: bankProfile.name, periodo: periodo || "—", transactions: deduped };
+}
+
 async function parseDocumentoPDF(file, onProgress) {
   const pdfjsLib = await loadPdfJs();
   const buf = await file.arrayBuffer();
@@ -899,7 +1209,15 @@ async function parseDocumentoPDF(file, onProgress) {
     if (clustered) Object.assign(cols, clustered);
   }
 
-  // ── Fase 2: Extrair cabeçalho (primeiras 3 páginas) ──
+  // ── Roteamento por banco ──
+  if (bankProfile.id === "itau") {
+    return parseItauTransactions(pageData, bankProfile);
+  }
+  if (bankProfile.id === "santander") {
+    return parseSantanderTransactions(pageData, bankProfile);
+  }
+
+  // ── Fase 2 (Bradesco): Extrair cabeçalho (primeiras 3 páginas) ──
   let clientName = "", agencia = "", conta = "", periodo = "";
   for (let i = 0; i < Math.min(3, pageData.length); i++) {
     const { flat, rows } = pageData[i];
