@@ -24,18 +24,17 @@ function Modal({ group, onClose, clientName, onExported, buildSheet, loadXLSX })
       const ws = buildSheet(XLSX, cat, items);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, cat.label.slice(0, 31));
-      const safeName = (clientName || "cliente").replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_");
       const wbOut = XLSX.write(wb, { bookType:"xlsx", type:"array" });
       const blob = new Blob([wbOut], { type:"application/octet-stream" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = `LexFinder_${safeName}_${cat.id}.xlsx`;
+      a.href = url; a.download = "TABELA DE DESCONTOS LEXFINDER.xlsx";
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
       onExported && onExported(cat.id);
     } catch (err) { console.error("Erro ao exportar:", err); }
     finally { setExporting(false); }
-  }, [items, cat, clientName, buildSheet, loadXLSX]);
+  }, [items, cat, buildSheet, loadXLSX]);
 
   return (
     <div onClick={onClose} style={{ position:"fixed",inset:0,zIndex:1000,background:"rgba(2,6,23,0.88)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem",animation:"mFadeIn 0.18s ease" }}>
@@ -380,12 +379,39 @@ export default function App() {
     if (!window.XLSX) {
       await new Promise((resolve, reject) => {
         const s = document.createElement("script");
-        s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+        s.src = "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js";
         s.onload = resolve; s.onerror = reject;
         document.head.appendChild(s);
       });
     }
     return window.XLSX;
+  }, []);
+
+  const XLS_BORDER = { top:{style:"thin",color:{rgb:"000000"}}, bottom:{style:"thin",color:{rgb:"000000"}}, left:{style:"thin",color:{rgb:"000000"}}, right:{style:"thin",color:{rgb:"000000"}} };
+  const XLS_HEADER = { fill:{fgColor:{rgb:"00B050"}}, font:{bold:true,color:{rgb:"FFFFFF"},sz:11}, border:XLS_BORDER, alignment:{horizontal:"center"} };
+  const XLS_DATA = { fill:{fgColor:{rgb:"D6E4F0"}}, border:XLS_BORDER, font:{sz:11} };
+  const XLS_VALOR = { fill:{fgColor:{rgb:"D6E4F0"}}, border:XLS_BORDER, font:{sz:11}, numFmt:'"R$ "#,##0.00' };
+  const XLS_TOTAL = { fill:{fgColor:{rgb:"FFFF00"}}, font:{bold:true,sz:11}, border:XLS_BORDER };
+  const XLS_TOTAL_VALOR = { fill:{fgColor:{rgb:"FFFF00"}}, font:{bold:true,sz:11}, border:XLS_BORDER, numFmt:'"R$ "#,##0.00' };
+  const XLS_TITLE = { fill:{fgColor:{rgb:"1F4E79"}}, font:{bold:true,color:{rgb:"FFFFFF"},sz:12}, border:XLS_BORDER, alignment:{horizontal:"center",vertical:"center"} };
+  const XLS_COLS = [{ wch: 20 }, { wch: 32 }, { wch: 42 }, { wch: 18 }];
+
+  const applySheetStyles = useCallback((XLSX, ws, rowStyles) => {
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let r = range.s.r; r <= range.e.r; r++) {
+      const style = rowStyles[r];
+      if (!style) continue;
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const addr = XLSX.utils.encode_cell({ r, c });
+        if (!ws[addr]) ws[addr] = { t: "s", v: "" };
+        ws[addr].s = (c === 3 && style === "data") ? XLS_VALOR
+          : (c === 3 && style === "total") ? XLS_TOTAL_VALOR
+          : style === "header" ? XLS_HEADER
+          : style === "total" ? XLS_TOTAL
+          : style === "title" ? XLS_TITLE
+          : XLS_DATA;
+      }
+    }
   }, []);
 
   const buildSheet = useCallback((XLSX, cat, items) => {
@@ -395,13 +421,51 @@ export default function App() {
       return [item.data, descricao, operacao, item.valor];
     });
     const total = items.reduce((s, i) => s + i.valor, 0);
-    const totalRow = ["VALOR TOTAL", "R$", "", total];
-    const art42Row = ["VALOR EM DOBRO", "R$", "", total * 2];
+    const totalRow = ["VALOR TOTAL", "", "", total];
+    const art42Row = ["VALOR EM DOBRO", "", "", total * 2];
     const wsData = [header, ...rows, [], totalRow, art42Row];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws["!cols"] = [{ wch: 14 }, { wch: 30 }, { wch: 36 }, { wch: 16 }];
+    ws["!cols"] = XLS_COLS;
+    const rowStyles = {};
+    rowStyles[0] = "header";
+    for (let i = 1; i <= rows.length; i++) rowStyles[i] = "data";
+    rowStyles[rows.length + 2] = "total";
+    rowStyles[rows.length + 3] = "total";
+    applySheetStyles(XLSX, ws, rowStyles);
     return ws;
-  }, [extractDescricaoOperacao]);
+  }, [extractDescricaoOperacao, applySheetStyles]);
+
+  const buildMultiSheet = useCallback((XLSX, groups) => {
+    const wsData = [];
+    const rowStyles = {};
+    const merges = [];
+    for (let gi = 0; gi < groups.length; gi++) {
+      const { cat, items } = groups[gi];
+      const titleIdx = wsData.length;
+      wsData.push([cat.label, "", "", ""]);
+      merges.push({ s: { r: titleIdx, c: 0 }, e: { r: titleIdx, c: 3 } });
+      rowStyles[titleIdx] = "title";
+      if (gi === 0) {
+        rowStyles[wsData.length] = "header";
+        wsData.push(["Data", "Descrição", "Operação", "Valor"]);
+      }
+      for (const item of items) {
+        const { descricao, operacao } = extractDescricaoOperacao(item.historico, cat);
+        rowStyles[wsData.length] = "data";
+        wsData.push([item.data, descricao, operacao, item.valor]);
+      }
+    }
+    const grandTotal = groups.reduce((s, g) => s + g.items.reduce((ss, i) => ss + i.valor, 0), 0);
+    rowStyles[wsData.length] = "total";
+    wsData.push(["VALOR TOTAL", "", "", grandTotal]);
+    rowStyles[wsData.length] = "total";
+    wsData.push(["VALOR EM DOBRO", "", "", grandTotal * 2]);
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws["!cols"] = XLS_COLS;
+    ws["!merges"] = merges;
+    applySheetStyles(XLSX, ws, rowStyles);
+    return ws;
+  }, [extractDescricaoOperacao, applySheetStyles]);
 
   const batchExport = useCallback(async () => {
     const selected = Object.values(grouped).filter(g => selectedCats.has(g.cat.id));
@@ -410,24 +474,19 @@ export default function App() {
     try {
       const XLSX = await loadXLSX();
       const wb = XLSX.utils.book_new();
-      for (const group of selected) {
-        const ws = buildSheet(XLSX, group.cat, group.items);
-        const sheetName = group.cat.label.slice(0, 31);
-        XLSX.utils.book_append_sheet(wb, ws, sheetName);
-      }
-      const safeName = (meta.clientName || "cliente").replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_");
-      const catIds = selected.map(g => g.cat.id).join("_");
+      const ws = buildMultiSheet(XLSX, selected);
+      XLSX.utils.book_append_sheet(wb, ws, "Descontos Identificados");
       const wbOut = XLSX.write(wb, { bookType: "xlsx", type: "array" });
       const blob = new Blob([wbOut], { type: "application/octet-stream" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = `LexFinder_${safeName}_${selected.length > 1 ? "MULTIPLOS" : catIds}.xlsx`;
+      a.href = url; a.download = "TABELA DE DESCONTOS LEXFINDER.xlsx";
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
       for (const g of selected) setDownloadedCats(prev => new Set([...prev, g.cat.id]));
     } catch (err) { console.error("Erro ao exportar:", err); }
     finally { setBatchExporting(false); }
-  }, [grouped, selectedCats, meta, loadXLSX, buildSheet]);
+  }, [grouped, selectedCats, loadXLSX, buildMultiSheet]);
 
   const groups = Object.values(grouped);
   const reembolsaveis = groups.filter(g => !g.cat.naoReembolsavel);
