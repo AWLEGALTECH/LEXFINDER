@@ -702,7 +702,7 @@ function assembleTransactions(classified, layout) {
         }
         // Start new pending
         const date = layout === "superior" ? lastDate : null;
-        if (date || layout === "inferior") {
+        if (date || layout === "inferior" || c.categoria) {
           pending = { data: date, historico: c.text, valor: null };
         }
         justEmitted = false;
@@ -800,6 +800,7 @@ async function parseDocumentoPDF(file, onProgress) {
 
   // ── Fase 1: Extrair todas as páginas (com fallback OCR) ──
   const pageData = [];
+  const ultimosPages = []; // páginas de "Últimos Lançamentos" separadas para fallback
   const cols = { debitoX: null, creditoX: null, saldoX: null };
   let needsOCR = false;
   let ocrWorker = null;
@@ -856,9 +857,17 @@ async function parseDocumentoPDF(file, onProgress) {
         if (/^saldo/i.test(item.text) && cols.saldoX === null) cols.saldoX = item.x;
       }
     }
-    // Pular páginas de "Últimos Lançamentos" (resumo que repete última transação)
-    if (/[uú]ltimos\s+lan[cç]amentos/i.test(flat)) continue;
+    // Separar páginas de "Últimos Lançamentos" (resumo que repete última transação)
+    if (/[uú]ltimos\s+lan[cç]amentos/i.test(flat)) {
+      ultimosPages.push({ rows, flat, items });
+      continue;
+    }
     pageData.push({ rows, flat, items });
+  }
+
+  // Fallback: se TODAS as páginas são "Últimos Lançamentos", usar como fonte (não há duplicata)
+  if (pageData.length === 0 && ultimosPages.length > 0) {
+    pageData.push(...ultimosPages);
   }
 
   // Column clustering fallback if header detection failed

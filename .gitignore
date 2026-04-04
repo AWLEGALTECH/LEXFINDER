@@ -27,6 +27,15 @@ env/
 *.swo
 *~
 
+# ── Playwright MCP ───────────────────────────
+.playwright-mcp/
+
+# ── Screenshots de teste ─────────────────────
+*.png
+
+# ── Debug scripts ────────────────────────────
+tests/debug_*.mjs
+
 # ── OS ───────────────────────────────────────
 Thumbs.db
 Desktop.ini

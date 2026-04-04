@@ -360,8 +360,8 @@ export default function App() {
 
   const clearSelection = useCallback(() => { setSelectedCats(new Set()); }, []);
 
-  // Extrai "Operação" do historico removendo a keyword da categoria
-  const extractOperacao = useCallback((historico, cat) => {
+  // Extrai Descrição (keyword matchada) e Operação (restante) do historico
+  const extractDescricaoOperacao = useCallback((historico, cat) => {
     const h = historico.toUpperCase();
     let bestKw = "";
     for (const kw of cat.keywords) {
@@ -369,11 +369,11 @@ export default function App() {
       const nh = h.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (nh.includes(nkw) && nkw.length > bestKw.length) bestKw = nkw;
     }
-    if (!bestKw) return historico;
+    if (!bestKw) return { descricao: historico.toUpperCase(), operacao: "" };
     const nh = h.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const idx = nh.indexOf(bestKw.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
     const remainder = historico.substring(idx + bestKw.length).trim();
-    return remainder || "";
+    return { descricao: bestKw, operacao: remainder || "" };
   }, []);
 
   const loadXLSX = useCallback(async () => {
@@ -389,21 +389,19 @@ export default function App() {
   }, []);
 
   const buildSheet = useCallback((XLSX, cat, items) => {
-    const fmtVal = (v) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const descricao = cat.descricao || cat.label;
     const header = ["Data", "Descrição", "Operação", "Valor"];
     const rows = items.map(item => {
-      const operacao = extractOperacao(item.historico, cat);
-      return [item.data, descricao, operacao, `R$\t${fmtVal(item.valor)}`];
+      const { descricao, operacao } = extractDescricaoOperacao(item.historico, cat);
+      return [item.data, descricao, operacao, item.valor];
     });
     const total = items.reduce((s, i) => s + i.valor, 0);
-    const totalRow = ["", "", "TOTAL:", `R$\t${fmtVal(total)}`];
-    const art42Row = ["", "", "ART. 42 CDC", `R$\t${fmtVal(total * 2)}`];
+    const totalRow = ["VALOR TOTAL", "R$", "", total];
+    const art42Row = ["VALOR EM DOBRO", "R$", "", total * 2];
     const wsData = [header, ...rows, [], totalRow, art42Row];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     ws["!cols"] = [{ wch: 14 }, { wch: 30 }, { wch: 36 }, { wch: 16 }];
     return ws;
-  }, [extractOperacao]);
+  }, [extractDescricaoOperacao]);
 
   const batchExport = useCallback(async () => {
     const selected = Object.values(grouped).filter(g => selectedCats.has(g.cat.id));

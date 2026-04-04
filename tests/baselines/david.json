@@ -1,0 +1,10 @@
+{
+  "clientName": "DAVID PONCIANO DA SILVA",
+  "totalOcorrencias": 8,
+  "totalValor": 4476.90,
+  "categorias": {
+    "cesta": { "count": 7, "valor": 151.60 },
+    "credito": { "count": 1, "valor": 4325.30 }
+  },
+  "nota": "PDF unico 'Ultimos Lancamentos' Folha 2/2 — fallback ativado"
+}
