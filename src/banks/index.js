@@ -27,5 +27,7 @@ export function detectBank(pageTexts) {
       bestProfile = profile;
     }
   }
-  return bestProfile || bradescoProfile; // fallback only if ALL score 0
+  const result = bestProfile || bradescoProfile; // fallback only if ALL score 0
+  result._lastScore = bestScore;
+  return result;
 }

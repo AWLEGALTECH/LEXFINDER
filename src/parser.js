@@ -825,6 +825,81 @@ function validateWithBalance(transactions, allRows, cols) {
   return warnings;
 }
 
+/* ── Parser Itaú Mobile (OCR de screenshots do app) ──
+   Formato: lista flat, sem tabela. Cada transação é ~2 rows:
+     Row 1: descrição (e.g., "anuidade e pacote de serviço")
+     Row 2: data + valor (e.g., "9 de fevereiro > dez/22 -R$ 14,70")
+   Valores com prefixo -R$ (débito) ou +R$ (crédito). OCR pode garble $ → 5.
+   Datas em formato mês/AA (set/22, dez/22) — convertidas para 01/MM/YYYY.
+*/
+const IS_ITAU_MOBILE_VALUE = /[-]R[\$5]\s*([\d.,]+)/;
+const MONTH_ABBR_MAP = {
+  jan: "01", fev: "02", mar: "03", abr: "04", mai: "05", jun: "06",
+  jul: "07", ago: "08", set: "09", out: "10", nov: "11", dez: "12",
+};
+
+function parseItauMobile(pageData, bankProfile) {
+  const transactions = [];
+  const dedup = new Set();
+
+  // Scan all rows, collecting description text and pairing with values
+  let pendingDesc = "";
+  for (const pd of pageData) {
+    for (const row of pd.rows) {
+      const text = row.items.map(i => i.text).join(" ").trim();
+      if (!text) continue;
+      // Skip header/nav elements
+      if (/^meu\s+extrato|^minhas\s+finan|^saldo\s+sempre|^filtros|^lan[cç]amentos\s+futuros|^para\s+movimenta|^transa[cç][oõ]es|^produtas|^ajuda$/i.test(text)) continue;
+      if (/^conta\s+t|^n\$\s|^D,\s*DO$/i.test(text)) continue; // garbled header
+
+      // Check for value in this row
+      const valMatch = IS_ITAU_MOBILE_VALUE.exec(text);
+      if (valMatch) {
+        const valor = parseValor(valMatch[1]);
+        if (!valor) { pendingDesc = ""; continue; }
+
+        // Extract description: everything before the value pattern
+        const beforeVal = text.substring(0, valMatch.index).trim();
+        const fullDesc = pendingDesc ? `${pendingDesc} ${beforeVal}`.trim() : beforeVal;
+        pendingDesc = "";
+
+        // Try to extract date (mês/AA pattern)
+        let date = "—";
+        const dateMatch = text.match(/\b(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\/(\d{2})\b/i);
+        if (dateMatch) {
+          const mm = MONTH_ABBR_MAP[dateMatch[1].toLowerCase()];
+          const yy = dateMatch[2];
+          const yyyy = parseInt(yy) > 50 ? `19${yy}` : `20${yy}`;
+          date = `01/${mm}/${yyyy}`;
+        }
+
+        // Only emit if description matches a category
+        const cat = matchCategoria(fullDesc);
+        if (cat) {
+          const key = `${date}|${normalizeText(fullDesc)}|${valor}`;
+          if (!dedup.has(key)) {
+            dedup.add(key);
+            transactions.push({ data: date, historico: fullDesc, valor, categoria: cat.id });
+          }
+        }
+      } else {
+        // No value — accumulate as description for next row
+        pendingDesc = pendingDesc ? `${pendingDesc} ${text}`.trim() : text;
+      }
+    }
+  }
+
+  return {
+    clientName: "—",
+    agencia: "",
+    conta: "",
+    banco: bankProfile.name,
+    periodo: "—",
+    transactions,
+    bankName: bankProfile.name,
+  };
+}
+
 /* ── Parser Agibank ──
    Formato: 1-2 linhas por transação, coluna única Valor com prefixo +/- R$
    Datas DD/MM (sem ano — derivar do header), Data apenas na 1ª linha de cada dia
@@ -1495,17 +1570,20 @@ async function parseDocumentoPDF(file, onProgress) {
   }
 
   // Re-detect bank from OCR text if initial detection defaulted to Bradesco on image PDFs
+  // Minimum score threshold: OCR text often contains bank names in transaction descriptions
+  // (e.g., "PIX para ITAU UNIBANCO") which cause false positives with low scores (2-3).
+  // Only override Bradesco when strong structural markers are found (score >= 5).
+  const OCR_REDETECT_MIN_SCORE = 5;
   if (needsOCR && bankProfile.id === "bradesco" && pageData.length > 0) {
     const ocrText = pageData.slice(0, 3).map(p => p.flat).join(" ");
     const redetected = detectBank(ocrText);
-    if (redetected.id !== "bradesco") {
+    if (redetected.id !== "bradesco" && redetected._lastScore >= OCR_REDETECT_MIN_SCORE) {
       bankProfile = redetected;
       if (!bankProfile.supported) {
         return { clientName: "—", agencia: "", conta: "", banco: bankProfile.name, periodo: "—", transactions: [], unsupported: true };
       }
     }
   }
-
   // Column clustering fallback if header detection failed
   if (cols.debitoX === null) {
     const allValues = pageData.flatMap(p => p.items.filter(i => IS_VALUE.test(i.text)));
@@ -1518,6 +1596,10 @@ async function parseDocumentoPDF(file, onProgress) {
     // Sub-format: "Extrato Anual de Tarifas" (DD/MMM dates, all-debit tariff summary)
     if (pageData.some(p => /extrato\s+anual\s+(de\s+tarifas|com\s+as\s+tarifas)/i.test(p.flat))) {
       return parseItauTarifasAnuais(pageData, bankProfile);
+    }
+    // Sub-format: Itaú mobile app screenshot (OCR) — "meu extrato" header, -R$ prefix values
+    if (needsOCR && pageData.some(p => /meu\s+extrato|minhas\s+finan[cç]as/i.test(p.flat))) {
+      return parseItauMobile(pageData, bankProfile);
     }
     return parseItauTransactions(pageData, bankProfile);
   }

@@ -326,7 +326,7 @@ export default function App() {
     // ── Banco não suportado ──
     const unsupportedResult = results.find(r => r.result.unsupported);
     if (unsupportedResult) {
-      setErrorMsg(`O banco "${unsupportedResult.result.bankName}" ainda não é suportado pelo LEX FINDER. Atualmente apenas extratos do Bradesco são analisados. Suporte para outros bancos será adicionado em breve.`);
+      setErrorMsg(`O banco "${unsupportedResult.result.bankName}" ainda não é suportado pelo LEX FINDER. Atualmente são suportados: Bradesco, Itaú, Santander e Agibank.`);
       setPhase("error");
       return;
     }
