@@ -2,7 +2,7 @@
 
 ## Contexto do Projeto
 
-Ferramenta jurídica que analisa extratos bancários Bradesco Celular em PDF e identifica cobranças indevidas. Extrai automaticamente dados do titular, cruza lançamentos com categorias de descontos irregulares e gera relatórios com fundamento jurídico.
+Ferramenta jurídica multi-banco que analisa extratos bancários em PDF e identifica cobranças indevidas. Suporta **Bradesco**, **Itaú**, **Santander** e **Agibank**. Extrai automaticamente dados do titular, cruza lançamentos com categorias de descontos irregulares e gera relatórios com fundamento jurídico.
 
 **Cliente:** RA Reclame AI (empresa de tecnologia, cliente da AW LEGALTECH)
 **Desenvolvido por:** AW LEGALTECH (João Winícius)
@@ -34,14 +34,27 @@ Ferramenta jurídica que analisa extratos bancários Bradesco Celular em PDF e i
 ```
 LEXFINDER/
 ├── src/
-│   ├── App.jsx          # Frontend completo (~1200 linhas) — parser JS + UI
-│   └── main.jsx         # Entry point React
+│   ├── App.jsx          # Frontend (~1200 linhas) — UI + orquestração
+│   ├── parser.js         # Parser multi-banco (~1600 linhas) — toda lógica de parsing
+│   ├── main.jsx         # Entry point React
+│   └── banks/           # Perfis de bancos
+│       ├── index.js     # detectBank() score-based + registry
+│       ├── bradesco.js  # Perfil Bradesco (score, detect, patterns)
+│       ├── itau.js      # Perfil Itaú (score, detect, patterns)
+│       ├── santander.js # Perfil Santander (score, detect, patterns)
+│       ├── agibank.js   # Perfil Agibank (score, detect, patterns)
+│       ├── bb.js        # Perfil BB (stub — todos image-based)
+│       └── caixa.js     # Perfil Caixa (stub — todos image-based)
 ├── backend/             # Parser Python (alternativo, CLI local)
 │   ├── main.py          # Orquestrador CLI
 │   ├── parser_bradesco.py
 │   ├── motor_regras.py
 │   ├── rubricas.json
 │   └── requirements.txt
+├── tests/
+│   ├── parser.test.js   # 34 testes unitários (baselines)
+│   ├── baselines/*.json # Snapshots de resultados esperados
+│   └── fixtures/*.pdf   # PDFs de teste
 ├── index.html
 ├── package.json
 ├── vite.config.js
@@ -49,45 +62,71 @@ LEXFINDER/
 └── .gitignore
 ```
 
-## Arquivo Principal — src/App.jsx
+## Arquivos Principais
 
-Tudo está em `src/App.jsx`:
+### src/parser.js — Parser Multi-Banco
 
 ```
-├── CATEGORIAS[]           — 12 categorias de descontos
-├── normalizeText()        — remove acentos para matching case-insensitive
-├── matchCategoria()       — cruza histórico com keywords (com guard REM:/DES:)
-├── analyzeAll()           — agrupa transações por categoria
-├── PDF PARSER
-│   ├── loadPdfJs()        — carrega PDF.js do CDN
-│   ├── groupByY()         — agrupa text items por coordenada Y (±4pt)
-│   ├── parseValor()       — converte "1.234,56" → 1234.56 (abs)
-│   ├── pickDebit()        — seleciona valor da coluna Débito via posição X
-│   ├── detectLayout()     — detecta "superior" vs "inferior" automaticamente
-│   ├── extractFromRow()   — extrai histórico + valor de uma row
-│   └── parseDocumentoPDF()— orquestra parsing em 4 fases
-├── Modal                  — detalhes de uma categoria com export XLSX
-├── CategoryCard           — card resumo de uma categoria
-└── App                    — componente principal (upload, parsing, resultados, analytics)
+├── CATEGORIAS[]                  — 15 categorias de descontos
+├── normalizeText()               — remove acentos para matching case-insensitive
+├── matchCategoria()              — cruza histórico com keywords (guard REM:/DES:)
+├── analyzeAll()                  — agrupa transações por categoria
+├── groupByY()                    — agrupa text items por coordenada Y (±4pt)
+├── parseValor()                  — converte "1.234,56" → 1234.56 (abs)
+├── parseDocumentoPDF()           — orquestra: scan → detect → route → parse
+├── PARSERS POR BANCO
+│   ├── assembleTransactions()    — Parser Bradesco (2 layouts)
+│   ├── parseItauTransactions()   — Parser Itaú (formato padrão + sufixo +/-)
+│   ├── parseItauTarifasAnuais()  — Parser Itaú (extrato anual DD/MMM)
+│   ├── parseSantanderTransactions() — Parser Santander
+│   └── parseAgibankTransactions()   — Parser Agibank
+└── DETECÇÃO
+    └── detectBank() via src/banks/index.js (score-based, multi-page)
 ```
 
-## Dois Layouts de Bradesco Celular
+### src/App.jsx — Frontend
 
-O parser detecta automaticamente qual layout o PDF usa:
+```
+├── Modal            — detalhes de uma categoria com export XLSX
+├── CategoryCard     — card resumo de uma categoria
+└── App              — upload, parsing, resultados, analytics
+```
 
-| Layout | Regra | Parser |
-|--------|-------|--------|
-| **Data Superior** | Data na 1ª linha do grupo → herda para baixo | `lastDate` + `lastPushed` para continuações |
-| **Data Inferior** | Data na última linha do grupo → herda para cima | Buffer de transações sem data, flush quando data aparece |
+## Detecção de Banco — Score-Based
 
-## Detecção de Colunas
+`detectBank()` em `src/banks/index.js` usa sistema de scores com scan multi-page (páginas 1-3):
 
-O parser detecta as posições X de 3 colunas do cabeçalho da tabela:
-- `creditoX` — posição do texto "Crédito (R$)"
-- `debitoX` — posição do texto "Débito (R$)"
-- `saldoX` — posição do texto "Saldo (R$)"
+| Banco | Markers fortes (+5) | Markers fracos | Negativos |
+|-------|---------------------|----------------|-----------|
+| Bradesco | `bradesco celular` | `bradesco` (+1) | `banco bradesco s.a` sem celular (-1) |
+| Santander | `extrato consolidado inteligente`, `BALP_UY_` | `santander` (+2) | — |
+| Itaú | `combinaqui`, `extrato anual de tarifas` | `itaú` (+3) | — |
+| Agibank | `agibank` | `banco 121` (+3) | — |
 
-`pickDebit()` pega o valor mais próximo de `debitoX` que NÃO esteja mais perto de `creditoX` ou `saldoX`.
+Fallback: Bradesco (se todos scores = 0).
+
+## Parsers por Banco
+
+### Bradesco — `assembleTransactions()`
+- 2 layouts auto-detectados: "Data Superior" vs "Data Inferior"
+- 3 colunas: Crédito, Débito, Saldo (posição X)
+- `justEmitted` tipado para controle de fluxo multi-line
+- `pickDebit()` seleciona valor mais próximo de `debitoX`
+
+### Itaú — `parseItauTransactions()` + `parseItauTarifasAnuais()`
+- Formato padrão: 1 linha/txn, coluna "Valor (R$)" com sinal `-`
+- Formato B (sufixo): valores "97,00 (-)" via IS_SUFFIX_VALUE
+- Formato Tarifas Anuais: datas DD/MMM, all-debit, dedup 5x
+
+### Santander — `parseSantanderTransactions()`
+- Multi-line (descrição + detalhe)
+- Datas DD/MM (ano do cabeçalho)
+- Débito: sufixo `-` (ex: "75,00-")
+
+### Agibank — `parseAgibankTransactions()`
+- Valores `+/- R$ xxx,xx` (IS_AGIBANK_VALUE)
+- Datas DD/MM (ano do header)
+- 1 coluna Valor, saldo filtrado por x>480
 
 ## Pitfalls Conhecidos
 
@@ -159,13 +198,19 @@ O parser usa `IS_SEPARATE_TX` regex para impedir que textos de transações leg�
 - Na branch `justEmitted` de `assembleTransactions()` — impede append ao lastEmitted
 - Na branch `pending` — só separa se pending já tiver valor (para não quebrar 2-line format do Abel)
 
+## Bancos Deferidos
+
+| Banco | PDFs disponíveis | Motivo |
+|-------|-----------------|--------|
+| BB | 50 | Todos image-based — precisa OCR confiável |
+| Caixa | 17 | Todos image-based — precisa OCR confiável |
+
 ## Pendências
 
-1. Testes com mais PDFs variados (outros clientes)
+1. Melhorar OCR para PDFs image-based (BB, Caixa, parte do Itaú/Agibank)
 2. Exportação Excel/PDF aprimorada
-3. Implementar parsers para outros bancos (Itaú, BB, Caixa, Santander) — stubs já criados
 
 ## Documentação
 
 - Obsidian vault: `C:\Users\winic\OneDrive\Desktop\AW-Brain\03 - Clientes Futuros\RA Reclame AI\`
-- Notas-chave: `Home RA`, `Briefing RA`, `LEX FINDER`
+- Notas-chave: `Home RA`, `Briefing RA`, `LEX FINDER`, `LEXFINDER v10 - Multi-Banco`
