@@ -3,6 +3,7 @@ import { itauProfile } from "./itau.js";
 import { bbProfile } from "./bb.js";
 import { caixaProfile } from "./caixa.js";
 import { santanderProfile } from "./santander.js";
+import { agibankProfile } from "./agibank.js";
 
 export const BANK_PROFILES = [
   bradescoProfile,
@@ -10,11 +11,21 @@ export const BANK_PROFILES = [
   bbProfile,
   caixaProfile,
   santanderProfile,
+  agibankProfile,
 ];
 
-export function detectBank(text) {
+export function detectBank(pageTexts) {
+  const texts = Array.isArray(pageTexts) ? pageTexts : [pageTexts];
+  const combined = texts.join(" ");
+
+  let bestProfile = null;
+  let bestScore = 0;
   for (const profile of BANK_PROFILES) {
-    if (profile.detect(text)) return profile;
+    const score = profile.score ? profile.score(combined, texts) : (profile.detect(combined) ? 1 : 0);
+    if (score > bestScore) {
+      bestScore = score;
+      bestProfile = profile;
+    }
   }
-  return bradescoProfile; // fallback
+  return bestProfile || bradescoProfile; // fallback only if ALL score 0
 }

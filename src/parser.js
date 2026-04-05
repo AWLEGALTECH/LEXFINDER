@@ -29,7 +29,9 @@ const CATEGORIAS = [
       // Caixa
       "tar manut", "tar saque atm", "tar sq atm", "tar ex ect", "tar renov cadas",
       // Santander
-      "tarifa mensalidade pacote servicos", "tarifa mensalidade", "tar mensalidade", "tarifa pagamentocontas", "tarifa aval.emerg.credito"],
+      "tarifa mensalidade pacote servicos", "tarifa mensalidade", "tar mensalidade", "tarifa pagamentocontas", "tarifa aval.emerg.credito",
+      // Agibank
+      "tarifa comunicacao digital", "tarifa comunicacao", "reserva cobranza vista"],
     fundamento: "Art. 3º, Res. CMN 3.919/10; Súmula 297 STJ",
     acao: "Pleitear restituição em dobro das tarifas cobradas sem prévia contratação expressa (Art. 42, CDC). Verificar se houve autorização expressa em contrato.",
     descricao: "Cobrança Indevida",
@@ -115,7 +117,9 @@ const CATEGORIAS = [
       // Caixa
       "caixa seg", "caixa seguradora", "caixa vida", "caixa previdencia",
       // Santander
-      "mensalidade de seguro", "santander seguros", "santander seg", "zurich santander"],
+      "mensalidade de seguro", "santander seguros", "santander seg", "zurich santander",
+      // Agibank
+      "debito de seguro"],
     fundamento: "Art. 39, III, CDC; Súmula 473 STJ; Art. 757, CC",
     acao: "Verificar se o seguro foi contratado voluntariamente. Seguros vinculados a financiamentos sem opção de recusa são abusivos (Súmula 473 STJ). Pleitear cancelamento e devolução.",
     descricao: "Seguro",
@@ -147,7 +151,9 @@ const CATEGORIAS = [
     ...THEME,
     keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "divida em atraso", "jbcred sociedade", "jbcred", "crefisa", "sudacred", "suda", "agiplan financeira", "agiplan", "easycob", "eagle", "pagto eletron cobranca (eagle)", "parcela emprestimo", "parcela financiamento", "amort emprestimo", "amortizacao emprestimo", "prestacao credito", "parcela consignado", "parcela cdc", "cdc credito",
       // Multi-banco
-      "cred pessoal", "bb cred", "consignado bb", "parcela cred", "consignado caixa", "siemp", "consignado santander"],
+      "cred pessoal", "bb cred", "consignado bb", "parcela cred", "consignado caixa", "siemp", "consignado santander",
+      // Agibank
+      "debito de parcela", "pagamento emprestimo"],
     fundamento: "Art. 52, CDC; Lei 10.931/04; Res. CMN 4.559/17",
     acao: "Solicitar demonstrativo completo da operação. Verificar CET e taxa de juros. Contestar cobranças acima do contratado ou sem autorização expressa.",
     descricao: "Parcela de Crédito Pessoal",
@@ -211,7 +217,9 @@ const CATEGORIAS = [
     sublabel: "Cobranças de gastos com cartão de crédito/débito",
     icon: "!",
     ...THEME,
-    keywords: ["gasto c/cartao de credito", "gastos cartao de credito", "gastos cartao credito", "gasto c credito", "gasto cartao de credito", "gasto cartao credito", "provisao gasto cart cred", "gasto c/cartao", "gastos c/cartao", "gasto cart cred", "gasto cartao debito", "compra cartao debito", "gasto e credito"],
+    keywords: ["gasto c/cartao de credito", "gastos cartao de credito", "gastos cartao credito", "gasto c credito", "gasto cartao de credito", "gasto cartao credito", "provisao gasto cart cred", "gasto c/cartao", "gastos c/cartao", "gasto cart cred", "gasto cartao debito", "compra cartao debito", "gasto e credito",
+      // Agibank
+      "debito de cartao"],
     fundamento: "Art. 52, CDC; Res. CMN 3.919/10",
     acao: "Verificar se os gastos lançados foram efetivamente realizados pelo titular. Contestar cobranças não reconhecidas e pleitear estorno com correção monetária.",
     descricao: "Gasto com Cartão de Crédito",
@@ -817,6 +825,235 @@ function validateWithBalance(transactions, allRows, cols) {
   return warnings;
 }
 
+/* ── Parser Agibank ──
+   Formato: 1-2 linhas por transação, coluna única Valor com prefixo +/- R$
+   Datas DD/MM (sem ano — derivar do header), Data apenas na 1ª linha de cada dia
+   Colunas: Data (x~40), Detalhe (x~90), Valor (x~427), Saldo (x~504)
+*/
+const IS_AGIBANK_VALUE = /^([+-])\s*R\$\s*([\d.,]+)$/;
+const IS_SHORT_DATE_AGIBANK = /^\d{2}\/\d{2}$/;
+
+function parseAgibankTransactions(pageData, bankProfile) {
+  const transactions = [];
+  let clientName = "", agencia = "", conta = "", periodo = "";
+
+  // Extrair header info
+  for (let i = 0; i < Math.min(3, pageData.length); i++) {
+    const { flat, rows } = pageData[i];
+    if (!clientName) {
+      // First row is usually the client name
+      for (const row of rows) {
+        const text = row.items.map(it => it.text).join(" ").trim();
+        if (/^[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]+(\s+[A-Za-záàâãéêíóôõúçÁÀÂÃÉÊÍÓÔÕÚÇ]+){1,8}$/.test(text) && text.length > 5) {
+          clientName = text;
+          break;
+        }
+      }
+    }
+    if (!agencia) {
+      const m = flat.match(/ag[eê]ncia\s*(\d{3,6})/i);
+      if (m) agencia = m[1];
+    }
+    if (!conta) {
+      const m = flat.match(/conta\s*(\d{6,12})/i);
+      if (m) conta = m[1];
+    }
+    if (!periodo) {
+      const m = flat.match(/extrato\s+de\s+(\d{2}\/\d{2}\/\d{4})\s+a\s+(\d{2}\/\d{2}\/\d{4})/i);
+      if (m) periodo = `${m[1]} a ${m[2]}`;
+    }
+  }
+
+  // Derive year from periodo
+  let defaultYear = new Date().getFullYear().toString();
+  if (periodo) {
+    const ym = periodo.match(/(\d{4})/);
+    if (ym) defaultYear = ym[1];
+  }
+
+  const IS_HEADER = bankProfile.headerPattern;
+  const IS_SUMMARY = bankProfile.summaryPattern;
+
+  let lastDate = "";
+  let pendingDesc = null; // For 2-line transactions: description on first row, value on second
+
+  for (const pd of pageData) {
+    for (let ri = 0; ri < pd.rows.length; ri++) {
+      const row = pd.rows[ri];
+      const text = row.items.map(i => i.text).join(" ").trim();
+      if (!text) continue;
+      if (IS_HEADER.test(text)) continue;
+      if (IS_SUMMARY.test(text)) continue;
+
+      const first = row.items[0]?.text?.trim() || "";
+      const hasDate = IS_SHORT_DATE_AGIBANK.test(first);
+      if (hasDate) lastDate = first;
+
+      // Try to find value in this row
+      let valor = null;
+      let isDebit = false;
+      let descItems = [];
+
+      for (const item of row.items) {
+        const trimmed = item.text.trim();
+        if (IS_SHORT_DATE_AGIBANK.test(trimmed) && item.x < 60) continue; // skip date
+        const valMatch = IS_AGIBANK_VALUE.exec(trimmed);
+        if (valMatch) {
+          isDebit = valMatch[1] === "-";
+          valor = parseValor(valMatch[2]);
+          continue;
+        }
+        // Skip saldo values (R$ without +/- prefix, at saldo position x~504+)
+        if (/^R\$\s*[\d.,]+$/.test(trimmed) && item.x > 480) continue;
+        descItems.push(trimmed);
+      }
+
+      const desc = descItems.join(" ").trim();
+
+      if (valor !== null) {
+        // Row has value — complete transaction
+        const fullDesc = pendingDesc ? `${pendingDesc} ${desc}`.trim() : desc;
+        pendingDesc = null;
+
+        if (!isDebit) continue; // Only debits are charges
+        if (!fullDesc || !lastDate) continue;
+
+        const cat = matchCategoria(fullDesc);
+        if (!cat) continue;
+
+        const fullDate = `${lastDate}/${defaultYear}`;
+        transactions.push({ data: fullDate, historico: fullDesc, valor, categoria: cat.id });
+      } else if (desc && !hasDate) {
+        // Row has description but no value — continuation of previous desc or start of 2-line txn
+        if (pendingDesc) {
+          pendingDesc = `${pendingDesc} ${desc}`;
+        } else {
+          pendingDesc = desc;
+        }
+      } else if (desc && hasDate) {
+        // Date row with description but no value — start of 2-line txn
+        pendingDesc = desc;
+      }
+    }
+  }
+
+  // Dedup
+  const seen = new Set();
+  const deduped = transactions.filter(t => {
+    const key = `${t.data}|${t.historico}|${t.valor}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return { clientName: clientName || "Titular não identificado", agencia, conta, banco: bankProfile.name, periodo: periodo || "—", transactions: deduped };
+}
+
+/* ── Parser Itaú — Extrato Anual de Tarifas ──
+   Formato especial: DIA (DD/MMM) | TARIFA | VALOR (positivo, tudo é débito)
+   Colunas: x=113 DIA, x=161 TARIFA, x=421-427 VALOR
+*/
+const MONTH_MAP = { JAN: "01", FEV: "02", MAR: "03", ABR: "04", MAI: "05", JUN: "06", JUL: "07", AGO: "08", SET: "09", OUT: "10", NOV: "11", DEZ: "12" };
+const IS_DATE_MMM = /^\d{2}\/(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)$/i;
+
+function parseItauTarifasAnuais(pageData, bankProfile) {
+  const transactions = [];
+  let clientName = "", agencia = "", conta = "", periodo = "";
+
+  // Extrair header info e anos cobertos
+  const years = [];
+  for (const pd of pageData) {
+    const m = pd.flat.match(/PERIODO\s+DE\s+\d{2}\/\d{2}\/(\d{4})\s+A\s+\d{2}\/\d{2}\/(\d{4})/i);
+    if (m) {
+      const y = m[2];
+      if (!years.includes(y)) years.push(y);
+      if (!periodo) periodo = `01/01/${m[1]} a 31/12/${m[2]}`;
+    }
+    if (!clientName) {
+      // Client name is on its own line after "PERIODO DE..."
+      const nm = pd.flat.match(/PERIODO\s+DE[^A-Z]+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+COM\s+BASE)/i);
+      if (nm) clientName = nm[1].trim();
+    }
+    if (!agencia) {
+      const am = pd.flat.match(/AGENCIA\s+(\d{3,6})\s+CONTA\s+([\d-]+)/i);
+      if (am) { agencia = am[1]; conta = am[2]; }
+    }
+  }
+  const defaultYear = years[0] || new Date().getFullYear().toString();
+
+  // Track current year per section (each section starts with "TARIFAS DEBITADAS EM YYYY")
+  let currentYear = defaultYear;
+
+  for (const pd of pageData) {
+    // Check for year section header
+    const ym = pd.flat.match(/TARIFAS\s+DEBITADAS\s+EM\s+(\d{4})/i);
+    if (ym) currentYear = ym[1];
+    // Also check PERIODO on this page
+    const pm = pd.flat.match(/PERIODO\s+DE\s+\d{2}\/\d{2}\/(\d{4})\s+A\s+\d{2}\/\d{2}\/(\d{4})/i);
+    if (pm) currentYear = pm[2];
+
+    for (const row of pd.rows) {
+      // Dedup items within row (some PDFs have 5x duplicated text at same position)
+      const seenItems = new Set();
+      const items = row.items.filter(it => {
+        const key = `${Math.round(it.x)}|${it.text}`;
+        if (seenItems.has(key)) return false;
+        seenItems.add(key);
+        return true;
+      });
+      const first = items[0]?.text?.trim() || "";
+
+      // Skip headers, summaries, totals
+      if (/^DIA$/i.test(first)) continue;
+      if (/VALOR\s+TOTAL\s+EM/i.test(items.map(i => i.text).join(" "))) continue;
+      if (/RESUMO\s+DAS\s+TARIFAS/i.test(items.map(i => i.text).join(" "))) continue;
+      if (/VALOR\s+TOTAL\s+DEBITADO/i.test(items.map(i => i.text).join(" "))) continue;
+      if (/VALOR\s+MEDIO/i.test(items.map(i => i.text).join(" "))) continue;
+      if (/^-+$/.test(first)) continue;
+
+      // Match DD/MMM date
+      if (!IS_DATE_MMM.test(first)) continue;
+
+      const [dd, mmm] = first.split("/");
+      const mm = MONTH_MAP[mmm.toUpperCase()];
+      if (!mm) continue;
+      const fullDate = `${dd}/${mm}/${currentYear}`;
+
+      // Collect description (items between date and value)
+      const descItems = [];
+      let valor = null;
+      for (let idx = 1; idx < items.length; idx++) {
+        const item = items[idx];
+        if (IS_VALUE.test(item.text)) {
+          valor = parseValor(item.text);
+        } else {
+          descItems.push(item.text);
+        }
+      }
+
+      const historico = descItems.join(" ").trim();
+      if (!historico || !valor) continue;
+
+      // ALL values in "Extrato Anual de Tarifas" are debits (tariff charges)
+      const cat = matchCategoria(historico);
+      if (!cat) continue;
+
+      transactions.push({ data: fullDate, historico, valor, categoria: cat.id });
+    }
+  }
+
+  // Dedup (same PDF may have repeated sections)
+  const seen = new Set();
+  const deduped = transactions.filter(t => {
+    const key = `${t.data}|${t.historico}|${t.valor}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return { clientName: clientName || "Titular não identificado", agencia, conta, banco: bankProfile.name, periodo: periodo || "—", transactions: deduped };
+}
+
 /* ── Parser Itaú ──
    Formato: 1 linha por transação, coluna "valor (R$)" com sinal (- = débito)
    Sem multi-line, sem Docto, sem layout duplo
@@ -829,8 +1066,8 @@ function parseItauTransactions(pageData, bankProfile) {
   let valorX = null, saldoX = null;
   for (const pd of pageData) {
     for (const item of pd.items) {
-      if (/^valor\s*\(r\$\)/i.test(item.text) && valorX === null) valorX = item.x;
-      if (/^saldo\s*\(r\$\)/i.test(item.text) && saldoX === null) saldoX = item.x;
+      if (/^valor(\s*\(r\$\))?$/i.test(item.text) && valorX === null) valorX = item.x;
+      if (/^saldo(\s*\(r\$\))?$/i.test(item.text) && saldoX === null) saldoX = item.x;
     }
     if (valorX !== null) break;
   }
@@ -842,8 +1079,13 @@ function parseItauTransactions(pageData, bankProfile) {
       const m = flat.match(/([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)\s+\d{3}\.\d{3}\.\d{3}[-.]?\d{2}/);
       if (m) clientName = m[1].replace(/\s+/g, " ").trim();
     }
+    if (!clientName) {
+      // Format B: "Cliente NOME Agência: ..."
+      const mc = flat.match(/Cliente\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)\s+Ag[eê]ncia/i);
+      if (mc) clientName = mc[1].replace(/\s+/g, " ").trim();
+    }
     if (!agencia) {
-      const m = flat.match(/ag[eê]ncia\s*[:\-]?\s*(\d{3,6})/i);
+      const m = flat.match(/ag[eê]ncia\s*[:\-]?\s*([\d]{3,6}[-]?\d?)/i);
       if (m) agencia = m[1];
     }
     if (!conta) {
@@ -854,42 +1096,81 @@ function parseItauTransactions(pageData, bankProfile) {
       const m = flat.match(/per[ií]odo\s+de\s+visualiza[cç][aã]o\s*:\s*([\d\/]+)\s+at[eé]\s+([\d\/]+)/i);
       if (m) periodo = `${m[1]} a ${m[2]}`;
     }
+    if (!periodo) {
+      // Format B: "Período: 01 a 31/01/2025"
+      const mp = flat.match(/per[ií]odo\s*:\s*(\d{2}\s+a\s+\d{2}\/\d{2}\/\d{4})/i);
+      if (mp) periodo = mp[1];
+    }
   }
 
   const IS_ITAU_HEADER = bankProfile.headerPattern;
   const IS_ITAU_SUMMARY = bankProfile.summaryPattern;
+  // Format B: value with suffix sign as single text item e.g. "97,00 (-)" or "1.000,00 (+)"
+  const IS_SUFFIX_VALUE = /^(\d{1,3}(?:\.\d{3})*,\d{2})\s*\(([+-])\)$/;
 
   for (const pd of pageData) {
-    for (const row of pd.rows) {
+    for (let ri = 0; ri < pd.rows.length; ri++) {
+      const row = pd.rows[ri];
       const text = row.items.map(i => i.text).join(" ").trim();
       if (!text) continue;
       if (IS_ITAU_HEADER.test(text)) continue;
       if (IS_ITAU_SUMMARY.test(text)) continue;
+      // Format B: skip summary rows
+      if (/saldo\s+(do\s+dia|anterior)|^s\s+a\s+l\s+d\s+o$/i.test(text)) continue;
 
       const first = row.items[0]?.text || "";
       if (!IS_DATE.test(first)) continue;
 
-      // Extrair descrição: todos os items entre data e valor
+      // Extrair descrição e valor
+      // Format B (Jeferson): items include lote (x~99) and documento (x~148) — skip these as metadata
+      // Only items at x >= 200 are description text; items near valorX are values
       const descItems = [];
       let valor = null;
       let isDebit = false;
       for (let idx = 1; idx < row.items.length; idx++) {
         const item = row.items[idx];
-        const isValue = IS_VALUE.test(item.text);
+        const trimmed = item.text.trim();
+        // Format B: "97,00 (-)" or "1.000,00 (+)" as single text item
+        const suffixMatch = IS_SUFFIX_VALUE.exec(trimmed);
+        if (suffixMatch) {
+          if (valorX !== null && Math.abs(item.x - valorX) > 80) continue;
+          valor = parseValor(suffixMatch[1]);
+          isDebit = suffixMatch[2] === "-";
+          continue;
+        }
+        const isValue = IS_VALUE.test(trimmed);
         if (isValue) {
-          // Distinguir valor vs saldo pela posição X
-          if (saldoX !== null && Math.abs(item.x - saldoX) < 30) continue; // é saldo, pular
-          if (valorX !== null && Math.abs(item.x - valorX) > 80) continue; // muito longe de valor
-          isDebit = item.text.trim().startsWith("-");
-          valor = parseValor(item.text);
+          if (saldoX !== null && Math.abs(item.x - saldoX) < 30) continue;
+          if (valorX !== null && Math.abs(item.x - valorX) > 80) continue;
+          if (trimmed.startsWith("-")) isDebit = true;
+          valor = parseValor(trimmed);
         } else {
+          // Skip numeric-only metadata (lote, documento) — they're between date and desc columns
+          if (/^\d+$/.test(trimmed) && item.x < 200) continue;
           descItems.push(item.text);
         }
       }
 
-      const historico = descItems.join(" ").trim();
+      let historico = descItems.join(" ").trim();
+
+      // Format B: description is on the ROW ABOVE the date row
+      // Try prev row if: no description found OR historico is just numbers (lote/doc leaked through)
+      if ((!historico || !matchCategoria(historico)) && ri > 0) {
+        const prevRow = pd.rows[ri - 1];
+        const prevFirst = prevRow.items[0]?.text?.trim() || "";
+        const prevText = prevRow.items.map(i => i.text).join(" ").trim();
+        if (!IS_DATE.test(prevFirst) && !IS_ITAU_HEADER.test(prevText) && !IS_ITAU_SUMMARY.test(prevText)
+            && !/saldo\s+(do\s+dia|anterior)|^s\s+a\s+l\s+d\s+o$/i.test(prevText)
+            && !/^lan[cç]amentos$/i.test(prevText)) {
+          // Use prev row description, possibly combined with current
+          const prevDesc = prevText;
+          if (matchCategoria(prevDesc)) {
+            historico = historico ? `${prevDesc} ${historico}` : prevDesc;
+          }
+        }
+      }
+
       if (!historico || !valor) continue;
-      // Itaú: apenas débitos (valor negativo) são cobranças — créditos (positivos) são recebimentos
       if (!isDebit) continue;
       const cat = matchCategoria(historico);
       if (!cat) continue;
@@ -1147,11 +1428,22 @@ async function parseDocumentoPDF(file, onProgress) {
     ocrWorker = await loadTesseract();
   }
 
-  // ── Detectar banco ──
+  // ── Detectar banco (multi-page: pages 1-3 para score-based detection) ──
+  const detectionTexts = [];
   const firstPageText = firstItems.length > 0
     ? firstItems.map(it => it.str || it.text || "").join(" ")
-    : (needsOCR ? "bradesco" : "");  // OCR fallback defaults to Bradesco
-  let bankProfile = detectBank(firstPageText);
+    : (needsOCR ? "bradesco" : "");
+  detectionTexts.push(firstPageText);
+  // Pre-scan pages 2-3 for bank detection (lightweight, text-only)
+  if (!needsOCR) {
+    for (let pn = 2; pn <= Math.min(3, pdf.numPages); pn++) {
+      const pg = await pdf.getPage(pn);
+      const tc = await pg.getTextContent();
+      const pageItems = tc.items.filter(it => it.str.trim());
+      detectionTexts.push(pageItems.map(it => it.str).join(" "));
+    }
+  }
+  let bankProfile = detectBank(detectionTexts);
   if (!bankProfile.supported) {
     return {
       clientName: "—",
@@ -1223,10 +1515,17 @@ async function parseDocumentoPDF(file, onProgress) {
 
   // ── Roteamento por banco ──
   if (bankProfile.id === "itau") {
+    // Sub-format: "Extrato Anual de Tarifas" (DD/MMM dates, all-debit tariff summary)
+    if (pageData.some(p => /extrato\s+anual\s+(de\s+tarifas|com\s+as\s+tarifas)/i.test(p.flat))) {
+      return parseItauTarifasAnuais(pageData, bankProfile);
+    }
     return parseItauTransactions(pageData, bankProfile);
   }
   if (bankProfile.id === "santander") {
     return parseSantanderTransactions(pageData, bankProfile);
+  }
+  if (bankProfile.id === "agibank") {
+    return parseAgibankTransactions(pageData, bankProfile);
   }
 
   // ── Fase 2 (Bradesco): Extrair cabeçalho (primeiras 3 páginas) ──
