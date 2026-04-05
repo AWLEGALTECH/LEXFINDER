@@ -22,6 +22,31 @@ Assumindo fator medio de inflacao de 5.8x:
 
 > Nota: "valor real medio" calculado como media dos 4 clientes comparados (R$ 53.639 / 4 = R$ 13.409)
 
+## Descontos Reais NAO Detectados pelo Optijus (5 clientes)
+
+| Cliente | Categoria Perdida | Ocorr. | Valor Perdido (R$) |
+|---------|-------------------|--------|---------------------|
+| ALCILENE PEREIRA | Anuidade e Cartao | 13 | 4.628,91 |
+| DAVID PONCIANO | Parcela de Credito Pessoal | 1 | 4.325,30 |
+| CLAUDIA NAYARA | Cesta + Outros + Extrato | ~4 | 3.622,40 |
+| ZEILDO ALMEIDA | Cesta + Anuidade + Seguros | ~95 | 2.066,69 |
+| ABEL MOTA | Seguros | 1 | 19,31 |
+| **TOTAL** | — | — | **14.662,61** |
+
+**Taxa de clientes afetados:** 62,5% (5 de 8)
+
+### Projecao de Perda por Volume (acoes nao ajuizadas)
+
+| Clientes/mes | Afetados (62,5%) | Perda/mes | Perda/ano |
+|-------------|------------------|-----------|-----------|
+| 10 | 6 | R$ 17.592 | R$ 211.104 |
+| 50 | 31 | R$ 90.892 | R$ 1.090.704 |
+| 100 | 62 | R$ 181.784 | R$ 2.181.408 |
+
+> Com Art. 42 CDC (dobro): R$ 363.568/mes em 100 clientes
+
+---
+
 ## Custos Indiretos do Optijus
 
 | Custo | Descricao | Estimativa |

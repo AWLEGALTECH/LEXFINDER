@@ -24,7 +24,7 @@ O LEX FINDER e uma ferramenta juridica que analisa extratos bancarios em PDF e i
 | Testes automatizados | **34** (regressao automatica) |
 | Tempo de desenvolvimento | **8 dias** (44 commits) |
 
-**Descoberta critica:** O Optijus (sistema concorrente usado atualmente) **infla valores sistematicamente em 4x a 13.5x**, gerando peticoes com valores irreais que comprometem a credibilidade do escritorio perante o juiz.
+**Descoberta critica:** O Optijus (sistema concorrente usado atualmente) **infla valores sistematicamente em 4x a 13.5x**, gerando peticoes com valores irreais que comprometem a credibilidade do escritorio perante o juiz. Alem disso, o Optijus **deixa de detectar R$ 14.662 em descontos reais** (62,5% dos clientes afetados) — acoes que nunca foram ajuizadas porque o sistema nao as encontrou.
 
 ---
 
@@ -347,6 +347,39 @@ Isso prova que o parser do LEX FINDER e tao preciso quanto o Optijus — a difer
 > **Em apenas 4 clientes, o Optijus reportou R$ 259.778 a mais do que o valor real.**
 >
 > Escale isso para dezenas ou centenas de clientes processados por mes e o prejuizo em credibilidade e trabalho manual se torna inaceitavel.
+
+---
+
+## SECAO 4B: O que o Optijus DEIXOU DE DETECTAR
+
+Alem de inflar valores, o Optijus tambem **perde categorias inteiras de descontos reais**. Em 5 dos 8 clientes analisados (62,5%), existem cobrancas indevidas que o Optijus simplesmente nao encontrou — acoes que **nunca foram ajuizadas** porque o escritorio nao sabia que existiam.
+
+### Categorias perdidas pelo Optijus (detectadas apenas pelo LEX FINDER)
+
+| Cliente | Categoria Perdida | Ocorr. | Valor Perdido (R$) | Evidencia |
+|---------|-------------------|--------|---------------------|-----------|
+| ALCILENE PEREIRA | Anuidade e Cartao | 13 | **R$ 4.628,91** | Sem pasta de processo no servidor — nunca ajuizada |
+| DAVID PONCIANO | Parcela de Credito Pessoal | 1 | **R$ 4.325,30** | Maior transacao do cliente, ignorada pelo Optijus |
+| CLAUDIA NAYARA | Cesta + Outros + Extrato | ~4 | **R$ 3.622,40** | LEX FINDER detectou categorias que Optijus perdeu |
+| ZEILDO ALMEIDA | Cesta + Anuidade + Seguros | ~95 | **R$ 2.066,69** | 3 categorias inteiras sem pasta de processo |
+| ABEL MOTA | Seguros | 1 | **R$ 19,31** | Seguro/Previdencia nao encontrado pelo Optijus |
+| **TOTAL** | — | — | **R$ 14.662,61** | **5 de 8 clientes afetados (62,5%)** |
+
+### Cross-reference: LEX FINDER encontrou MAIS na mesma rubrica
+
+| Cliente | Rubrica | Optijus | LEX FINDER | Diferenca |
+|---------|---------|---------|------------|-----------|
+| Ronilza | Encargos | R$ 3.576 | R$ 4.040 | +R$ 464 |
+| Ronilza | Tit Cap | R$ 80 | R$ 140 | +R$ 60 |
+
+### Projecao de impacto
+
+- Media de perda por cliente afetado: **R$ 2.932**
+- Taxa de clientes afetados: **62,5%** (5 de 8)
+- Em 100 clientes/mes: ~62 afetados x R$ 2.932 = **R$ 181.784/mes em acoes nao ajuizadas**
+- Com Art. 42 CDC (valor em dobro): **R$ 363.568/mes**
+
+> **Esses descontos sao REAIS — existem no extrato bancario, foram cobrados pelo banco, mas o Optijus nunca os encontrou. Sao acoes que nunca existiram. Dinheiro que ficou na mesa.**
 
 ---
 
