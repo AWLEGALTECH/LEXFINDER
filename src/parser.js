@@ -289,6 +289,8 @@ async function loadPdfJs() {
   await new Promise((resolve, reject) => {
     const s = document.createElement("script");
     s.src = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.min.js`;
+    s.integrity = "sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e";
+    s.crossOrigin = "anonymous";
     s.onload = resolve;
     s.onerror = reject;
     document.head.appendChild(s);
