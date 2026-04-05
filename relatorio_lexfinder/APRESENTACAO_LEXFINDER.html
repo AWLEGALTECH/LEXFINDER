@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEX FINDER — Apresentacao Comercial</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #0a0a1a;
+    color: #e0e0e0;
+  }
+
+  .slide {
+    width: 100vw;
+    min-height: 100vh;
+    padding: 60px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    page-break-after: always;
+    border-bottom: 2px solid #1a1a3a;
+  }
+
+  .slide-number {
+    position: absolute;
+    bottom: 20px;
+    right: 40px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .brand {
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a9eff;
+    letter-spacing: 2px;
+  }
+
+  /* COVER SLIDE */
+  .cover { background: linear-gradient(135deg, #0a0a2e 0%, #0d1b3e 50%, #0a2540 100%); text-align: center; }
+  .cover .logo { font-size: 18px; color: #4a9eff; letter-spacing: 4px; font-weight: 600; margin-bottom: 20px; }
+  .cover h1 { font-size: 64px; font-weight: 900; color: #fff; line-height: 1.1; margin-bottom: 10px; }
+  .cover h1 span { color: #4a9eff; }
+  .cover .subtitle { font-size: 28px; font-weight: 300; color: #8aa8c7; margin-bottom: 50px; }
+  .cover .tagline { font-size: 20px; color: #ff6b6b; font-weight: 600; background: rgba(255,107,107,0.1); padding: 15px 30px; border-radius: 12px; display: inline-block; border: 1px solid rgba(255,107,107,0.3); }
+  .cover .meta { margin-top: 60px; font-size: 14px; color: #556; }
+
+  /* SECTION HEADERS */
+  h2 { font-size: 42px; font-weight: 800; color: #fff; margin-bottom: 30px; line-height: 1.2; }
+  h2 span { color: #4a9eff; }
+  h2 .red { color: #ff6b6b; }
+  h3 { font-size: 26px; font-weight: 700; color: #4a9eff; margin-bottom: 15px; margin-top: 25px; }
+
+  /* CONTENT */
+  p { font-size: 20px; line-height: 1.6; color: #b0b8c8; margin-bottom: 15px; }
+  .highlight { color: #fff; font-weight: 600; }
+  .red-text { color: #ff6b6b; font-weight: 700; }
+  .blue-text { color: #4a9eff; font-weight: 700; }
+  .green-text { color: #4ade80; font-weight: 700; }
+
+  /* METRICS ROW */
+  .metrics { display: flex; gap: 20px; margin: 30px 0; flex-wrap: wrap; }
+  .metric-card {
+    flex: 1;
+    min-width: 200px;
+    background: linear-gradient(135deg, #111133, #0d1b3e);
+    border: 1px solid #2a3a5a;
+    border-radius: 16px;
+    padding: 25px;
+    text-align: center;
+  }
+  .metric-card .number { font-size: 42px; font-weight: 900; color: #4a9eff; }
+  .metric-card .label { font-size: 14px; color: #8899aa; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
+  .metric-card.red .number { color: #ff6b6b; }
+  .metric-card.green .number { color: #4ade80; }
+
+  /* TABLES */
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 17px; }
+  th { background: #1a2a4a; color: #4a9eff; font-weight: 700; padding: 12px 16px; text-align: left; border-bottom: 2px solid #2a3a5a; }
+  td { padding: 10px 16px; border-bottom: 1px solid #1a1a3a; color: #c0c8d8; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .val-bad { color: #ff6b6b; font-weight: 700; }
+  .val-good { color: #4ade80; font-weight: 700; }
+  .val-neutral { color: #4a9eff; font-weight: 600; }
+  td.check { color: #4ade80; font-size: 20px; }
+  td.cross { color: #ff6b6b; font-size: 20px; }
+
+  /* COMPARISON */
+  .vs-box {
+    display: flex;
+    gap: 30px;
+    margin: 25px 0;
+  }
+  .vs-card {
+    flex: 1;
+    padding: 30px;
+    border-radius: 16px;
+    text-align: center;
+  }
+  .vs-card.good { background: linear-gradient(135deg, #0a2a1a, #0d3a2a); border: 2px solid #2a8a5a; }
+  .vs-card.bad { background: linear-gradient(135deg, #2a0a0a, #3a0d0d); border: 2px solid #8a2a2a; }
+  .vs-card .vs-title { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+  .vs-card.good .vs-title { color: #4ade80; }
+  .vs-card.bad .vs-title { color: #ff6b6b; }
+  .vs-card .vs-value { font-size: 48px; font-weight: 900; margin: 10px 0; }
+  .vs-card.good .vs-value { color: #4ade80; }
+  .vs-card.bad .vs-value { color: #ff6b6b; }
+  .vs-card .vs-label { font-size: 16px; color: #8899aa; }
+
+  /* QUOTE / CALLOUT */
+  .callout {
+    background: linear-gradient(135deg, #1a0a0a, #2a0d0d);
+    border-left: 4px solid #ff6b6b;
+    padding: 25px 30px;
+    border-radius: 0 12px 12px 0;
+    margin: 25px 0;
+    font-size: 22px;
+    color: #ff9999;
+    font-weight: 600;
+    font-style: italic;
+  }
+
+  .callout-blue {
+    background: linear-gradient(135deg, #0a1a2a, #0d1b3e);
+    border-left: 4px solid #4a9eff;
+    padding: 25px 30px;
+    border-radius: 0 12px 12px 0;
+    margin: 25px 0;
+    font-size: 22px;
+    color: #8ac4ff;
+    font-weight: 600;
+    font-style: italic;
+  }
+
+  .callout-green {
+    background: linear-gradient(135deg, #0a2a1a, #0d3a2a);
+    border-left: 4px solid #4ade80;
+    padding: 25px 30px;
+    border-radius: 0 12px 12px 0;
+    margin: 25px 0;
+    font-size: 20px;
+    color: #8affb4;
+    font-weight: 600;
+  }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    color: #ff8888;
+    line-height: 1.8;
+    overflow-x: auto;
+    margin: 15px 0;
+  }
+
+  /* BULLETS */
+  ul { list-style: none; padding: 0; margin: 15px 0; }
+  ul li { font-size: 20px; padding: 8px 0; color: #b0b8c8; position: relative; padding-left: 30px; }
+  ul li::before { content: ""; position: absolute; left: 0; top: 16px; width: 10px; height: 10px; background: #4a9eff; border-radius: 50%; }
+  ul.red-bullets li::before { background: #ff6b6b; }
+  ul.green-bullets li::before { background: #4ade80; }
+
+  /* FOOTER */
+  .footer-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4a9eff, #4ade80, #4a9eff);
+  }
+
+  /* FINAL SLIDE */
+  .final { text-align: center; }
+  .final h2 { font-size: 52px; }
+  .final .big-question { font-size: 36px; color: #ff6b6b; font-weight: 800; margin: 40px 0; }
+  .final .url { font-size: 28px; color: #4a9eff; font-weight: 600; margin-top: 30px; }
+
+  @media print {
+    .slide { page-break-after: always; min-height: 100vh; }
+    body { background: #0a0a1a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== SLIDE 1: CAPA ==================== -->
+<div class="slide cover">
+  <div class="logo">AW LEGALTECH</div>
+  <h1>LEX <span>FINDER</span></h1>
+  <div class="subtitle">Analise de Extratos Bancarios com Precisao Juridica</div>
+  <div class="tagline">Por que o Optijus esta custando dinheiro ao seu escritorio</div>
+  <div class="meta">Abril 2026 &mdash; v11 &mdash; Desenvolvido em 8 dias</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 2: NUMEROS DE IMPACTO ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2>Resultados em <span>8 dias</span> de desenvolvimento</h2>
+  <div class="metrics">
+    <div class="metric-card"><div class="number">184</div><div class="label">PDFs processados</div></div>
+    <div class="metric-card"><div class="number">11.031</div><div class="label">Transacoes detectadas</div></div>
+    <div class="metric-card green"><div class="number">R$ 705K+</div><div class="label">Valor identificado</div></div>
+  </div>
+  <div class="metrics">
+    <div class="metric-card"><div class="number">4</div><div class="label">Bancos operacionais</div></div>
+    <div class="metric-card"><div class="number">15</div><div class="label">Categorias juridicas</div></div>
+    <div class="metric-card"><div class="number">413</div><div class="label">Keywords de deteccao</div></div>
+  </div>
+  <div class="metrics">
+    <div class="metric-card green"><div class="number">ZERO</div><div class="label">Falsos positivos</div></div>
+    <div class="metric-card"><div class="number">34</div><div class="label">Testes automatizados</div></div>
+    <div class="metric-card"><div class="number">44</div><div class="label">Commits</div></div>
+  </div>
+  <div class="slide-number">2</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 3: O PROBLEMA ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2>O Problema: Optijus <span class="red">infla valores</span></h2>
+  <p>O Optijus, sistema atualmente em uso, tem <span class="red-text">dois erros sistematicos</span> que geram valores de peticao completamente irreais:</p>
+
+  <h3>Erro 1 &mdash; Duplicacao massiva</h3>
+  <p>Extratos Bradesco incluem paginas-resumo ("Ultimos Lancamentos"). O Optijus processa essas paginas como transacoes novas, <span class="red-text">multiplicando cada cobranca 5x a 27x</span>.</p>
+
+  <h3>Erro 2 &mdash; Creditos contados como debitos</h3>
+  <p>O Optijus nao distingue dinheiro que ENTRA (credito) de dinheiro que SAI (debito). <span class="red-text">Emprestimos recebidos, renegociacoes e aplicacoes</span> sao somados como "descontos indevidos".</p>
+
+  <div class="callout">
+    Em apenas 4 clientes analisados, o Optijus reportou R$ 259.778 a MAIS do que o valor real.
+  </div>
+  <div class="slide-number">3</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 4: PROVA - DUPLICACAO CSV ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2>Prova: <span class="red">27x duplicado</span> no Optijus</h2>
+  <p>Cliente <span class="highlight">ALEXANDRE LUIS BARBOSA</span> &mdash; arquivo CSV exportado do Optijus:</p>
+
+  <div class="code-block">
+06/07/2021, TARIFA BANCARIA, CESTA B.EXPRESSO4, 33.20<br>
+06/07/2021, TARIFA BANCARIA, CESTA B.EXPRESSO4, 33.20<br>
+06/07/2021, TARIFA BANCARIA, CESTA B.EXPRESSO4, 33.20<br>
+06/07/2021, TARIFA BANCARIA, CESTA B.EXPRESSO4, 33.20<br>
+06/07/2021, TARIFA BANCARIA, CESTA B.EXPRESSO4, 33.20<br>
+06/07/2021, TARIFA BANCARIA, CESTA B.EXPRESSO4, 33.20<br>
+... <span style="color:#ff4444;font-weight:bold">(mesma linha repetida 27 vezes &mdash; mesma data, descricao e valor)</span><br>
+  </div>
+
+  <div class="vs-box">
+    <div class="vs-card good">
+      <div class="vs-title">LEX FINDER</div>
+      <div class="vs-value">58</div>
+      <div class="vs-label">transacoes reais</div>
+      <div style="font-size:28px;font-weight:800;color:#4ade80;margin-top:10px">R$ 2.579,95</div>
+    </div>
+    <div class="vs-card bad">
+      <div class="vs-title">OPTIJUS</div>
+      <div class="vs-value">365</div>
+      <div class="vs-label">transacoes (6.3x inflado)</div>
+      <div style="font-size:28px;font-weight:800;color:#ff6b6b;margin-top:10px">R$ 12.790,80</div>
+    </div>
+  </div>
+  <div class="slide-number">4</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 5: CASO ADAILTON ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2>Caso: ADAILTON &mdash; Inflacao <span class="red">5.5x</span></h2>
+  <p>Extrato de 59 paginas &mdash; Bradesco &mdash; 13 categorias de desconto</p>
+
+  <div class="vs-box">
+    <div class="vs-card good">
+      <div class="vs-title">LEX FINDER</div>
+      <div class="vs-value">R$ 39.984</div>
+      <div class="vs-label">443 transacoes &bull; 13 categorias</div>
+    </div>
+    <div class="vs-card bad">
+      <div class="vs-title">OPTIJUS</div>
+      <div class="vs-value">R$ 197.800</div>
+      <div class="vs-label">1.631 registros &bull; 22 keywords</div>
+    </div>
+  </div>
+
+  <h3>R$ 87.630 em creditos fantasma do Optijus:</h3>
+  <table>
+    <tr><th>Lancamento</th><th>Valor Optijus</th><th>Natureza REAL</th></tr>
+    <tr><td>OPERACOES VENCIDAS</td><td class="val-bad">R$ 36.832</td><td>CREDITO (divida vencida)</td></tr>
+    <tr><td>REORGANIZACAO FINANCEIRA</td><td class="val-bad">R$ 27.000</td><td>CREDITO (renegociacao)</td></tr>
+    <tr><td>APLIC. INVEST FACIL</td><td class="val-bad">R$ 15.082</td><td>Aplicacao (retorna ao cliente)</td></tr>
+    <tr><td>EMPRESTIMO PESSOAL</td><td class="val-bad">R$ 8.716</td><td>CREDITO (emprestimo recebido)</td></tr>
+  </table>
+  <div class="slide-number">5</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 6: CASO CLAUDIA ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2>Caso: CLAUDIA &mdash; Inflacao <span class="red">13.5x</span></h2>
+  <p>O pior caso documentado. O Optijus multiplicou o valor real por <span class="red-text">13,5 vezes</span>.</p>
+
+  <div class="vs-box">
+    <div class="vs-card good">
+      <div class="vs-title">LEX FINDER</div>
+      <div class="vs-value">R$ 6.838</div>
+      <div class="vs-label">129 transacoes &bull; 9 categorias</div>
+    </div>
+    <div class="vs-card bad">
+      <div class="vs-title">OPTIJUS</div>
+      <div class="vs-value">R$ 86.042</div>
+      <div class="vs-label">383 registros &bull; R$ 79.203 fantasma</div>
+    </div>
+  </div>
+
+  <ul class="red-bullets">
+    <li>INVEST FACIL: <span class="red-text">64x</span> no Optijus vs 15x real</li>
+    <li>PAGTO ELETRON COBRANCA: R$ 14.576 contado como desconto &mdash; sao pagamentos <span class="highlight">LEGITIMOS</span></li>
+    <li>LEX FINDER detectou Regularizacao Lancamento (R$ 498,58) que o <span class="red-text">Optijus perdeu</span></li>
+  </ul>
+  <div class="slide-number">6</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 7: TABELA DE INFLACAO ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2>Resumo: <span class="red">R$ 259.778</span> em valores fantasma</h2>
+  <p>Em apenas 4 clientes comparados, o Optijus reportou quase <span class="red-text">5 vezes</span> o valor real:</p>
+
+  <table>
+    <tr><th>Cliente</th><th>LEX FINDER (correto)</th><th>Optijus (inflado)</th><th>Fantasma</th><th>Fator</th></tr>
+    <tr>
+      <td>Adailton</td>
+      <td class="val-good">R$ 39.984</td>
+      <td class="val-bad">R$ 197.800</td>
+      <td class="val-bad">R$ 157.816</td>
+      <td class="val-bad">5,5x</td>
+    </tr>
+    <tr>
+      <td>Claudia</td>
+      <td class="val-good">R$ 6.838</td>
+      <td class="val-bad">R$ 86.042</td>
+      <td class="val-bad">R$ 79.204</td>
+      <td class="val-bad">13,5x</td>
+    </tr>
+    <tr>
+      <td>Alexandre</td>
+      <td class="val-good">R$ 2.579</td>
+      <td class="val-bad">R$ 12.790</td>
+      <td class="val-bad">R$ 10.211</td>
+      <td class="val-bad">5,0x</td>
+    </tr>
+    <tr>
+      <td>Abrao</td>
+      <td class="val-good">R$ 4.235</td>
+      <td class="val-bad">R$ 16.782</td>
+      <td class="val-bad">R$ 12.547</td>
+      <td class="val-bad">4,0x</td>
+    </tr>
+    <tr style="background:rgba(255,107,107,0.1)">
+      <td style="font-weight:800;color:#fff">TOTAL</td>
+      <td class="val-good" style="font-weight:800">R$ 53.636</td>
+      <td class="val-bad" style="font-weight:800">R$ 313.414</td>
+      <td class="val-bad" style="font-weight:800">R$ 259.778</td>
+      <td class="val-bad" style="font-weight:800">5,8x</td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    Escale isso para 50 ou 100 clientes por mes: o prejuizo em credibilidade e trabalho manual se torna inaceitavel.
+  </div>
+  <div class="slide-number">7</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 8: PRECISAO COMPROVADA ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2>Precisao comprovada: <span>Match exato</span> ao centavo</h2>
+  <p>Quando o Optijus NAO duplica, os valores sao <span class="green-text">identicos</span> aos do LEX FINDER:</p>
+
+  <table>
+    <tr><th>Cliente</th><th>Rubrica</th><th>Optijus</th><th>LEX FINDER</th><th>Match?</th></tr>
+    <tr><td>Almerinda</td><td>Parc Cred Pessoal</td><td>12 / R$ 921</td><td>12 / R$ 921</td><td class="check">&#10003; EXATO</td></tr>
+    <tr><td>Almerinda</td><td>Mora Cred Pessoal</td><td>11 / R$ 2.853</td><td>11 / R$ 2.853</td><td class="check">&#10003; EXATO</td></tr>
+    <tr><td>Filipe</td><td>Saque Terminal</td><td>5 / R$ 39</td><td>5 / R$ 39</td><td class="check">&#10003; EXATO</td></tr>
+    <tr><td>Ronilza</td><td>BX ANT</td><td>3 / R$ 925</td><td>3 / R$ 925</td><td class="check">&#10003; EXATO</td></tr>
+    <tr><td>Rafaela</td><td>Parc Cred Pessoal</td><td>2 / R$ 8</td><td>2 / R$ 8</td><td class="check">&#10003; EXATO</td></tr>
+    <tr><td>Abrao</td><td>Mora Credito</td><td>R$ 1.368,84</td><td>R$ 1.368,84</td><td class="check">&#10003; EXATO</td></tr>
+    <tr><td>Ronilza</td><td>Encargos</td><td>85 / R$ 3.576</td><td class="val-good">172 / R$ 4.040</td><td class="val-good">LEX > Optijus</td></tr>
+  </table>
+
+  <div class="callout-green">
+    O LEX FINDER e tao preciso quanto o Optijus nos dados corretos &mdash; e encontra MAIS nos mesmos extratos.
+  </div>
+  <div class="slide-number">8</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 9: CONSEQUENCIAS JURIDICAS ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2>Consequencias <span class="red">juridicas</span> dos valores inflados</h2>
+
+  <ul class="red-bullets">
+    <li><span class="highlight">Peticoes indeferidas</span> &mdash; Juiz ve R$ 197K pedido, analisa extrato, encontra R$ 40K real. Perde credibilidade em TODA a peticao.</li>
+    <li><span class="highlight">Art. 80, CPC &mdash; Litigancia de ma-fe</span> &mdash; "Alterar a verdade dos fatos" ao pedir R$ 259.778 a mais que o real.</li>
+    <li><span class="highlight">Honorarios sobre valor errado</span> &mdash; Escritorio calcula sobre valor inflado. Juiz corrige e honorario cai.</li>
+    <li><span class="highlight">Revisao manual OBRIGATORIA</span> &mdash; Todo advogado que usa Optijus SABE que precisa conferir linha por linha. Horas de trabalho desperdicadas.</li>
+    <li><span class="highlight">1 planilha POR rubrica</span> &mdash; Optijus gera TABELA.xlsx separada para cada tipo de cobranca. O advogado junta manualmente.</li>
+  </ul>
+
+  <div class="callout-blue">
+    O LEX FINDER elimina TODOS esses problemas: valores corretos, relatorio unificado, zero revisao manual.
+  </div>
+  <div class="slide-number">9</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 10: MULTI-BANCO ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2><span>4 bancos</span> operacionais &mdash; 184 PDFs testados</h2>
+
+  <table>
+    <tr><th>Banco</th><th>Parser</th><th>PDFs OK</th><th>Transacoes</th><th>Valor Total</th></tr>
+    <tr>
+      <td><span class="highlight">Bradesco</span></td>
+      <td>2 layouts, 3 colunas, multi-line</td>
+      <td class="val-neutral">31+</td>
+      <td class="val-neutral">6.674+</td>
+      <td class="val-good">R$ 514K+</td>
+    </tr>
+    <tr>
+      <td><span class="highlight">Itau</span></td>
+      <td>3 formatos (padrao, sufixo, tarifas)</td>
+      <td class="val-neutral">100</td>
+      <td class="val-neutral">2.272</td>
+      <td class="val-good">R$ 45K</td>
+    </tr>
+    <tr>
+      <td><span class="highlight">Santander</span></td>
+      <td>Multi-line, datas curtas</td>
+      <td class="val-neutral">12</td>
+      <td class="val-neutral">1.279</td>
+      <td class="val-good">R$ 26K</td>
+    </tr>
+    <tr>
+      <td><span class="highlight">Agibank</span></td>
+      <td>Prefixo +/- R$</td>
+      <td class="val-neutral">41</td>
+      <td class="val-neutral">495</td>
+      <td class="val-good">R$ 35K</td>
+    </tr>
+    <tr style="background:rgba(74,158,255,0.1)">
+      <td style="font-weight:800;color:#fff">TOTAL</td>
+      <td></td>
+      <td class="val-neutral" style="font-weight:800">184</td>
+      <td class="val-neutral" style="font-weight:800">11.031</td>
+      <td class="val-good" style="font-weight:800">R$ 705K+</td>
+    </tr>
+  </table>
+
+  <p style="margin-top:20px"><span class="blue-text">OCR integrado</span> para PDFs de imagem (Tesseract.js) &mdash; 28 PDFs processados via OCR com sucesso.</p>
+  <p><span class="blue-text">BB e Caixa</span> no roadmap (todos image-based, aguardando OCR otimizado).</p>
+  <div class="slide-number">10</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 11: COMPARATIVO FEATURES ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2>LEX FINDER vs Optijus: <span>Feature por feature</span></h2>
+
+  <table>
+    <tr><th>Caracteristica</th><th style="color:#4ade80">LEX FINDER</th><th style="color:#ff6b6b">Optijus</th></tr>
+    <tr><td>Precisao de valores</td><td class="check">Correto (comprovado)</td><td class="cross">Inflado 4-13.5x</td></tr>
+    <tr><td>Falsos positivos</td><td class="check">Zero</td><td class="cross">Creditos como debitos</td></tr>
+    <tr><td>Duplicacao</td><td class="check">Filtro "Ultimos Lancamentos"</td><td class="cross">Processa como transacoes</td></tr>
+    <tr><td>Categorias juridicas</td><td class="check">15 com fundamento legal</td><td class="cross">Keywords sem agrupamento</td></tr>
+    <tr><td>Fundamento legal</td><td class="check">Artigo + Sumula por categoria</td><td class="cross">Sem</td></tr>
+    <tr><td>Dashboard</td><td class="check">Graficos interativos</td><td class="cross">Sem visualizacao</td></tr>
+    <tr><td>Export Excel</td><td class="check">Formato peticao (Art. 42 CDC)</td><td style="color:#aaa">Tabela simples</td></tr>
+    <tr><td>OCR integrado</td><td class="check">Tesseract.js</td><td style="color:#aaa">Desconhecido</td></tr>
+    <tr><td>Privacidade</td><td class="check">100% client-side</td><td class="cross">Dados vao ao servidor</td></tr>
+    <tr><td>Keywords</td><td class="val-good">413</td><td style="color:#aaa">265</td></tr>
+  </table>
+  <div class="slide-number">11</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 12: 15 CATEGORIAS ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2><span>15 categorias</span> com fundamento legal</h2>
+  <p>Cada categoria vem com artigo e sumula prontos para a peticao:</p>
+
+  <table style="font-size:15px">
+    <tr><th>#</th><th>Categoria</th><th>Fundamento Legal</th></tr>
+    <tr><td>1</td><td>Cobrancas Indevidas</td><td>Art. 3, Res. CMN 3.919/10; Sumula 297 STJ</td></tr>
+    <tr><td>2</td><td>Saque Terminal</td><td>Art. 3, Res. CMN 3.919/10; Sumula 297 STJ</td></tr>
+    <tr><td>3</td><td>Adiantamento ao Depositante</td><td>Art. 52 e 422, CC; Res. CMN 3.919/10</td></tr>
+    <tr><td>4</td><td>Pacotes e Cestas</td><td>Art. 3 e 4, Res. CMN 3.919/10; Art. 39, CDC</td></tr>
+    <tr><td>5</td><td>Encargos e IOF</td><td>Art. 52 e 422, CC; Dec. 6.306/07</td></tr>
+    <tr><td>6</td><td>Mora de Credito</td><td>Art. 52, par. 1, CDC; Sumula 379 STJ</td></tr>
+    <tr><td>7</td><td>Seguro</td><td>Art. 39, III, CDC; Sumula 473 STJ</td></tr>
+    <tr><td>8</td><td>Titulo de Capitalizacao</td><td>Art. 39, I e V, CDC; Sumula 473 STJ</td></tr>
+    <tr><td>9</td><td>Parcela de Credito Pessoal</td><td>Art. 52, CDC; Res. CMN 4.559/17</td></tr>
+    <tr><td>10</td><td>Anuidade e Cartao</td><td>Res. CMN 3.919/10; Art. 39, CDC</td></tr>
+    <tr><td>11</td><td>Emissao de Extrato</td><td>Art. 6, VIII, CDC; Res. CMN 3.919/10</td></tr>
+    <tr><td>12</td><td>Invest Facil</td><td>Art. 39, IV, CDC; Art. 422, CC</td></tr>
+    <tr><td>13</td><td>BX Antecipacao Financeira</td><td>Art. 52, par. 2, CDC; Res. CMN 3.516/07</td></tr>
+    <tr><td>14</td><td>Gastos com Cartao</td><td>Art. 52, CDC; Res. CMN 3.919/10</td></tr>
+    <tr><td>15</td><td>Outras Cobrancas</td><td>Art. 39, CDC; Res. CMN 3.919/10</td></tr>
+  </table>
+  <div class="slide-number">12</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 13: TOP CLIENTES ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2>Top clientes detectados <span>multi-banco</span></h2>
+
+  <table>
+    <tr><th>Cliente</th><th>Banco</th><th>Transacoes</th><th>Valor</th><th>Categorias</th></tr>
+    <tr><td>ADEMAR PINTO (OCR)</td><td>Bradesco</td><td class="val-neutral">214</td><td class="val-good">R$ 56.750</td><td>via OCR automatico</td></tr>
+    <tr><td>ZEILDO ALMEIDA</td><td>Bradesco</td><td class="val-neutral">467</td><td class="val-good">R$ 30.974</td><td>9 categorias, 93 pgs</td></tr>
+    <tr><td>ADAILTON DA SILVA</td><td>Bradesco</td><td class="val-neutral">443</td><td class="val-good">R$ 39.984</td><td>13 categorias</td></tr>
+    <tr><td>LEIDE NERY</td><td>Santander</td><td class="val-neutral">390</td><td class="val-good">R$ 6.066</td><td>encargos, mora, tarifas</td></tr>
+    <tr><td>LUIS CARLOS</td><td>Bradesco</td><td class="val-neutral">207</td><td class="val-good">R$ 9.555</td><td>7 categorias</td></tr>
+    <tr><td>CHARLY BASILIO</td><td>Santander</td><td class="val-neutral">99</td><td class="val-good">R$ 3.740</td><td>tit_cap, encargos</td></tr>
+    <tr><td>EDUARDO BARBOSA</td><td>Itau</td><td class="val-neutral">96</td><td class="val-good">R$ 2.956</td><td>encargos, tarifas</td></tr>
+    <tr><td>RAIMUNDO NONATO (OCR)</td><td>Itau</td><td class="val-neutral">90</td><td class="val-good">R$ 2.956</td><td>via OCR automatico</td></tr>
+  </table>
+  <div class="slide-number">13</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 14: TIMELINE ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2><span>8 dias.</span> 44 commits. Pronto para producao.</h2>
+
+  <table style="font-size:16px">
+    <tr><th>Data</th><th>Versao</th><th>Marco</th></tr>
+    <tr><td>29/mar</td><td>v1</td><td>Scaffold + parser Bradesco + deteccao de layout automatica</td></tr>
+    <tr><td>30/mar</td><td>v1.x</td><td>Sistema justEmitted, OCR pipeline, keywords expandidas</td></tr>
+    <tr><td>31/mar</td><td>v2</td><td><span class="highlight">Parser 2-pass bidirecional, 265 keywords, test suite completo</span></td></tr>
+    <tr><td>01/abr</td><td>v4-v6</td><td>IS_SEPARATE_TX guard, categoria Saque Terminal (13 categorias)</td></tr>
+    <tr><td>02/abr</td><td>v7</td><td>383 keywords multi-banco, export Excel formato peticao</td></tr>
+    <tr><td>03/abr</td><td>v8</td><td>Fallback "Ultimos Lancamentos", Excel formato Optijus</td></tr>
+    <tr><td>04/abr</td><td>v9-v10</td><td><span class="highlight">15 categorias, parsers Itau + Santander, batch 157 PDFs</span></td></tr>
+    <tr><td>05/abr</td><td>v11</td><td><span class="highlight">Score-based detection, Agibank, seguranca, 34 testes</span></td></tr>
+  </table>
+
+  <div class="metrics" style="margin-top:30px">
+    <div class="metric-card"><div class="number">1.676</div><div class="label">Linhas de codigo (parser)</div></div>
+    <div class="metric-card"><div class="number">805</div><div class="label">Linhas de codigo (frontend)</div></div>
+    <div class="metric-card green"><div class="number">34</div><div class="label">Testes unitarios</div></div>
+  </div>
+  <div class="slide-number">14</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 15: SEGURANCA ==================== -->
+<div class="slide">
+  <div class="brand">LEX FINDER</div>
+  <h2>Seguranca e <span>privacidade</span></h2>
+
+  <div class="metrics">
+    <div class="metric-card green"><div class="number" style="font-size:28px">100% Client-Side</div><div class="label">Dados NUNCA saem do browser</div></div>
+    <div class="metric-card green"><div class="number" style="font-size:28px">SRI + CSP</div><div class="label">Subresource Integrity + Content Security Policy</div></div>
+    <div class="metric-card green"><div class="number" style="font-size:28px">CI/CD</div><div class="label">GitHub Actions (test + build automatico)</div></div>
+  </div>
+
+  <ul class="green-bullets">
+    <li><span class="highlight">Extratos bancarios processados localmente</span> &mdash; nenhum dado e enviado a servidores externos</li>
+    <li><span class="highlight">SRI (Subresource Integrity)</span> &mdash; hashes SHA-384 validam integridade dos scripts CDN</li>
+    <li><span class="highlight">CSP (Content Security Policy)</span> &mdash; restringe fontes de scripts e recursos</li>
+    <li><span class="highlight">Security Headers</span> &mdash; X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy</li>
+    <li><span class="highlight">npm audit</span> &mdash; 0 vulnerabilidades nas 4 dependencias de producao</li>
+  </ul>
+
+  <div class="callout-blue">
+    O Optijus processa extratos em seus servidores &mdash; dados bancarios sensiveis trafegam pela internet.
+    O LEX FINDER nao. Tudo fica no computador do usuario.
+  </div>
+  <div class="slide-number">15</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ==================== SLIDE 16: FINAL ==================== -->
+<div class="slide final" style="background: linear-gradient(135deg, #0a0a2e 0%, #1a0a2a 50%, #2a0a1a 100%);">
+  <div class="brand">LEX FINDER</div>
+
+  <h2>A pergunta nao e<br>"<span>quanto custa o LEX FINDER</span>"</h2>
+
+  <div class="big-question">A pergunta e:<br>"quanto esta custando continuar com o Optijus?"</div>
+
+  <div class="metrics">
+    <div class="metric-card red"><div class="number">R$ 259K</div><div class="label">Valores fantasma em 4 clientes</div></div>
+    <div class="metric-card green"><div class="number">ZERO</div><div class="label">Falsos positivos no LEX FINDER</div></div>
+    <div class="metric-card"><div class="number">184</div><div class="label">PDFs processados com sucesso</div></div>
+  </div>
+
+  <div class="url">https://lexfinder.vercel.app</div>
+  <p style="margin-top:30px;font-size:16px;color:#556">AW LEGALTECH &mdash; Abril 2026</p>
+  <div class="slide-number">16</div>
+  <div class="footer-bar"></div>
+</div>
+
+</body>
+</html>
