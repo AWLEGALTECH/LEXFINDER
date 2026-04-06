@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "LEX FINDER — Extrator inteligente de cobranças indevidas em extratos bancários (RA Tecnologia / AW LEGALTECH)",
   "type": "module",
+  "engines": { "node": ">=20.0.0" },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
