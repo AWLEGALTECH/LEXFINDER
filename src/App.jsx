@@ -4,6 +4,62 @@ import { CATEGORIAS, THEME, matchCategoria, analyzeAll, parseDocumentoPDF } from
 const fmt = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 /* ─────────────────────────────────────────────
+   AUTH — SHA-256 hashed credentials
+───────────────────────────────────────────── */
+const HASH_EMAIL = "fc401c95244b15a0bb7398cf3983130bd130c4149036feec6413bed10311c0a8";
+const HASH_PASS  = "662fd63627ae81b42aa9ff339dd96a7e47f306c79aa1478c0dc083562696db53";
+
+async function hashSHA256(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
+function LoginScreen({ onLogin, error, attempts, loading }) {
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const blocked = attempts >= 5;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!blocked && !loading) onLogin(email, pass);
+  };
+
+  return (
+    <div style={{ minHeight:"100vh",background:"radial-gradient(ellipse 80% 50% at 50% 20%,rgba(59,130,246,0.1) 0%,transparent 60%),#020617",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Inter,sans-serif" }}>
+      <div style={{ width:"100%",maxWidth:400,animation:"mSlideUp 0.4s ease" }}>
+        <div style={{ textAlign:"center",marginBottom:32 }}>
+          <div style={{ width:52,height:52,borderRadius:14,background:"linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%)",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:900,color:"#fff",boxShadow:"0 0 32px rgba(59,130,246,0.5)",marginBottom:16 }}>§</div>
+          <div style={{ fontSize:22,fontWeight:800,color:"#f1f5f9",letterSpacing:"-0.5px" }}>LEX FINDER</div>
+          <div style={{ fontSize:13,color:"#475569",marginTop:4 }}>Análise de Descontos Indevidos</div>
+        </div>
+        <form onSubmit={handleSubmit} style={{ background:"rgba(12,19,35,0.7)",backdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:"2rem",boxShadow:"0 20px 60px rgba(0,0,0,0.5)" }}>
+          <div style={{ marginBottom:18 }}>
+            <label style={{ display:"block",fontSize:"0.68rem",fontWeight:700,letterSpacing:"2px",textTransform:"uppercase",color:"#475569",marginBottom:8 }}>E-mail</label>
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="seu@email.com" disabled={blocked||loading} autoComplete="email" style={{ width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 14px",color:"#f1f5f9",fontSize:"0.9rem",fontFamily:"Inter,sans-serif",outline:"none",transition:"border-color 0.2s" }} onFocus={e=>e.target.style.borderColor="rgba(59,130,246,0.5)"} onBlur={e=>e.target.style.borderColor="rgba(255,255,255,0.1)"} />
+          </div>
+          <div style={{ marginBottom:22 }}>
+            <label style={{ display:"block",fontSize:"0.68rem",fontWeight:700,letterSpacing:"2px",textTransform:"uppercase",color:"#475569",marginBottom:8 }}>Senha</label>
+            <div style={{ position:"relative" }}>
+              <input type={showPass?"text":"password"} value={pass} onChange={e=>setPass(e.target.value)} placeholder="••••••" disabled={blocked||loading} autoComplete="current-password" style={{ width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 14px",paddingRight:44,color:"#f1f5f9",fontSize:"0.9rem",fontFamily:"Inter,sans-serif",outline:"none",transition:"border-color 0.2s" }} onFocus={e=>e.target.style.borderColor="rgba(59,130,246,0.5)"} onBlur={e=>e.target.style.borderColor="rgba(255,255,255,0.1)"} />
+              <button type="button" onClick={()=>setShowPass(v=>!v)} style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#475569",cursor:"pointer",padding:4,fontSize:16 }}>{showPass?"🙈":"👁"}</button>
+            </div>
+          </div>
+          {error && <div style={{ marginBottom:14,padding:"10px 14px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.25)",borderRadius:8,color:"#f87171",fontSize:"0.78rem",fontWeight:600 }}>{error}</div>}
+          <button type="submit" disabled={blocked||loading} style={{ width:"100%",background:blocked?"rgba(255,255,255,0.04)":"linear-gradient(135deg,#3b82f6,#1d4ed8)",border:"none",borderRadius:10,padding:"13px",color:blocked?"#475569":"#fff",fontSize:"0.85rem",fontWeight:700,letterSpacing:"0.5px",cursor:blocked?"not-allowed":"pointer",transition:"all 0.2s",boxShadow:blocked?"none":"0 4px 20px rgba(59,130,246,0.4)" }}>
+            {loading ? "Verificando..." : blocked ? "Acesso bloqueado" : "Entrar"}
+          </button>
+        </form>
+        <div style={{ textAlign:"center",marginTop:24,display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontSize:11,color:"#334155" }}>
+          <div style={{ width:5,height:5,borderRadius:"50%",background:"#3b82f6",opacity:0.5 }}/>
+          Motor Ativo · RA TECNOLOGIA
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
    MODAL
 ───────────────────────────────────────────── */
 function Modal({ group, onClose, clientName, onExported, buildSheet, loadXLSX }) {
@@ -141,6 +197,7 @@ function CategoryCard({ cat, items, onClick, delay, downloaded, selected, onTogg
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Cell, PieChart, Pie } from "recharts";
 
 const CHART_COLORS = ["#3b82f6","#60a5fa","#93c5fd","#bfdbfe","#dbeafe"];
+const WARM_COLORS = ["#ef4444","#f97316","#eab308","#f59e0b","#dc2626","#fb923c","#fbbf24"];
 
 function SectionLabel({ children }) {
   return (
@@ -185,10 +242,10 @@ const CustomCountTooltip = ({ active, payload, label }) => {
   );
 };
 
-function AnalyticsDashboard({ groups }) {
+function AnalyticsDashboard({ groups, meta, totalValor, totalOcorrencias }) {
   const reemb = groups.filter(g => !g.cat.naoReembolsavel);
   const allItems = reemb.flatMap(g => g.items.map(it => ({ ...it, cat: g.cat })));
-  const byCategory = reemb.map(g => ({ name:g.cat.label.replace(" de ","\nde "), shortName:g.cat.label.split(" ")[0], valor:parseFloat(g.items.reduce((s,i)=>s+i.valor,0).toFixed(2)), ocorrencias:g.items.length }));
+  const byCategory = reemb.map(g => ({ name:g.cat.label.replace(" de ","\nde "), shortName:g.cat.label.split(" ")[0], valor:parseFloat(g.items.reduce((s,i)=>s+i.valor,0).toFixed(2)), ocorrencias:g.items.length })).sort((a,b)=>b.valor-a.valor);
   const monthly = {};
   for (const item of allItems) {
     const parts = item.data.split("/");
@@ -200,23 +257,73 @@ function AnalyticsDashboard({ groups }) {
     }
   }
   const timeline = Object.values(monthly).sort((a,b)=>a.key.localeCompare(b.key));
-  const totalValor = allItems.reduce((s,i)=>s+i.valor,0);
-  const mostValuableCat = [...groups].sort((a,b)=>b.items.reduce((s,i)=>s+i.valor,0)-a.items.reduce((s,i)=>s+i.valor,0))[0];
-  const mostFreqCat = [...groups].sort((a,b)=>b.items.length-a.items.length)[0];
-  const worstMonth = [...timeline].sort((a,b)=>b.valor-a.valor)[0];
   const avgPerOccurrence = totalValor/allItems.length;
-  const donutData = groups.map(g=>({ name:g.cat.label, value:parseFloat(g.items.reduce((s,i)=>s+i.valor,0).toFixed(2)) }));
+  const donutData = groups.map(g=>({ name:g.cat.label, value:parseFloat(g.items.reduce((s,i)=>s+i.valor,0).toFixed(2)) })).sort((a,b)=>b.value-a.value);
   const glassCard = { background:"rgba(12,19,35,0.65)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:14,padding:"1.4rem 1.6rem",backdropFilter:"blur(12px)" };
+  const clientName = meta?.clientName || "CLIENTE";
+  const banco = meta?.banco || "BANCO";
+  const dobro = totalValor * 2;
+  const topCats = byCategory.slice(0, 8);
+  const maxCatVal = topCats[0]?.valor || 1;
 
   return (
     <div style={{ marginTop:"2.5rem" }}>
-      <SectionLabel>Análise Gráfica do Relatório</SectionLabel>
-      <div style={{ display:"flex",gap:"0.85rem",flexWrap:"wrap",marginBottom:"1.4rem" }}>
-        <InsightCard delay={0} label="Categoria Mais Onerosa" value={mostValuableCat?.cat.label.split(" ")[0]||"—"} sub={`${fmt(mostValuableCat?.items.reduce((s,i)=>s+i.valor,0)||0)} em descontos`} icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>} />
-        <InsightCard delay={0.05} label="Mais Frequente" value={mostFreqCat?.cat.label.split(" ")[0]||"—"} sub={`${mostFreqCat?.items.length||0} ocorrências registradas`} icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
-        <InsightCard delay={0.1} label="Mês Mais Crítico" value={worstMonth?.label||"—"} sub={`${fmt(worstMonth?.valor||0)} em irregularidades`} icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>} />
-        <InsightCard delay={0.15} label="Média por Lançamento" value={fmt(avgPerOccurrence)} sub={`sobre ${allItems.length} descontos identificados`} icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} />
+
+      {/* ══════ HERO PUNCH ══════ */}
+      <div style={{ background:"linear-gradient(135deg, rgba(127,29,29,0.35) 0%, rgba(153,27,27,0.15) 40%, rgba(12,19,35,0.95) 100%)",border:"1px solid rgba(239,68,68,0.25)",borderRadius:18,padding:"2.5rem 2rem",textAlign:"center",marginBottom:"2rem",position:"relative",overflow:"hidden",animation:"cIn 0.4s ease" }}>
+        <div style={{ position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:300,height:300,borderRadius:"50%",background:"rgba(239,68,68,0.08)",filter:"blur(80px)",pointerEvents:"none" }}/>
+        <div style={{ position:"relative",zIndex:1 }}>
+          <div style={{ display:"inline-flex",alignItems:"center",gap:8,background:"rgba(239,68,68,0.12)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:20,padding:"6px 16px",marginBottom:20 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span style={{ fontSize:"0.7rem",fontWeight:700,letterSpacing:"2px",textTransform:"uppercase",color:"#ef4444" }}>Alerta de Cobranças Irregulares</span>
+          </div>
+          <div style={{ fontSize:"1.6rem",fontWeight:800,color:"#f1f5f9",letterSpacing:"-0.5px",marginBottom:6 }}>{clientName}</div>
+          <div style={{ fontSize:"1rem",fontWeight:400,color:"#94a3b8",marginBottom:14 }}>já perdeu</div>
+          <div style={{ fontSize:"3.5rem",fontWeight:900,color:"#ef4444",letterSpacing:"-2px",lineHeight:1,marginBottom:8,textShadow:"0 0 40px rgba(239,68,68,0.5),0 0 80px rgba(239,68,68,0.2)",animation:"redPulse 2.5s ease-in-out infinite" }}>{fmt(totalValor)}</div>
+          <div style={{ fontSize:"1.1rem",fontWeight:500,color:"#94a3b8",marginBottom:24 }}>para o <span style={{ color:"#f87171",fontWeight:700 }}>{banco}</span></div>
+          <div style={{ fontSize:"0.82rem",color:"#64748b",marginBottom:20 }}>
+            Em <span style={{ color:"#f1f5f9",fontWeight:700 }}>{totalOcorrencias}</span> cobranças irregulares identificadas
+            {meta?.periodo && meta.periodo !== "—" && <> no período de <span style={{ color:"#f1f5f9",fontWeight:600 }}>{meta.periodo}</span></>}
+          </div>
+          <div style={{ display:"inline-block",background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:12,padding:"14px 28px" }}>
+            <div style={{ fontSize:"0.6rem",fontWeight:700,letterSpacing:"2.5px",textTransform:"uppercase",color:"#4ade80",marginBottom:6 }}>Direito à Restituição em Dobro · Art. 42, CDC</div>
+            <div style={{ fontSize:"2rem",fontWeight:900,color:"#4ade80",letterSpacing:"-1px" }}>{fmt(dobro)}</div>
+          </div>
+        </div>
       </div>
+
+      {/* ══════ CARDS DE IMPACTO ══════ */}
+      <div style={{ display:"flex",gap:"0.85rem",flexWrap:"wrap",marginBottom:"1.4rem" }}>
+        <InsightCard delay={0} label="Total Cobrado Indevidamente" value={fmt(totalValor)} sub="descontado da conta sem autorização" accent="#ef4444" icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} />
+        <InsightCard delay={0.05} label="Cobranças Irregulares" value={`${totalOcorrencias}`} sub="lançamentos identificados no extrato" accent="#f97316" icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>} />
+        <InsightCard delay={0.1} label="Média por Lançamento" value={fmt(avgPerOccurrence)} sub={`sobre ${allItems.length} descontos`} accent="#eab308" icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>} />
+        <InsightCard delay={0.15} label="Restituição em Dobro" value={fmt(dobro)} sub="seu direito — Art. 42, CDC" accent="#22c55e" icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
+      </div>
+
+      {/* ══════ TOP CATEGORIAS — RANKING HORIZONTAL ══════ */}
+      <div style={{ ...glassCard,marginBottom:"1rem",borderColor:"rgba(239,68,68,0.12)" }}>
+        <div style={{ fontSize:"0.7rem",fontWeight:700,color:"#ef4444",letterSpacing:"1.5px",textTransform:"uppercase",marginBottom:"1.2rem",fontFamily:"Inter,sans-serif" }}>De Onde Vêm as Cobranças Irregulares</div>
+        {topCats.map((c,i) => {
+          const pct = ((c.valor/totalValor)*100).toFixed(1);
+          const barW = Math.max((c.valor/maxCatVal)*100, 2);
+          return (
+            <div key={i} style={{ display:"flex",alignItems:"center",gap:12,marginBottom:10,animation:`cIn 0.35s ease ${0.05*i}s both` }}>
+              <div style={{ width:24,textAlign:"right",fontSize:"0.72rem",fontWeight:800,color:"#475569",flexShrink:0 }}>{i+1}.</div>
+              <div style={{ flex:1,minWidth:0 }}>
+                <div style={{ display:"flex",justifyContent:"space-between",marginBottom:4 }}>
+                  <span style={{ fontSize:"0.78rem",fontWeight:600,color:"#e2e8f0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{c.name.replace("\n"," ")}</span>
+                  <span style={{ fontSize:"0.75rem",fontWeight:700,color:WARM_COLORS[i%WARM_COLORS.length],flexShrink:0,marginLeft:8 }}>{fmt(c.valor)} ({pct}%)</span>
+                </div>
+                <div style={{ width:"100%",height:6,background:"rgba(255,255,255,0.04)",borderRadius:3,overflow:"hidden" }}>
+                  <div style={{ width:`${barW}%`,height:"100%",background:`linear-gradient(90deg, ${WARM_COLORS[i%WARM_COLORS.length]}, ${WARM_COLORS[(i+1)%WARM_COLORS.length]})`,borderRadius:3,transition:"width 0.6s ease" }}/>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ══════ CHARTS ══════ */}
       <div style={{ display:"grid",gridTemplateColumns:"1fr 340px",gap:"1rem",marginBottom:"1rem" }}>
         <div style={{ ...glassCard }}>
           <div style={{ fontSize:"0.7rem",fontWeight:700,color:"#475569",letterSpacing:"1.5px",textTransform:"uppercase",marginBottom:"1.2rem",fontFamily:"Inter,sans-serif" }}>Valor por Categoria (R$)</div>
@@ -225,8 +332,8 @@ function AnalyticsDashboard({ groups }) {
               <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
               <XAxis dataKey="shortName" tick={{ fill:"#475569",fontSize:11,fontFamily:"Inter,sans-serif" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill:"#334155",fontSize:10,fontFamily:"Inter,sans-serif" }} axisLine={false} tickLine={false} tickFormatter={v=>`R$${v>=1000?(v/1000).toFixed(1)+"k":v}`} width={52} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill:"rgba(59,130,246,0.06)" }} />
-              <Bar dataKey="valor" radius={[5,5,0,0]}>{byCategory.map((_,i)=><Cell key={i} fill={`rgba(59,130,246,${0.85-i*0.12})`} />)}</Bar>
+              <Tooltip content={<CustomTooltip />} cursor={{ fill:"rgba(239,68,68,0.06)" }} />
+              <Bar dataKey="valor" radius={[5,5,0,0]}>{byCategory.map((_,i)=><Cell key={i} fill={WARM_COLORS[i%WARM_COLORS.length]} />)}</Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -234,16 +341,16 @@ function AnalyticsDashboard({ groups }) {
           <div style={{ fontSize:"0.7rem",fontWeight:700,color:"#475569",letterSpacing:"1.5px",textTransform:"uppercase",marginBottom:"1rem",fontFamily:"Inter,sans-serif" }}>Proporção por Categoria</div>
           <ResponsiveContainer width="100%" height={160}>
             <PieChart>
-              <Pie data={donutData} cx="50%" cy="50%" innerRadius={46} outerRadius={72} paddingAngle={3} dataKey="value" strokeWidth={0}>{donutData.map((_,i)=><Cell key={i} fill={CHART_COLORS[i%CHART_COLORS.length]} />)}</Pie>
-              <Tooltip formatter={(v)=>fmt(v)} contentStyle={{ background:"rgba(10,17,35,0.97)",border:"1px solid rgba(59,130,246,0.25)",borderRadius:8,fontFamily:"Inter,sans-serif",fontSize:12 }} itemStyle={{ color:"#60a5fa" }} />
+              <Pie data={donutData} cx="50%" cy="50%" innerRadius={46} outerRadius={72} paddingAngle={3} dataKey="value" strokeWidth={0}>{donutData.map((_,i)=><Cell key={i} fill={WARM_COLORS[i%WARM_COLORS.length]} />)}</Pie>
+              <Tooltip formatter={(v)=>fmt(v)} contentStyle={{ background:"rgba(10,17,35,0.97)",border:"1px solid rgba(239,68,68,0.25)",borderRadius:8,fontFamily:"Inter,sans-serif",fontSize:12 }} itemStyle={{ color:"#f87171" }} />
             </PieChart>
           </ResponsiveContainer>
           <div style={{ display:"flex",flexDirection:"column",gap:5,marginTop:"auto" }}>
             {donutData.map((d,i)=>(
               <div key={i} style={{ display:"flex",alignItems:"center",gap:7,fontSize:"0.72rem",color:"#475569",fontFamily:"Inter,sans-serif" }}>
-                <div style={{ width:8,height:8,borderRadius:2,background:CHART_COLORS[i%CHART_COLORS.length],flexShrink:0 }}/>
+                <div style={{ width:8,height:8,borderRadius:2,background:WARM_COLORS[i%WARM_COLORS.length],flexShrink:0 }}/>
                 <span style={{ flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{d.name}</span>
-                <span style={{ color:"#60a5fa",fontWeight:700 }}>{fmt(d.value)}</span>
+                <span style={{ color:WARM_COLORS[i%WARM_COLORS.length],fontWeight:700 }}>{fmt(d.value)}</span>
               </div>
             ))}
           </div>
@@ -257,23 +364,34 @@ function AnalyticsDashboard({ groups }) {
               <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="4 4" />
               <XAxis dataKey="label" tick={{ fill:"#475569",fontSize:10,fontFamily:"Inter,sans-serif" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill:"#334155",fontSize:10,fontFamily:"Inter,sans-serif" }} axisLine={false} tickLine={false} tickFormatter={v=>`R$${v>=1000?(v/1000).toFixed(1)+"k":v}`} width={52} />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke:"rgba(59,130,246,0.2)",strokeWidth:1 }} />
-              <Line type="monotone" dataKey="valor" stroke="#3b82f6" strokeWidth={2.5} dot={{ fill:"#3b82f6",strokeWidth:0,r:4 }} activeDot={{ r:6,fill:"#60a5fa" }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke:"rgba(239,68,68,0.2)",strokeWidth:1 }} />
+              <Line type="monotone" dataKey="valor" stroke="#ef4444" strokeWidth={2.5} dot={{ fill:"#ef4444",strokeWidth:0,r:4 }} activeDot={{ r:6,fill:"#f87171" }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       )}
-      <div style={{ ...glassCard }}>
+      <div style={{ ...glassCard,marginBottom:"1rem" }}>
         <div style={{ fontSize:"0.7rem",fontWeight:700,color:"#475569",letterSpacing:"1.5px",textTransform:"uppercase",marginBottom:"1.2rem",fontFamily:"Inter,sans-serif" }}>Frequência de Ocorrências por Categoria</div>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={byCategory} layout="vertical" barCategoryGap="25%">
             <CartesianGrid horizontal={false} stroke="rgba(255,255,255,0.04)" />
             <XAxis type="number" tick={{ fill:"#334155",fontSize:10,fontFamily:"Inter,sans-serif" }} axisLine={false} tickLine={false} />
             <YAxis type="category" dataKey="shortName" tick={{ fill:"#475569",fontSize:11,fontFamily:"Inter,sans-serif" }} axisLine={false} tickLine={false} width={72} />
-            <Tooltip content={<CustomCountTooltip />} cursor={{ fill:"rgba(59,130,246,0.05)" }} />
-            <Bar dataKey="ocorrencias" radius={[0,5,5,0]}>{byCategory.map((_,i)=><Cell key={i} fill={`rgba(96,165,250,${0.85-i*0.12})`} />)}</Bar>
+            <Tooltip content={<CustomCountTooltip />} cursor={{ fill:"rgba(239,68,68,0.05)" }} />
+            <Bar dataKey="ocorrencias" radius={[0,5,5,0]}>{byCategory.map((_,i)=><Cell key={i} fill={WARM_COLORS[i%WARM_COLORS.length]} />)}</Bar>
           </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* ══════ RODAPE LEGAL ══════ */}
+      <div style={{ background:"rgba(12,19,35,0.5)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:12,padding:"1.2rem 1.6rem",borderLeft:"3px solid rgba(239,68,68,0.4)" }}>
+        <div style={{ fontSize:"0.65rem",fontWeight:700,letterSpacing:"2px",textTransform:"uppercase",color:"#ef4444",marginBottom:8 }}>Fundamentação Legal</div>
+        <div style={{ fontSize:"0.78rem",color:"#64748b",lineHeight:1.7 }}>
+          <strong style={{ color:"#94a3b8" }}>Art. 42, CDC</strong> — O consumidor cobrado em quantia indevida tem direito à repetição do indébito, por valor igual ao dobro do que pagou em excesso, acrescido de correção monetária e juros legais.
+        </div>
+        <div style={{ fontSize:"0.78rem",color:"#64748b",lineHeight:1.7,marginTop:6 }}>
+          <strong style={{ color:"#94a3b8" }}>Art. 39, CDC</strong> — É vedado ao fornecedor de produtos ou serviços condicionar o fornecimento de produto ou serviço ao de outro produto ou serviço.
+        </div>
       </div>
     </div>
   );
@@ -283,6 +401,36 @@ function AnalyticsDashboard({ groups }) {
    MAIN APP
 ───────────────────────────────────────────── */
 export default function App() {
+  /* ── AUTH ── */
+  const [loggedIn, setLoggedIn] = useState(() => sessionStorage.getItem("lf_auth")==="1");
+  const [loginError, setLoginError] = useState("");
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  const handleLogin = useCallback(async (email, pass) => {
+    setLoginLoading(true);
+    setLoginError("");
+    try {
+      const [he, hp] = await Promise.all([hashSHA256(email.trim().toLowerCase()), hashSHA256(pass)]);
+      if (he === HASH_EMAIL && hp === HASH_PASS) {
+        sessionStorage.setItem("lf_auth","1");
+        setLoggedIn(true);
+      } else {
+        setLoginAttempts(a => a+1);
+        setLoginError(loginAttempts >= 4 ? "Acesso bloqueado. Recarregue a página." : "E-mail ou senha incorretos.");
+      }
+    } catch { setLoginError("Erro ao verificar credenciais."); }
+    finally { setLoginLoading(false); }
+  }, [loginAttempts]);
+
+  const handleLogout = useCallback(() => {
+    sessionStorage.removeItem("lf_auth");
+    setLoggedIn(false);
+    setLoginError("");
+    setLoginAttempts(0);
+  }, []);
+
+  /* ── APP STATE ── */
   const [phase, setPhase] = useState("upload");
   const [dragOver, setDragOver] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -495,6 +643,19 @@ export default function App() {
   const totalOcorrencias = reembolsaveis.reduce((s,g)=>s+g.items.length,0);
   const totalValor = reembolsaveis.reduce((s,g)=>s+g.items.reduce((ss,i)=>ss+i.valor,0),0);
 
+  /* ── LOGIN GATE ── */
+  if (!loggedIn) return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        body{background:#020617}
+        @keyframes mSlideUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+      `}</style>
+      <LoginScreen onLogin={handleLogin} error={loginError} attempts={loginAttempts} loading={loginLoading} />
+    </>
+  );
+
   return (
     <>
       <style>{`
@@ -513,6 +674,7 @@ export default function App() {
         @keyframes xPop{0%{transform:scale(0) rotate(20deg);opacity:0}60%{transform:scale(1.15) rotate(-4deg);opacity:1}80%{transform:scale(0.96) rotate(2deg)}100%{transform:scale(1) rotate(0deg);opacity:1}}
         @keyframes xRing{0%{transform:scale(0.6);opacity:0}50%{opacity:1}100%{transform:scale(1.7);opacity:0}}
         @keyframes warnPop{0%{transform:scale(0);opacity:0}65%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
+        @keyframes redPulse{0%,100%{transform:scale(1);text-shadow:0 0 40px rgba(239,68,68,0.5),0 0 80px rgba(239,68,68,0.2)}50%{transform:scale(1.02);text-shadow:0 0 60px rgba(239,68,68,0.7),0 0 100px rgba(239,68,68,0.35)}}
         .kpi-featured{transition:box-shadow 0.3s ease,border-color 0.3s ease;}
         .kpi-featured:hover{box-shadow:0 0 48px rgba(59,130,246,0.55),inset 0 1px 0 rgba(255,255,255,0.06) !important;border-color:rgba(59,130,246,0.75) !important;}
       `}</style>
@@ -527,9 +689,12 @@ export default function App() {
             <span style={{ color:"rgba(255,255,255,0.12)",margin:"0 6px" }}>|</span>
             <span style={{ fontSize:12,color:"#475569",fontWeight:400 }}>Análise de Descontos Indevidos</span>
           </div>
-          <div style={{ display:"flex",alignItems:"center",gap:6,background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.22)",borderRadius:20,padding:"5px 12px",fontSize:11,fontWeight:600,color:"#60a5fa" }}>
-            <div style={{ width:6,height:6,borderRadius:"50%",background:"#3b82f6",animation:"pulse 2s infinite",boxShadow:"0 0 6px #3b82f6" }}/>
-            Motor Ativo · RA TECNOLOGIA
+          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+            <div style={{ display:"flex",alignItems:"center",gap:6,background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.22)",borderRadius:20,padding:"5px 12px",fontSize:11,fontWeight:600,color:"#60a5fa" }}>
+              <div style={{ width:6,height:6,borderRadius:"50%",background:"#3b82f6",animation:"pulse 2s infinite",boxShadow:"0 0 6px #3b82f6" }}/>
+              Motor Ativo · RA TECNOLOGIA
+            </div>
+            <button onClick={handleLogout} style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:7,color:"#475569",fontSize:11,fontWeight:600,padding:"5px 10px",cursor:"pointer",transition:"all 0.2s",fontFamily:"Inter,sans-serif" }} onMouseEnter={e=>{e.currentTarget.style.color="#f87171";e.currentTarget.style.borderColor="rgba(239,68,68,0.3)";}} onMouseLeave={e=>{e.currentTarget.style.color="#475569";e.currentTarget.style.borderColor="rgba(255,255,255,0.08)";}}>Sair</button>
           </div>
         </header>
 
@@ -789,10 +954,10 @@ export default function App() {
                 <div style={{ marginTop:"1.8rem",display:"flex",justifyContent:"center" }}>
                   <button onClick={()=>setShowDashboard(v=>!v)} style={{ display:"flex",alignItems:"center",gap:10,background:showDashboard?"rgba(59,130,246,0.14)":"rgba(255,255,255,0.03)",border:showDashboard?"1px solid rgba(59,130,246,0.4)":"1px solid rgba(255,255,255,0.08)",borderRadius:12,color:showDashboard?"#60a5fa":"#475569",fontFamily:"Inter,sans-serif",fontSize:"0.78rem",fontWeight:600,letterSpacing:"0.5px",padding:"11px 24px",cursor:"pointer",transition:"all 0.22s ease",boxShadow:showDashboard?"0 0 24px rgba(59,130,246,0.2)":"none" }} onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(59,130,246,0.45)";e.currentTarget.style.color="#60a5fa";e.currentTarget.style.background="rgba(59,130,246,0.1)";}} onMouseLeave={e=>{e.currentTarget.style.borderColor=showDashboard?"rgba(59,130,246,0.4)":"rgba(255,255,255,0.08)";e.currentTarget.style.color=showDashboard?"#60a5fa":"#475569";e.currentTarget.style.background=showDashboard?"rgba(59,130,246,0.14)":"rgba(255,255,255,0.03)";}}>
                     {showDashboard?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
-                    {showDashboard?"Ocultar Análise Gráfica":"Ver Análise Gráfica dos Dados"}
+                    {showDashboard?"Ocultar Relatório":"Ver Relatório para o Cliente"}
                   </button>
                 </div>
-                {showDashboard && <AnalyticsDashboard groups={groups} />}
+                {showDashboard && <AnalyticsDashboard groups={groups} meta={meta} totalValor={totalValor} totalOcorrencias={totalOcorrencias} />}
               </>
             )}
           </div>
