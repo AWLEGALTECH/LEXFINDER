@@ -1,13 +1,25 @@
-// Vercel Edge Middleware — runs BEFORE any static file is served.
+// Vercel Routing Middleware — runs BEFORE any static file is served.
 // If the user has no valid session cookie, they get a login page (not the SPA).
-export const config = { matcher: ["/((?!api|_vercel|favicon\\.svg|favicon\\.ico).*)"] };
+import { next } from "@vercel/functions";
+
+export const config = {
+  matcher: ["/((?!api|_vercel|favicon\\.svg|favicon\\.ico).*)"],
+};
+
+function getCookie(request, name) {
+  const header = request.headers.get("cookie") || "";
+  const match = header.split(";").map(s => s.trim()).find(s => s.startsWith(name + "="));
+  return match ? match.slice(name.length + 1) : null;
+}
 
 export default async function middleware(request) {
-  const cookie = request.cookies.get("lf_session")?.value;
+  const cookie = getCookie(request, "lf_session");
 
   if (cookie) {
-    const [ts, sig] = cookie.split(".");
-    if (ts && sig) {
+    const dot = cookie.indexOf(".");
+    if (dot > 0) {
+      const ts = cookie.slice(0, dot);
+      const sig = cookie.slice(dot + 1);
       const secret = process.env.AUTH_SECRET;
       if (secret) {
         const key = await crypto.subtle.importKey(
@@ -19,7 +31,7 @@ export default async function middleware(request) {
 
         const age = Date.now() - Number(ts);
         if (sig === expected && age >= 0 && age < 86400000) {
-          return;           // valid session — serve the SPA normally
+          return next();  // valid session — serve the SPA normally
         }
       }
     }
