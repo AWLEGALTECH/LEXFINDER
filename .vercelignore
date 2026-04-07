@@ -1,2 +1,4 @@
 backend/
 tests/
+*.md
+*.traineddata
