@@ -1,16 +1,43 @@
 {
   "clientName": "CLAUDIA NAYARA LIRA LEMOS",
-  "totalOcorrencias": 129,
-  "totalValor": 6838.49,
+  "totalOcorrencias": 116,
+  "totalValor": 18362.89,
   "categorias": {
-    "outros": { "count": 1, "valor": 498.58 },
-    "encargos": { "count": 62, "valor": 3078.57 },
-    "seguros": { "count": 24, "valor": 208.00 },
-    "cesta": { "count": 2, "valor": 41.90 },
-    "invest_facil": { "count": 15, "valor": 11579.81 },
-    "tarifas": { "count": 1, "valor": 3.35 },
-    "extrato": { "count": 1, "valor": 3.35 },
-    "credito": { "count": 18, "valor": 1066.33 },
-    "mora": { "count": 20, "valor": 1938.41 }
+    "reg_lancamento": {
+      "count": 1,
+      "valor": 498.58
+    },
+    "seguros": {
+      "count": 24,
+      "valor": 208
+    },
+    "encargos": {
+      "count": 32,
+      "valor": 2889.35
+    },
+    "cesta": {
+      "count": 2,
+      "valor": 41.9
+    },
+    "invest_facil": {
+      "count": 16,
+      "valor": 11713.62
+    },
+    "tarifas": {
+      "count": 1,
+      "valor": 3.35
+    },
+    "extrato": {
+      "count": 1,
+      "valor": 3.35
+    },
+    "credito": {
+      "count": 19,
+      "valor": 1066.33
+    },
+    "mora": {
+      "count": 20,
+      "valor": 1938.41
+    }
   }
 }

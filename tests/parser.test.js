@@ -69,8 +69,13 @@ describe('matchCategoria', () => {
     expect(cat.id).toBe('bx_ant_financ');
   });
 
-  it('matches seguros', () => {
+  it('matches vida_prev (was seguros)', () => {
     const cat = matchCategoria('BRADESCO VIDA E PREVIDENCIA S/A');
+    expect(cat.id).toBe('vida_prev');
+  });
+
+  it('matches seguros', () => {
+    const cat = matchCategoria('SEGURO PRESTAMISTA');
     expect(cat.id).toBe('seguros');
   });
 
@@ -205,7 +210,7 @@ describe('IS_VALUE', () => {
 
 describe('CATEGORIAS', () => {
   it('has 15 categories', () => {
-    expect(CATEGORIAS).toHaveLength(15);
+    expect(CATEGORIAS).toHaveLength(22);
   });
 
   it('all have required fields', () => {

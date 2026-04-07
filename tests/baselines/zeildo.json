@@ -1,16 +1,39 @@
 {
   "clientName": "ZEILDO ALMEIDA FREITAS",
-  "totalOcorrencias": 467,
-  "totalValor": 30974.44,
+  "totalOcorrencias": 399,
+  "totalValor": 30940.03,
   "categorias": {
-    "encargos": { "count": 176, "valor": 1473.81 },
-    "anuidade": { "count": 5, "valor": 53.53 },
-    "gastos_cartao": { "count": 142, "valor": 22719.36 },
-    "tarifas": { "count": 2, "valor": 22.00 },
-    "saque_terminal": { "count": 7, "valor": 45.45 },
-    "cesta": { "count": 88, "valor": 1922.50 },
-    "credito": { "count": 10, "valor": 10.22 },
-    "mora": { "count": 35, "valor": 4636.91 },
-    "seguros": { "count": 2, "valor": 90.66 }
+    "encargos": {
+      "count": 108,
+      "valor": 1439.4
+    },
+    "gastos_cartao": {
+      "count": 144,
+      "valor": 22810.02
+    },
+    "tarifas": {
+      "count": 2,
+      "valor": 22
+    },
+    "anuidade": {
+      "count": 5,
+      "valor": 53.53
+    },
+    "saque_terminal": {
+      "count": 7,
+      "valor": 45.45
+    },
+    "cesta": {
+      "count": 88,
+      "valor": 1922.5
+    },
+    "credito": {
+      "count": 10,
+      "valor": 10.22
+    },
+    "mora": {
+      "count": 35,
+      "valor": 4636.91
+    }
   }
 }

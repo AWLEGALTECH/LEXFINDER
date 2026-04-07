@@ -39,3 +39,5 @@ tests/debug_*.mjs
 # ── OS ───────────────────────────────────────
 Thumbs.db
 Desktop.ini
+
+.vercel

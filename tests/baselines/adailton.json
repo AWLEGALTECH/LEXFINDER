@@ -1,20 +1,63 @@
 {
   "clientName": "ADAILTON DA SILVA PEREIRA",
-  "totalOcorrencias": 443,
-  "totalValor": 39984.86,
+  "totalOcorrencias": 439,
+  "totalValor": 45214.15,
   "categorias": {
-    "cesta": { "count": 88, "valor": 2290.92 },
-    "seguros": { "count": 31, "valor": 276.05 },
-    "encargos": { "count": 75, "valor": 3131.71 },
-    "credito": { "count": 31, "valor": 5218.53 },
-    "invest_facil": { "count": 8, "valor": 3770.52 },
-    "anuidade": { "count": 26, "valor": 516.22 },
-    "gastos_cartao": { "count": 24, "valor": 2132.10 },
-    "bx_ant_financ": { "count": 10, "valor": 8857.98 },
-    "mora": { "count": 108, "valor": 16414.57 },
-    "extrato": { "count": 21, "valor": 104.82 },
-    "tarifas": { "count": 1, "valor": 1.35 },
-    "saque_terminal": { "count": 2, "valor": 35.00 },
-    "adiantamento": { "count": 26, "valor": 1005.61 }
+    "cesta": {
+      "count": 91,
+      "valor": 2339.42
+    },
+    "seguros": {
+      "count": 31,
+      "valor": 276.05
+    },
+    "encargos": {
+      "count": 54,
+      "valor": 3091.71
+    },
+    "credito": {
+      "count": 34,
+      "valor": 6575.64
+    },
+    "invest_facil": {
+      "count": 8,
+      "valor": 3770.52
+    },
+    "gastos_cartao": {
+      "count": 24,
+      "valor": 2132.1
+    },
+    "mora": {
+      "count": 108,
+      "valor": 16414.57
+    },
+    "extrato": {
+      "count": 22,
+      "valor": 104.82
+    },
+    "saque_terminal": {
+      "count": 2,
+      "valor": 35
+    },
+    "anuidade": {
+      "count": 26,
+      "valor": 516.22
+    },
+    "tarifas": {
+      "count": 1,
+      "valor": 1.35
+    },
+    "adiantamento": {
+      "count": 26,
+      "valor": 957.11
+    },
+    "bx_ant_financ": {
+      "count": 11,
+      "valor": 8999.64
+    },
+    "vida_prev": {
+      "count": 1,
+      "valor": 0
+    }
   }
 }

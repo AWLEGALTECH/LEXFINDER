@@ -81,16 +81,16 @@ const CATEGORIAS = [
   },
   {
     id: "encargos",
-    label: "Encargos e IOF",
-    sublabel: "Encargos sobre limite de crédito e IOF",
+    label: "Encargos",
+    sublabel: "Encargos sobre limite de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["encargos limite de cred", "encargos limite credito", "encargos descoberto cc", "encargos descoberto", "encargos saldo vinculado", "encargo saldo vinculado", "encargos excesso limite", "encargos", "iof s/ utilizacao limite", "iof s/utilizacao", "iof s/", "encargos cheque especial", "encargos conta garantida", "encargos atraso", "encargos financeiros", "iof complementar",
+    keywords: ["encargos limite de cred", "encargos limite credito", "encargos descoberto cc", "encargos descoberto", "encargos saldo vinculado", "encargo saldo vinculado", "encargos excesso limite", "encargos", "encargos cheque especial", "encargos conta garantida", "encargos atraso", "encargos financeiros",
       // Multi-banco
-      "sob med encargos", "juros saldo devedor", "enc lis", "enc ch esp", "juros saldo utiliz ate limite", "juros saldo utiliz", "juros cheque especial", "enc limite", "iof imposto", "iof adicional", "iof"],
-    fundamento: "Art. 52 e 422, CC; Res. CMN 3.919/10; Dec. 6.306/07",
-    acao: "Verificar se houve efetiva utilização do limite. Encargos e IOF cobrados sem utilização ou em duplicidade são passíveis de repetição de indébito.",
-    descricao: "Encargo sobre Limite / IOF",
+      "sob med encargos", "juros saldo devedor", "enc lis", "enc ch esp", "juros saldo utiliz ate limite", "juros saldo utiliz", "juros cheque especial", "enc limite"],
+    fundamento: "Art. 52 e 422, CC; Res. CMN 3.919/10",
+    acao: "Verificar se houve efetiva utilização do limite. Encargos cobrados sem utilização ou em duplicidade são passíveis de repetição de indébito.",
+    descricao: "Encargo sobre Limite de Crédito",
   },
   {
     id: "mora",
@@ -98,7 +98,7 @@ const CATEGORIAS = [
     sublabel: "Juros de mora em operações de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["mora credito pessoal", "mora cred pess", "mora conta de telefone", "mora cta telef", "mora de operacao", "mora operacao de credito", "mora cartao de credito", "mora cartao", "mora encargos", "mora vida e previdencia", "mora enc descoberto", "mora enc descoberto c.c", "mora limite credito", "mora consignado", "mora financiamento", "mora cdc", "juros mora", "juros atraso", "juros de mora", "multa moratoria"],
+    keywords: ["mora credito pessoal", "mora credito pesso", "mora cred pess", "mora conta de telefone", "mora cta telef", "mora de operacao", "mora operacao de credito", "mora cartao de credito", "mora cartao", "mora encargos", "mora vida e previdencia", "mora enc descoberto", "mora enc descoberto c.c", "mora limite credito", "mora consignado", "mora financiamento", "mora cdc", "juros mora", "juros atraso", "juros de mora", "multa moratoria"],
     fundamento: "Art. 52, §1º, CDC; Súmula 379 STJ",
     acao: "Verificar legalidade da cobrança. Mora decorrente de cobranças indevidas é igualmente indevida. Pleitear cancelamento da mora sobre débitos contestados.",
     descricao: "Mora de Crédito",
@@ -106,16 +106,16 @@ const CATEGORIAS = [
   {
     id: "seguros",
     label: "Seguro",
-    sublabel: "Seguros e previdência cobrados indevidamente",
+    sublabel: "Seguros prestamista, morte e invalidez",
     icon: "!",
     ...THEME,
-    keywords: ["bradesco vida e previdencia s/a", "bradesco vida e previdencia", "bradesco vida e prev", "bradesco vida prev-seg", "bradesco vida prev", "bradesco seg-resid/outros", "bradesco seg-resid", "prev-seg", "vida e previdencia", "sabemi segurado", "sabemi", "seguro prestamista", "seguro protecao financeira", "seguro mais protegido", "seg protecao cheque esp", "seg protecao cheque", "seguro cart deb bradesco", "servico cartao protegido", "seguradora secon", "aspecir - uniao seguradora", "aspecir", "odontoprev s/a", "odontoprev", "mbm previdencia complementar", "mbm previdencia", "previplan clube", "previplan", "aquisicao/devolucao-seg", "liberty seguros", "viza prev seguros", "sebraseg clube de beneficios", "sebraseg", "sudamerica clube de servicos", "sudamerica clube", "previsul", "crefisa sa credito financiamento", "pagto eletron cobranca (brades resi)", "pagto eletron cobranca (vida pre)", "pagto eletron cobranca (dental saude)", "pagto eletron cobranca (ace seguradora", "pagto eletron cobranca (centro de assistencia)", "pagto eletron cobranca cenasp", "bradesco auto", "bradesco saude", "bradesco dental", "seguro residencial", "seguro vida", "seguro acidentes pessoais", "seguro desemprego", "seguro perda involuntaria", "zurich seguros", "mapfre seguros", "porto seguro", "pagto eletron cobranca (mapfre)", "pagto eletron cobranca (zurich)",
+    keywords: ["bradesco seg-resid/outros", "bradesco seg-resid", "sabemi segurado", "sabemi", "seguro prestamista", "seguro protecao financeira", "seguro mais protegido", "seg protecao cheque esp", "seg protecao cheque", "seguro cart deb bradesco", "servico cartao protegido", "seguradora secon", "aspecir - uniao seguradora", "aspecir", "odontoprev s/a", "odontoprev", "aquisicao/devolucao-seg", "liberty seguros", "viza prev seguros", "sebraseg clube de beneficios", "sebraseg", "sudamerica clube de servicos", "sudamerica clube", "previsul", "pagto eletron cobranca (brades resi)", "pagto eletron cobranca (dental saude)", "pagto eletron cobranca (ace seguradora", "pagto eletron cobranca (centro de assistencia)", "pagto eletron cobranca cenasp", "bradesco auto", "bradesco saude", "bradesco dental", "seguro residencial", "seguro vida", "seguro acidentes pessoais", "seguro desemprego", "seguro perda involuntaria", "zurich seguros", "mapfre seguros", "porto seguro", "pagto eletron cobranca (mapfre)", "pagto eletron cobranca (zurich)",
       // Itau
       "itau seg vida pf", "itau seg ap pf", "itau seg vida ap pf", "seguro residencia", "seguro cartao itau", "seguro cartao", "seguro lis", "seguro itau viva", "seguro bolsa protegida", "pagto itau seguros", "itau seguros",
       // BB
-      "seguro bb credito", "seguro credito protegido", "protecao ouro", "bb seguros", "bb seg", "bb prev", "bb previdencia", "brasilprev",
+      "seguro bb credito", "seguro credito protegido", "protecao ouro", "bb seguros", "bb seg",
       // Caixa
-      "caixa seg", "caixa seguradora", "caixa vida", "caixa previdencia",
+      "caixa seg", "caixa seguradora",
       // Santander
       "mensalidade de seguro", "santander seguros", "santander seg", "zurich santander",
       // Agibank
@@ -149,7 +149,7 @@ const CATEGORIAS = [
     sublabel: "Parcelas de empréstimos e operações de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "operacoes vencidas", "operacoes venvidas", "div. em atraso", "divida em atraso", "jbcred sociedade", "jbcred", "crefisa", "sudacred", "suda", "agiplan financeira", "agiplan", "easycob", "eagle", "pagto eletron cobranca (eagle)", "parcela emprestimo", "parcela financiamento", "amort emprestimo", "amortizacao emprestimo", "prestacao credito", "parcela consignado", "parcela cdc", "cdc credito",
+    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "jbcred sociedade", "jbcred", "crefisa", "sudacred", "suda", "agiplan financeira", "agiplan", "easycob", "eagle", "pagto eletron cobranca (eagle)", "parcela emprestimo", "parcela financiamento", "amort emprestimo", "amortizacao emprestimo", "prestacao credito", "parcela consignado", "parcela cdc", "cdc credito",
       // Multi-banco
       "cred pessoal", "bb cred", "consignado bb", "parcela cred", "consignado caixa", "siemp", "consignado santander",
       // Agibank
@@ -206,7 +206,7 @@ const CATEGORIAS = [
     sublabel: "Baixa antecipada de financiamento/empréstimo",
     icon: "!",
     ...THEME,
-    keywords: ["bx.ant.financ/emp", "bx.ant.fin/emp", "bx.ant.financ", "bx ant financ", "bx ant fin", "bx ant", "bx.antecipacao", "bx antecipacao", "baixa antecipada"],
+    keywords: ["bx.ant.financ/emp", "bx.ant.fin/emp", "bx.ant.financ", "bx ant financ", "bx ant fin", "bx ant", "bx.antecipacao", "bx antecipacao", "baixa antecipada", "liq.ant.financ", "liq ant financ", "liquidacao antecipada"],
     fundamento: "Art. 52, §2º, CDC; Art. 3º, Res. CMN 3.516/07",
     acao: "Baixa antecipada de contrato sem abatimento proporcional dos juros. Pleitear restituição da diferença conforme Art. 52, §2º, CDC.",
     descricao: "BX Antecipação Financeira",
@@ -225,12 +225,93 @@ const CATEGORIAS = [
     descricao: "Gasto com Cartão de Crédito",
   },
   {
+    id: "vida_prev",
+    label: "Vida e Previdência",
+    sublabel: "Cobranças de Bradesco Vida e Previdência",
+    icon: "!",
+    ...THEME,
+    keywords: ["bradesco vida e previdencia s/a", "bradesco vida e previdencia", "bradesco vida e prev", "bradesco vida prev-seg", "bradesco vida prev", "prev-seg", "vida e previdencia", "mbm previdencia complementar", "mbm previdencia", "previplan clube", "previplan", "pagto eletron cobranca (vida pre)", "previdencia complementar", "previdencia privada",
+      // BB
+      "bb previdencia", "bb prev", "brasilprev",
+      // Caixa
+      "caixa previdencia", "caixa vida"],
+    fundamento: "Art. 39, III, CDC; Súmula 473 STJ; Art. 757, CC",
+    acao: "Verificar se o produto de vida/previdência foi contratado voluntariamente. Cobranças sem consentimento expresso são abusivas. Pleitear cancelamento e devolução.",
+    descricao: "Vida e Previdência",
+  },
+  {
+    id: "extrato_movimento",
+    label: "Extrato Movimento",
+    sublabel: "Cobranças de extrato de movimentação",
+    icon: "!",
+    ...THEME,
+    keywords: ["extrato movimento", "extratomovimento", "extratomomovimento", "extrato mes anterior"],
+    fundamento: "Art. 6º, VIII, CDC; Res. CMN 3.919/10",
+    acao: "Cobrança por extrato de movimentação é abusiva. Emissão de extratos é direito do consumidor (Art. 6º, VIII, CDC). Pleitear devolução dos valores.",
+    descricao: "Extrato Movimento",
+  },
+  {
+    id: "mora_cel",
+    label: "Mora CEL",
+    sublabel: "Mora de conta Bradesco Celular",
+    icon: "!",
+    ...THEME,
+    keywords: ["mora cel", "mora celular", "mora bradesco celular"],
+    fundamento: "Art. 52, §1º, CDC; Súmula 379 STJ",
+    acao: "Verificar se a mora é devida. Mora sobre cobranças indevidas é igualmente indevida. Pleitear cancelamento.",
+    descricao: "Mora CEL",
+  },
+  {
+    id: "div_atraso",
+    label: "Dívida em Atraso",
+    sublabel: "Cobranças de dívida em atraso",
+    icon: "!",
+    ...THEME,
+    keywords: ["divida em atraso", "div. em atraso", "div.atraso", "div atraso", "dav.atraso", "divida atraso", "deb.valor atraso"],
+    fundamento: "Art. 52, CDC; Art. 397, CC",
+    acao: "Verificar se a dívida é legítima e se os encargos de atraso estão dentro dos limites legais. Contestar cobranças em duplicidade ou com juros abusivos.",
+    descricao: "Dívida em Atraso",
+  },
+  {
+    id: "reorg_finan",
+    label: "Reorganização Financeira",
+    sublabel: "Cobranças de reorganização financeira",
+    icon: "!",
+    ...THEME,
+    keywords: ["reorganizacao financeira", "reorg.financeira", "reorg financeira", "reorganizacao fin", "reorg finan"],
+    fundamento: "Art. 39, CDC; Res. CMN 3.919/10",
+    acao: "Verificar se houve contratação expressa de reorganização financeira. Contestar cobranças sem autorização.",
+    descricao: "Reorganização Financeira",
+  },
+  {
+    id: "op_vencidas",
+    label: "Operações Vencidas",
+    sublabel: "Cobranças de operações vencidas",
+    icon: "!",
+    ...THEME,
+    keywords: ["operacoes vencidas", "operacoes venvidas", "op.vencidas", "op vencidas", "operacao vencida"],
+    fundamento: "Art. 52, CDC; Art. 397, CC",
+    acao: "Verificar se as operações vencidas são legítimas. Contestar cobranças em duplicidade ou com cálculos incorretos.",
+    descricao: "Operações Vencidas",
+  },
+  {
+    id: "reg_lancamento",
+    label: "Regularização de Lançamento",
+    sublabel: "Cobranças de regularização de lançamento",
+    icon: "!",
+    ...THEME,
+    keywords: ["regularizacao de lancamento", "regularizacao lancamento", "reg.lancamento", "reg lancamento", "regularizacao manual", "regulariz manual"],
+    fundamento: "Art. 39, CDC; Res. CMN 3.919/10",
+    acao: "Verificar se a regularização de lançamento é justificada. Contestar cobranças sem fundamento contratual.",
+    descricao: "Regularização de Lançamento",
+  },
+  {
     id: "outros",
     label: "Outras Cobranças",
     sublabel: "Cobranças irregulares diversas",
     icon: "!",
     ...THEME,
-    keywords: ["msg", "regularizacao manual", "regularizacao lancamento", "reorganizacao financeira", "debito automatico", "doc/ted internet", "doc/ted - internet", "doc ted internet", "ted internet", "doc internet", "sms aviso", "notificacao sms", "tar notificacao", "debito automatico tarifa"],
+    keywords: ["msg", "debito automatico", "doc/ted internet", "doc/ted - internet", "doc ted internet", "ted internet", "doc internet", "sms aviso", "notificacao sms", "tar notificacao", "debito automatico tarifa"],
     fundamento: "Art. 39, CDC; Res. CMN 3.919/10",
     acao: "Verificar natureza da cobrança e se houve autorização contratual expressa. Solicitar memória de cálculo e contestar cobranças sem fundamento contratual.",
     descricao: "Cobrança Diversa",
@@ -247,6 +328,7 @@ function matchCategoria(historico) {
   let bestCat = null;
   let bestLen = 0;
   let bestPos = -1;
+  let bestKw = "";
   for (const cat of CATEGORIAS) {
     for (const kw of cat.keywords) {
       const nkw = normalizeText(kw);
@@ -256,6 +338,7 @@ function matchCategoria(historico) {
         bestLen = nkw.length;
         bestCat = cat;
         bestPos = pos;
+        bestKw = nkw;
       }
     }
   }
@@ -265,16 +348,51 @@ function matchCategoria(historico) {
     const sq = CATEGORIAS.find(c => c.id === "saque_terminal");
     if (sq) return sq;
   }
+  // Guard: "extratomovimento"/"extratomes" são prefixos que podem ser merged com texto
+  // não-relacionado (ex: "EXTRATOmovimento(E) TV POR ASSINATURA"). Vetar quando o texto
+  // após o keyword contém conteúdo alfabético significativo não-relacionado a extrato.
+  if (bestCat && bestCat.id === "extrato" && bestKw.startsWith("extratom")) {
+    const afterKw = h.slice(bestPos + bestLen).replace(/\([^)]*\)/g, "").trim();
+    const alphaOnly = afterKw.replace(/[0-9\s./-]/g, "");
+    if (alphaOnly.length > 3 && !/tarifa|emissao|extrato|2\s*via|via/.test(afterKw)) {
+      return null;
+    }
+  }
   return bestCat;
 }
 
 function analyzeAll(transactions) {
   const grouped = {};
+  const moraKw = "mora credito pesso"; // Short keyword matches corrupted text (PESSOAi, PESSOAl, etc.)
+
   for (const t of transactions) {
     const cat = matchCategoria(t.historico);
     if (!cat) continue;
     if (!grouped[cat.id]) grouped[cat.id] = { cat, items: [] };
     grouped[cat.id].items.push(t);
+
+    // Count hidden MORA occurrences in merged historicos
+    // e.g. "MORA CREDITO PESSOAL.! ENCARGOS LIMITE DE CRED" → primary=encargos, but also count 1 MORA
+    // e.g. "MORA CREDITO PESSOAL.: MORA CREDITO PESSOAL;" → primary=mora (1), count 1 extra MORA
+    const h = normalizeText(t.historico);
+    let moraCount = 0, searchFrom = 0;
+    while (true) {
+      const idx = h.indexOf(moraKw, searchFrom);
+      if (idx === -1) break;
+      moraCount++;
+      searchFrom = idx + moraKw.length;
+    }
+    // Subtract 1 if primary is already MORA (already counted above)
+    const extraMora = (cat.id === "mora" || cat.id === "mora_cel") ? moraCount - 1 : moraCount;
+    if (extraMora > 0) {
+      const moraCat = CATEGORIAS.find(c => c.id === "mora");
+      if (moraCat) {
+        if (!grouped["mora"]) grouped["mora"] = { cat: moraCat, items: [] };
+        for (let k = 0; k < extraMora; k++) {
+          grouped["mora"].items.push({ data: t.data, historico: t.historico, valor: null });
+        }
+      }
+    }
   }
   return grouped;
 }
@@ -438,7 +556,7 @@ const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
 const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:|^data\s*:\s*\d{2}\/\d{2}\/\d{4}|^nome\s*:\s*[A-Z]/i;
 // Detecta linhas de TOTAL / sumário do extrato — não são transações reais
 const IS_SUMMARY = /^\s*total\b|\btotal\s*$|[uú]ltimos\s+lan[cç]amentos/i;
-const IS_SEPARATE_TX = /\b(transfer[eê]ncia\s*pix|pix\s+(enviado|recebido|qrcode)|compra\s*(elo|visa|master|d[eé]bito|cr[eé]dito)|saque\s*(dinheiro|terminal|compartilhado|bradesco|pessoal|correspon|caixa|atm|taa|pv)|ted\s|dep[oó]sito\s|pagamento\s+(de\s+)?titulo|pagto\s|cr[eé]dito\s+de\s+sal[aá]rio|credito\s+salario|pgto\s+fornecedor)\b/i;
+const IS_SEPARATE_TX = /\b(transfer[eê]ncia\s*pix|pix\s+(enviado|recebido|qrcode)|compra\s*(elo|visa|master|d[eé]bito|cr[eé]dito)|saque\s*(dinheiro|terminal|compartilhado|bradesco|pessoal|correspon|caixa|atm|taa|pv|c\/c)|ted\s|dep[oó]sito\s|pagamento\s+(de\s+)?titulo|pagto\s|cr[eé]dito\s+de\s+sal[aá]rio|credito\s+salario|pgto\s+fornecedor|bx[\s.]*ant|iof\s)/i;
 // "SAQUEterminal", "SAQUEcorrespondente", etc. após "TARIFA BANCARIA" são DESCRITORES de tarifa,
 // não transações de saque real. Permitir merge nesse contexto.
 const IS_SAQUE_DESCRIPTOR = /\bsaque\s*(terminal|termi|correspondente|corre|pessoal|compartilhado|bradesco|dinheiro|caixa)/i;
@@ -463,6 +581,20 @@ function pickDebit(rowValues, cols) {
   // Fallback sem detecção de colunas: remove último (provável saldo), pega penúltimo
   const candidates = rowValues.length >= 2 ? rowValues.slice(0, -1) : rowValues;
   return candidates.length ? parseValor(candidates[candidates.length - 1].text) : null;
+}
+
+// Extrai valor do saldo (coluna saldoX) COM sinal preservado (para cálculo de delta)
+function pickSaldo(rowValues, cols) {
+  if (!rowValues.length || cols.saldoX === null) return null;
+  let best = null, bestDist = Infinity;
+  for (const rv of rowValues) {
+    const dist = Math.abs(rv.x - cols.saldoX);
+    if (dist < bestDist) { bestDist = dist; best = rv; }
+  }
+  if (!best || bestDist > 30) return null;
+  const clean = best.text.replace(/[DC]$/i, "").replace(/\./g, "").replace(",", ".");
+  const v = parseFloat(clean);
+  return isNaN(v) ? null : v; // Preservar sinal (NÃO usar Math.abs)
 }
 
 function clusterColumns(allValueItems) {
@@ -521,7 +653,8 @@ function extractFromRow(row, cols, skipDate) {
   const historico = histItems.map(i => i.text).join(" ").trim();
   const rowValues = row.items.filter(i => IS_VALUE.test(i.text));
   const debitVal = rowValues.length > 0 ? pickDebit(rowValues, cols) : null;
-  return { historico, debitVal };
+  const saldoVal = rowValues.length > 0 ? pickSaldo(rowValues, cols) : null;
+  return { historico, debitVal, saldoVal };
 }
 
 /* ── Pass 1: Classificar cada row (date / values / text / header / summary / empty) ── */
@@ -539,11 +672,11 @@ function classifyRows(allRows, cols, needsOCR) {
     if (!text) { classified.push({ type: "empty", ri }); continue; }
 
     // Headers and summaries
-    if (IS_HEADER.test(text) && !matchCategoria(text)) { classified.push({ type: "header", ri }); continue; }
+    if (IS_HEADER.test(text) && !matchCategoria(text)) { classified.push({ type: "header", ri, row }); continue; }
     if (IS_SUMMARY.test(text)) { classified.push({ type: "summary", ri }); continue; }
 
     if (isDateRow) {
-      const { historico, debitVal } = extractFromRow(row, cols, true);
+      const { historico, debitVal, saldoVal } = extractFromRow(row, cols, true);
       if (IS_SUMMARY.test(historico)) { classified.push({ type: "summary", ri }); continue; }
       classified.push({
         type: "date",
@@ -551,18 +684,20 @@ function classifyRows(allRows, cols, needsOCR) {
         date: first,
         historico,
         debitVal,
+        saldoVal,
         hasValues,
         rowValues,
         row,
       });
     } else if (hasValues) {
       // Row with values but no date
-      const { historico, debitVal } = extractFromRow(row, cols, false);
+      const { historico, debitVal, saldoVal } = extractFromRow(row, cols, false);
       classified.push({
         type: "values",
         ri,
         historico,
         debitVal,
+        saldoVal,
         hasValues: true,
         rowValues,
         row,
@@ -617,6 +752,18 @@ function assembleTransactions(classified, layout) {
   let justEmitted = false;
   // Pending transaction being built
   let pending = null;
+  // Saldo-delta tracking for transactions without explicit debit value (e.g. MORA)
+  let lastSaldo = null;
+
+  function updateSaldo(c) {
+    if (c.saldoVal !== null && c.saldoVal !== undefined) lastSaldo = c.saldoVal;
+  }
+
+  // Emit a categorized pending that has no explicit valor, using saldo-delta if possible
+  function emitNoValue(p) {
+    if (!p || !matchCategoria(p.historico)) return;
+    emit(p);
+  }
 
   for (let i = 0; i < classified.length; i++) {
     const c = classified[i];
@@ -625,6 +772,15 @@ function assembleTransactions(classified, layout) {
 
     if (c.type === "empty" || c.type === "header" || c.type === "summary") {
       if (c.type === "summary") { pending = null; justEmitted = false; }
+      // Reset state at period boundaries (new section headers like "Data Histórico", "Extrato de:")
+      if (c.type === "header" && c.row) {
+        const hText = c.row.items.map(it => it.text).join(" ");
+        if (/data\s+hist[oó]rico|extrato\s+de\s*:/i.test(hText)) {
+          if (pending && !pending.valor) emitNoValue(pending);
+          pending = null; justEmitted = false;
+          lastSaldo = null; // Reset saldo at period boundary
+        }
+      }
       continue;
     }
 
@@ -664,6 +820,7 @@ function assembleTransactions(classified, layout) {
         // Date with text but no values — start pending
         pending = { data: c.date, historico: c.historico, valor: null };
       }
+      updateSaldo(c);
 
     } else if (c.type === "text") {
       if (pending?.valor) { emit(pending); lastEmitted = pending; pending = null; justEmitted = "pending-close"; }
@@ -750,21 +907,37 @@ function assembleTransactions(classified, layout) {
           const extra = c.row.items.slice(0, firstValIdx).map(it => it.text).join(" ").trim();
           if (extra) {
             const extraCat = matchCategoria(extra);
-            if (extraCat && !matchCategoria(pending.historico)) {
-              // Extra has recognized category but pending doesn't (e.g. REM:/DES:) — separate
+            const pendingCat = matchCategoria(pending.historico);
+            if (extraCat && (!pendingCat || extraCat.id !== pendingCat.id)) {
+              // Extra has recognized category different from pending's — separate
               pending = { data: pending.data, historico: extra, valor: null };
+            } else if (!extraCat && /\biof\s/i.test(extra)) {
+              // IOF text on values row — don't absorb into pending (IOF is not contestable)
+              pending = null;
             } else {
               pending.historico = (pending.historico + " " + extra).trim();
             }
           }
         }
-        if (c.debitVal) {
+        if (pending && c.debitVal) {
           pending.valor = c.debitVal;
           emit(pending);
           lastEmitted = pending;
           justEmitted = firstValIdx === 0 ? "pending-close" : false;
+          pending = null;
+        } else if (pending && !c.debitVal && c.saldoVal != null && lastSaldo != null && matchCategoria(pending.historico)) {
+          // Saldo-delta: no explicit debit but saldo changed → compute from delta
+          // Guard: delta must be positive (debit reduces saldo) and saldo must have decreased
+          const delta = lastSaldo - c.saldoVal;
+          if (delta > 0.01) {
+            pending.valor = Math.round(delta * 100) / 100;
+            emit(pending);
+            lastEmitted = pending;
+          }
+          pending = null;
+        } else {
+          pending = null;
         }
-        pending = null;
       } else {
         // Standalone transaction
         if (c.debitVal) {
@@ -773,17 +946,33 @@ function assembleTransactions(classified, layout) {
           emit(t);
           lastEmitted = t;
           justEmitted = "standalone";
+        } else if (c.saldoVal != null && lastSaldo != null && matchCategoria(c.historico)) {
+          // Standalone values row with saldo-only + recognized category → saldo-delta
+          // Guard: delta must be positive (debit reduces saldo)
+          const delta = lastSaldo - c.saldoVal;
+          if (delta > 0.01) {
+            const date = layout === "superior" ? lastDate : null;
+            const t = { data: date, historico: c.historico, valor: Math.round(delta * 100) / 100 };
+            emit(t);
+            lastEmitted = t;
+            justEmitted = "standalone";
+          } else {
+            lastEmitted = { data: layout === "superior" ? lastDate : null, historico: c.historico, valor: null };
+            justEmitted = "standalone";
+          }
         } else {
           // Credit-only standalone — phantom
           lastEmitted = { data: layout === "superior" ? lastDate : null, historico: c.historico, valor: null };
           justEmitted = "standalone";
         }
       }
+      updateSaldo(c);
     }
   }
 
   // Final flush
   if (pending?.valor) { emit(pending); lastEmitted = pending; }
+  else if (pending) { emitNoValue(pending); }
   if (buffer.length > 0) flushBuffer(lastDate || "—");
 
   return allTransactions;
@@ -1551,17 +1740,27 @@ async function parseDocumentoPDF(file, onProgress) {
     const rows = groupByY(items, needsOCR ? 3 : 4); // OCR: tight tolerance (line-level Y já normaliza same-line words)
     const flat = items.map(i => i.text).join(" ");
     // Detectar posições X das 3 colunas de valores no cabeçalho da tabela
-    if (cols.debitoX === null) {
-      for (const item of items) {
-        if (/^cr[eé]dito/i.test(item.text) && cols.creditoX === null) cols.creditoX = item.x;
-        if (/^d[eé]bito/i.test(item.text) && cols.debitoX === null) cols.debitoX = item.x;
-        if (/^saldo/i.test(item.text) && cols.saldoX === null) cols.saldoX = item.x;
-      }
+    // Re-detectar em cada página que tem cabeçalho (suporta PDFs multi-período)
+    const pageCols = { creditoX: null, debitoX: null, saldoX: null };
+    for (const item of items) {
+      if (/^cr[eé]dito/i.test(item.text)) pageCols.creditoX = item.x;
+      if (/^d[eé]bito/i.test(item.text)) pageCols.debitoX = item.x;
+      if (/^saldo/i.test(item.text)) pageCols.saldoX = item.x;
     }
+    if (pageCols.debitoX !== null) {
+      Object.assign(cols, pageCols);
+    }
+
     // Separar páginas de "Últimos Lançamentos" (resumo que repete última transação)
-    if (/[uú]ltimos\s+lan[cç]amentos/i.test(flat)) {
-      ultimosPages.push({ rows, flat, items });
-      continue;
+    // Só descartar se a página é DEDICADA a "Últimos Lançamentos" (poucas transações)
+    const ultimosMarker = /[uú]ltimos\s+lan[cç]amentos/i;
+    if (ultimosMarker.test(flat)) {
+      const valueRowCount = rows.filter(r => r.items.some(i => IS_VALUE.test(i.text))).length;
+      if (valueRowCount <= 5) {
+        ultimosPages.push({ rows, flat, items });
+        continue;
+      }
+      // Página com muitas transações + "Últimos Lançamentos" no texto → processar normalmente
     }
     pageData.push({ rows, flat, items });
   }
@@ -1673,4 +1872,4 @@ async function parseDocumentoPDF(file, onProgress) {
   };
 }
 
-export { detectBank, BANK_PROFILES, CATEGORIAS, THEME, normalizeText, matchCategoria, analyzeAll, parseDocumentoPDF, parseValor, groupByY, pickDebit, detectLayout, extractFromRow, loadPdfJs, loadTesseract, ocrCleanText, ocrPage, OCR_SCALE, IS_DATE, IS_VALUE, IS_HEADER, IS_SUMMARY, preprocessCanvas, otsuThreshold, clusterColumns, validateWithBalance };
+export { detectBank, BANK_PROFILES, CATEGORIAS, THEME, normalizeText, matchCategoria, analyzeAll, parseDocumentoPDF, parseValor, groupByY, pickDebit, pickSaldo, detectLayout, extractFromRow, loadPdfJs, loadTesseract, ocrCleanText, ocrPage, OCR_SCALE, IS_DATE, IS_VALUE, IS_HEADER, IS_SUMMARY, preprocessCanvas, otsuThreshold, clusterColumns, validateWithBalance };

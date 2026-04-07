@@ -137,7 +137,7 @@ Fallback: Bradesco (se todos scores = 0).
 - **Docto** (ex: "0090126") NÃO é valor monetário — não tem vírgula decimal, não casa com IS_VALUE
 - **Continuações** (ex: "CESTA B.EXPRESSO4" abaixo de "TARIFA BANCARIA") — `lastPushed` permite append ao histórico
 
-## Categorias de Descontos (15)
+## Categorias de Descontos (22)
 
 | ID | Label | Keywords principais |
 |----|-------|-------------------|
@@ -145,17 +145,24 @@ Fallback: Bradesco (se todos scores = 0).
 | saque_terminal | Saque Terminal | saqueterminal, saquecorrespondente, saquepessoal |
 | adiantamento | Adiantamento ao Depositante | adiant.depositante, tar adiant.depositante |
 | cesta | Pacotes e Cestas | cesta, pacote de servicos, pserv, binclub |
-| encargos | Encargos e IOF | encargos limite de cred, iof s/ |
+| encargos | Encargos | encargos limite de cred, encargos cheque especial |
 | mora | Mora de Crédito | mora credito pessoal, mora cartao |
-| seguros | Seguro | bradesco vida e previdencia, seguro prestamista |
+| seguros | Seguro | seguro prestamista, seguro protecao financeira |
 | tit_cap | Título de Capitalização | tit cap, titulo capitalizacao |
 | credito | Parcela de Crédito Pessoal | emprestimo pessoal, parcela credito pessoal |
 | anuidade | Anuidade e Cartão | anuidade, cartao credito anuidade |
-| extrato | Emissão de Extrato | emissao extrato, extrato movimento, 2via de extrato |
+| extrato | Emissão de Extrato | emissao extrato, 2via de extrato |
 | invest_facil | Invest Fácil | invest facil, aplic.invest facil |
-| bx_ant_financ | BX Antecipação Financeira | bx.ant.financ/emp, bx ant financ, bx.antecipacao |
+| bx_ant_financ | BX Antecipação Financeira | bx.ant.financ/emp, bx ant financ, bx.antecipacao, liq.ant.financ |
 | gastos_cartao | Gastos com Cartão | gasto c/cartao de credito, gastos cartao credito |
-| outros | Outras Cobranças | msg, regularizacao manual, doc/ted internet |
+| vida_prev | Vida e Previdência | bradesco vida e previdencia, vida e previdencia, brasilprev |
+| extrato_movimento | Extrato Movimento | extrato movimento, extratomovimento, extrato mes anterior |
+| mora_cel | Mora CEL | mora cel, mora celular, mora bradesco celular |
+| div_atraso | Dívida em Atraso | divida em atraso, div. em atraso, div.atraso |
+| reorg_finan | Reorganização Financeira | reorganizacao financeira, reorg.financeira |
+| op_vencidas | Operações Vencidas | operacoes vencidas, op.vencidas |
+| reg_lancamento | Regularização de Lançamento | regularizacao manual, regularizacao lancamento |
+| outros | Outras Cobranças | msg, debito automatico, doc/ted internet |
 
 ## justEmitted — Controle de Fluxo do Parser
 
@@ -167,18 +174,18 @@ O parser usa `justEmitted` tipado (`true`, `"pending-close"`, `"standalone"`) co
 
 **CUIDADO:** Qualquer mudança no parser DEVE ser testada com TODOS os 7 cases. O equilíbrio Abel (2-line) vs Adailton (regular) vs Claudia (phantoms) vs Zeildo (93 pgs, 9 períodos) é crítico.
 
-## Test Cases Validados (v7 — 15 categorias, bx_ant_financ + gastos_cartao separados)
+## Test Cases Validados (v9 — saldo-delta + MORA multi-count + keyword fuzzy)
 
 | Case | Ocorrências | Valor | Categorias |
 |------|-------------|-------|------------|
-| ABEL MOTA NOGUEIRA | 105 | R$ 6.067,90 | 8 |
-| ADAILTON DA SILVA PEREIRA | 443 | R$ 39.984,86 | 13 |
+| ABEL MOTA NOGUEIRA | 110 | R$ 6.067,90 | 8 |
+| ADAILTON DA SILVA PEREIRA | 439 | R$ 45.214,15 | 14 |
 | ALCILENE PEREIRA PINHEIRO | 58 | R$ 7.455,35 | 7 |
-| ALEXANDRE LUIS BARBOSA | 58 | R$ 2.579,95 | 6 |
-| CLAUDIA NAYARA LIRA LEMOS | 129 | R$ 6.838,49 | 9 |
+| ALEXANDRE LUIS BARBOSA | 59 | R$ 2.579,95 | 6 |
+| CLAUDIA NAYARA LIRA LEMOS | 116 | R$ 18.362,89 | 9 |
 | DAVID PONCIANO DA SILVA | 8 | R$ 4.476,90 | 2 |
-| ZEILDO ALMEIDA FREITAS | 467 | R$ 30.974,44 | 9 |
-| LUIS CARLOS MARQUES | 207 | R$ 9.555,32 | 7 |
+| ZEILDO ALMEIDA FREITAS | 399 | R$ 30.940,03 | 8 |
+| LUIS CARLOS MARQUES | 168 | R$ 9.378,07 | 7 |
 
 Baselines em `tests/baselines/*.json`. Fixtures em `tests/fixtures/*.pdf`.
 
