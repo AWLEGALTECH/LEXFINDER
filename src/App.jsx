@@ -4,62 +4,6 @@ import { CATEGORIAS, THEME, matchCategoria, analyzeAll, parseDocumentoPDF } from
 const fmt = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 /* ─────────────────────────────────────────────
-   AUTH — SHA-256 hashed credentials
-───────────────────────────────────────────── */
-const HASH_EMAIL = "fc401c95244b15a0bb7398cf3983130bd130c4149036feec6413bed10311c0a8";
-const HASH_PASS  = "662fd63627ae81b42aa9ff339dd96a7e47f306c79aa1478c0dc083562696db53";
-
-async function hashSHA256(text) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
-}
-
-function LoginScreen({ onLogin, error, attempts, loading }) {
-  const [email, setEmail] = useState("");
-  const [pass, setPass] = useState("");
-  const [showPass, setShowPass] = useState(false);
-  const blocked = attempts >= 5;
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!blocked && !loading) onLogin(email, pass);
-  };
-
-  return (
-    <div style={{ minHeight:"100vh",background:"radial-gradient(ellipse 80% 50% at 50% 20%,rgba(59,130,246,0.1) 0%,transparent 60%),#020617",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Inter,sans-serif" }}>
-      <div style={{ width:"100%",maxWidth:400,animation:"mSlideUp 0.4s ease" }}>
-        <div style={{ textAlign:"center",marginBottom:32 }}>
-          <div style={{ width:52,height:52,borderRadius:14,background:"linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%)",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:900,color:"#fff",boxShadow:"0 0 32px rgba(59,130,246,0.5)",marginBottom:16 }}>§</div>
-          <div style={{ fontSize:22,fontWeight:800,color:"#f1f5f9",letterSpacing:"-0.5px" }}>LEX FINDER</div>
-          <div style={{ fontSize:13,color:"#475569",marginTop:4 }}>Análise de Descontos Indevidos</div>
-        </div>
-        <form onSubmit={handleSubmit} style={{ background:"rgba(12,19,35,0.7)",backdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:"2rem",boxShadow:"0 20px 60px rgba(0,0,0,0.5)" }}>
-          <div style={{ marginBottom:18 }}>
-            <label style={{ display:"block",fontSize:"0.68rem",fontWeight:700,letterSpacing:"2px",textTransform:"uppercase",color:"#475569",marginBottom:8 }}>E-mail</label>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="seu@email.com" disabled={blocked||loading} autoComplete="email" style={{ width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 14px",color:"#f1f5f9",fontSize:"0.9rem",fontFamily:"Inter,sans-serif",outline:"none",transition:"border-color 0.2s" }} onFocus={e=>e.target.style.borderColor="rgba(59,130,246,0.5)"} onBlur={e=>e.target.style.borderColor="rgba(255,255,255,0.1)"} />
-          </div>
-          <div style={{ marginBottom:22 }}>
-            <label style={{ display:"block",fontSize:"0.68rem",fontWeight:700,letterSpacing:"2px",textTransform:"uppercase",color:"#475569",marginBottom:8 }}>Senha</label>
-            <div style={{ position:"relative" }}>
-              <input type={showPass?"text":"password"} value={pass} onChange={e=>setPass(e.target.value)} placeholder="••••••" disabled={blocked||loading} autoComplete="current-password" style={{ width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 14px",paddingRight:44,color:"#f1f5f9",fontSize:"0.9rem",fontFamily:"Inter,sans-serif",outline:"none",transition:"border-color 0.2s" }} onFocus={e=>e.target.style.borderColor="rgba(59,130,246,0.5)"} onBlur={e=>e.target.style.borderColor="rgba(255,255,255,0.1)"} />
-              <button type="button" onClick={()=>setShowPass(v=>!v)} style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#475569",cursor:"pointer",padding:4,fontSize:16 }}>{showPass?"🙈":"👁"}</button>
-            </div>
-          </div>
-          {error && <div style={{ marginBottom:14,padding:"10px 14px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.25)",borderRadius:8,color:"#f87171",fontSize:"0.78rem",fontWeight:600 }}>{error}</div>}
-          <button type="submit" disabled={blocked||loading} style={{ width:"100%",background:blocked?"rgba(255,255,255,0.04)":"linear-gradient(135deg,#3b82f6,#1d4ed8)",border:"none",borderRadius:10,padding:"13px",color:blocked?"#475569":"#fff",fontSize:"0.85rem",fontWeight:700,letterSpacing:"0.5px",cursor:blocked?"not-allowed":"pointer",transition:"all 0.2s",boxShadow:blocked?"none":"0 4px 20px rgba(59,130,246,0.4)" }}>
-            {loading ? "Verificando..." : blocked ? "Acesso bloqueado" : "Entrar"}
-          </button>
-        </form>
-        <div style={{ textAlign:"center",marginTop:24,display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontSize:11,color:"#334155" }}>
-          <div style={{ width:5,height:5,borderRadius:"50%",background:"#3b82f6",opacity:0.5 }}/>
-          Motor Ativo · RA TECNOLOGIA
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────
    MODAL
 ───────────────────────────────────────────── */
 function Modal({ group, onClose, clientName, onExported, buildSheet, loadXLSX }) {
@@ -88,7 +32,7 @@ function Modal({ group, onClose, clientName, onExported, buildSheet, loadXLSX })
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
       onExported && onExported(cat.id);
-    } catch (err) { console.error("Erro ao exportar:", err); }
+    } catch { /* export failed silently */ }
     finally { setExporting(false); }
   }, [items, cat, buildSheet, loadXLSX]);
 
@@ -401,34 +345,8 @@ function AnalyticsDashboard({ groups, meta, totalValor, totalOcorrencias }) {
    MAIN APP
 ───────────────────────────────────────────── */
 export default function App() {
-  /* ── AUTH ── */
-  const [loggedIn, setLoggedIn] = useState(() => sessionStorage.getItem("lf_auth")==="1");
-  const [loginError, setLoginError] = useState("");
-  const [loginAttempts, setLoginAttempts] = useState(0);
-  const [loginLoading, setLoginLoading] = useState(false);
-
-  const handleLogin = useCallback(async (email, pass) => {
-    setLoginLoading(true);
-    setLoginError("");
-    try {
-      const [he, hp] = await Promise.all([hashSHA256(email.trim().toLowerCase()), hashSHA256(pass)]);
-      if (he === HASH_EMAIL && hp === HASH_PASS) {
-        sessionStorage.setItem("lf_auth","1");
-        setLoggedIn(true);
-      } else {
-        setLoginAttempts(a => a+1);
-        setLoginError(loginAttempts >= 4 ? "Acesso bloqueado. Recarregue a página." : "E-mail ou senha incorretos.");
-      }
-    } catch { setLoginError("Erro ao verificar credenciais."); }
-    finally { setLoginLoading(false); }
-  }, [loginAttempts]);
-
-  const handleLogout = useCallback(() => {
-    sessionStorage.removeItem("lf_auth");
-    setLoggedIn(false);
-    setLoginError("");
-    setLoginAttempts(0);
-  }, []);
+  /* ── AUTH (server-side via Edge Middleware — cookie httpOnly) ── */
+  const handleLogout = useCallback(() => { window.location.href = "/api/logout"; }, []);
 
   /* ── APP STATE ── */
   const [phase, setPhase] = useState("upload");
@@ -447,8 +365,12 @@ export default function App() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [multipleClientsWarning, setMultipleClientsWarning] = useState(null);
 
+  const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
   const addFiles = useCallback((fileList) => {
-    const pdfs = Array.from(fileList).filter(f => f.type==="application/pdf" || f.name.endsWith(".pdf"));
+    const pdfs = Array.from(fileList).filter(f => {
+      if (f.size > MAX_FILE_SIZE) { setErrorMsg(`Arquivo "${f.name}" excede 100MB e foi ignorado.`); return false; }
+      return f.type==="application/pdf" || f.name.endsWith(".pdf");
+    });
     if (!pdfs.length) return;
     setUploadedFiles(prev => { const existing=prev.map(f=>f.name); return [...prev,...pdfs.filter(f=>!existing.includes(f.name))]; });
   }, []);
@@ -467,8 +389,14 @@ export default function App() {
     const results = [];
     for (let i=0; i<files.length; i++) {
       const file = files[i]; setFileName(file.name);
-      try { const result = await parseDocumentoPDF(file,(page,total,ocr)=>setParseProgress({page,total,ocr})); results.push({result,file}); }
-      catch(err) { console.error(err); }
+      try {
+        const PARSE_TIMEOUT = 120_000;
+        const result = await Promise.race([
+          parseDocumentoPDF(file,(page,total,ocr)=>setParseProgress({page,total,ocr})),
+          new Promise((_,reject) => setTimeout(() => reject(new Error("Timeout: processamento excedeu 2 minutos")), PARSE_TIMEOUT))
+        ]);
+        results.push({result,file});
+      } catch(err) { setErrorMsg(prev => prev ? prev : `Erro ao processar "${file.name}": ${err.message}`); }
     }
     if (!results.length) { setErrorMsg("Não foi possível processar nenhum PDF. Verifique se os arquivos são documentos válidos."); setPhase("error"); return; }
     // ── Banco não suportado ──
@@ -564,11 +492,13 @@ export default function App() {
     }
   }, []);
 
+  const sanitizeXlsCell = (v) => typeof v === "string" && /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
+
   const buildSheet = useCallback((XLSX, cat, items) => {
     const header = ["Data", "Descrição", "Operação", "Valor"];
     const rows = items.map(item => {
       const { descricao, operacao } = extractDescricaoOperacao(item.historico, cat);
-      return [item.data, descricao, operacao, item.valor];
+      return [sanitizeXlsCell(item.data), sanitizeXlsCell(descricao), sanitizeXlsCell(operacao), item.valor];
     });
     const total = items.reduce((s, i) => s + i.valor, 0);
     const totalRow = ["VALOR TOTAL", "", "", total];
@@ -602,7 +532,7 @@ export default function App() {
       for (const item of items) {
         const { descricao, operacao } = extractDescricaoOperacao(item.historico, cat);
         rowStyles[wsData.length] = "data";
-        wsData.push([item.data, descricao, operacao, item.valor]);
+        wsData.push([sanitizeXlsCell(item.data), sanitizeXlsCell(descricao), sanitizeXlsCell(operacao), item.valor]);
       }
     }
     const grandTotal = groups.reduce((s, g) => s + g.items.reduce((ss, i) => ss + i.valor, 0), 0);
@@ -634,7 +564,7 @@ export default function App() {
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
       for (const g of selected) setDownloadedCats(prev => new Set([...prev, g.cat.id]));
-    } catch (err) { console.error("Erro ao exportar:", err); }
+    } catch { /* export failed silently */ }
     finally { setBatchExporting(false); }
   }, [grouped, selectedCats, loadXLSX, buildMultiSheet]);
 
@@ -642,19 +572,6 @@ export default function App() {
   const reembolsaveis = groups.filter(g => !g.cat.naoReembolsavel);
   const totalOcorrencias = reembolsaveis.reduce((s,g)=>s+g.items.length,0);
   const totalValor = reembolsaveis.reduce((s,g)=>s+g.items.reduce((ss,i)=>ss+i.valor,0),0);
-
-  /* ── LOGIN GATE ── */
-  if (!loggedIn) return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        body{background:#020617}
-        @keyframes mSlideUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
-      `}</style>
-      <LoginScreen onLogin={handleLogin} error={loginError} attempts={loginAttempts} loading={loginLoading} />
-    </>
-  );
 
   return (
     <>

@@ -383,7 +383,8 @@ function analyzeAll(transactions) {
       searchFrom = idx + moraKw.length;
     }
     // Subtract 1 if primary is already MORA (already counted above)
-    const extraMora = (cat.id === "mora" || cat.id === "mora_cel") ? moraCount - 1 : moraCount;
+    const MAX_EXTRA_MORA = 100;
+    const extraMora = Math.min((cat.id === "mora" || cat.id === "mora_cel") ? moraCount - 1 : moraCount, MAX_EXTRA_MORA);
     if (extraMora > 0) {
       const moraCat = CATEGORIAS.find(c => c.id === "mora");
       if (moraCat) {
@@ -485,7 +486,13 @@ function preprocessCanvas(ctx, width, height) {
 }
 
 async function ocrPage(pdfPage, worker, scale = OCR_SCALE) {
-  const viewport = pdfPage.getViewport({ scale });
+  const MAX_OCR_PIXELS = 25_000_000;
+  let viewport = pdfPage.getViewport({ scale });
+  if (viewport.width * viewport.height > MAX_OCR_PIXELS) {
+    const origViewport = pdfPage.getViewport({ scale: 1 });
+    scale = Math.sqrt(MAX_OCR_PIXELS / (origViewport.width * origViewport.height));
+    viewport = pdfPage.getViewport({ scale });
+  }
   const canvas = document.createElement("canvas");
   canvas.width = viewport.width;
   canvas.height = viewport.height;
@@ -1723,7 +1730,9 @@ async function parseDocumentoPDF(file, onProgress) {
     };
   }
 
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+  const MAX_PAGES = 500;
+  const totalPages = Math.min(pdf.numPages, MAX_PAGES);
+  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
     onProgress && onProgress(pageNum, pdf.numPages, needsOCR);
     const page = pageNum === 1 ? firstPage : await pdf.getPage(pageNum);
 
