@@ -31,7 +31,9 @@ const CATEGORIAS = [
       // Santander
       "tarifa mensalidade pacote servicos", "tarifa mensalidade", "tar mensalidade", "tarifa pagamentocontas", "tarifa aval.emerg.credito",
       // Agibank
-      "tarifa comunicacao digital", "tarifa comunicacao", "reserva cobranza vista"],
+      "tarifa comunicacao digital", "tarifa comunicacao", "reserva cobranza vista",
+      // 2ª via cartão/senha (cobranças de reemissão, não são "emissão de extrato")
+      "tar 2 via", "tarifa 2via"],
     fundamento: "Art. 3º, Res. CMN 3.919/10; Súmula 297 STJ",
     acao: "Pleitear restituição em dobro das tarifas cobradas sem prévia contratação expressa (Art. 42, CDC). Verificar se houve autorização expressa em contrato.",
     descricao: "Cobrança Indevida",
@@ -179,7 +181,7 @@ const CATEGORIAS = [
     sublabel: "Tarifas por extratos e segunda via",
     icon: "!",
     ...THEME,
-    keywords: ["emissao extrato", "tarifa emissao extrato", "emissao extratos unificado", "extratomes", "extratomomovimento", "extratomovimento", "extrato movimento", "extrato mes", "extrato mes anterior", "2via de extrato", "extrato unificado", "tar demonst.consolidade", "tar demonstr consolidado", "2 via cartaodebito", "tar 2 via cartao debito", "tar 2 via cartao", "2 via", "segunda via", "tarifa emissao doc", "tarifa 2via cartao", "tarifa 2via senha", "emissao comprovante", "emissao informe rendimentos",
+    keywords: ["emissao extrato", "tarifa emissao extrato", "emissao extratos unificado", "extratomes", "extrato mes", "2via de extrato", "extrato unificado", "tar demonst.consolidade", "tar demonstr consolidado", "segunda via", "tarifa emissao doc", "emissao comprovante", "emissao informe rendimentos",
       // Caixa
       "extmeselet"],
     fundamento: "Art. 6º, VIII, CDC; Res. CMN 3.919/10",
@@ -321,7 +323,9 @@ const CATEGORIAS = [
 function matchCategoria(historico) {
   const h = normalizeText(historico);
   // REM: = remetente de PIX/TED, DES: = destinatário — nunca são tarifas bancárias
-  if (/\brem\s*:/.test(h) || /\bdes\s*:/.test(h)) return null;
+  // Usar ^ (inicio da string) em vez de \b para não bloquear textos prepended
+  // Ex: "BRADESCO VIDA E PREVIDENCIA REM: CLAUDIO..." deve casar vida_prev
+  if (/^rem\s*:/.test(h) || /^des\s*:/.test(h)) return null;
   // Busca o match com keyword MAIS LONGA (mais específica) entre todas as categorias.
   // Desempate: keyword que aparece MAIS TARDE no texto é mais específica.
   // Ex: "TARIFA BANCARIA CESTA B.EXPRESSO" → "cesta b.expresso" (pos 16) vence "tarifa bancaria" (pos 0)
@@ -347,6 +351,22 @@ function matchCategoria(historico) {
   if (bestCat && bestCat.id === "tarifas" && /saque\s*(terminal|termi|correspondente|corre|pessoal|compartilhado|bradesco)/i.test(h)) {
     const sq = CATEGORIAS.find(c => c.id === "saque_terminal");
     if (sq) return sq;
+  }
+  // Reclassificação: "TARIFA BANCARIA 0020125 CESTA BENEFIC 1" → cesta
+  // "TARIFA BANCARIA" é prefixo genérico; a cobrança real é CESTA/PACOTE.
+  if (bestCat && bestCat.id === "tarifas" && /cesta|pacote\s+de\s+servico|pserv|binclub/i.test(h)) {
+    const cs = CATEGORIAS.find(c => c.id === "cesta");
+    if (cs) return cs;
+  }
+  // Guard: "EMPRESTIMO PESSOAL 1234567" sem prefixo parcela/amort é desembolso (crédito), não cobrança
+  if (bestCat && bestCat.id === "credito" && /^emprestimo\s+pessoal\b/i.test(h) && !/parcela|amort|prestacao|pagamento|parc\b/i.test(h)) {
+    return null;
+  }
+  // Reclassificação: "EXTRATOmovimento(E) TARIFA EMISSAO EXTRATO" → extrato_movimento
+  // O prefixo "extratomovimento"/"extrato movimento" indica extrato de movimentação
+  if (bestCat && bestCat.id === "extrato" && /^extrato\s*m(ovimento|es\s+anterior)/i.test(h)) {
+    const em = CATEGORIAS.find(c => c.id === "extrato_movimento");
+    if (em) return em;
   }
   // Guard: "extratomovimento"/"extratomes" são prefixos que podem ser merged com texto
   // não-relacionado (ex: "EXTRATOmovimento(E) TV POR ASSINATURA"). Vetar quando o texto
@@ -847,6 +867,16 @@ function assembleTransactions(classified, layout) {
           pending = { data: pending.data, historico: c.text, valor: null };
           continue;
         }
+        // Guard: pending already categorized + text has DIFFERENT category → separate transactions
+        // Ex: pending="CAPITALIZACAO 1259..." (tit_cap) + text="TARIFA BANCARIA..." (tarifas) → split
+        {
+          const pendingCat = matchCategoria(pending.historico);
+          if (pendingCat && c.categoria && c.categoria.id !== pendingCat.id) {
+            if (pending.valor) { emit(pending); lastEmitted = pending; }
+            pending = { data: pending.data, historico: c.text, valor: null };
+            continue;
+          }
+        }
         pending.historico = (pending.historico + " " + c.text).trim();
       } else if (justEmitted && lastEmitted) {
         // BIDIRECTIONAL DECISION: Is this text a detail of lastEmitted, or title of a new transaction?
@@ -864,6 +894,11 @@ function assembleTransactions(classified, layout) {
           // Exception: CESTA and SAQUE descriptors are sub-descriptions of TARIFA BANCARIA
           if (lastCat && lastCat.id === "tarifas" && (textCat.id === "cesta" || (textCat.id === "saque_terminal" && IS_SAQUE_DESCRIPTOR.test(c.text)))) {
             lastEmitted.historico = (lastEmitted.historico + " " + c.text).trim();
+          } else if (!lastCat && lastEmitted.valor) {
+            // lastEmitted has value but no category — text is keyword that categorizes it
+            // Prepend so category keyword comes first (avoids REM:/DES: prefix blocking matchCategoria)
+            // Ex: "PAGTO ELETRON COBRANCA 0000759" → "BRADESCO VIDA E PREVIDENCIA PAGTO ELETRON COBRANCA 0000759"
+            lastEmitted.historico = (c.text + " " + lastEmitted.historico).trim();
           } else {
             const date = layout === "superior" ? lastDate : null;
             if (date || layout === "inferior") {
@@ -930,7 +965,9 @@ function assembleTransactions(classified, layout) {
           pending.valor = c.debitVal;
           emit(pending);
           lastEmitted = pending;
-          justEmitted = firstValIdx === 0 ? "pending-close" : false;
+          // Allow continuation when pending has no category (next text may categorize it)
+          // Ex: "PAGTO ELETRON COBRANCA 0000759" (no cat) + next text "BRADESCO VIDA E PREVIDENCIA" → append
+          justEmitted = (firstValIdx === 0 || !matchCategoria(pending.historico)) ? "pending-close" : false;
           pending = null;
         } else if (pending && !c.debitVal && c.saldoVal != null && lastSaldo != null && matchCategoria(pending.historico)) {
           // Saldo-delta: no explicit debit but saldo changed → compute from delta
@@ -1871,13 +1908,22 @@ async function parseDocumentoPDF(file, onProgress) {
   const classified = classifyRows(allRows, cols, needsOCR);
   const allTransactions = assembleTransactions(classified, layout);
 
+  // Dedup: Bradesco PDFs podem repetir seções (Últimos Lançamentos, períodos sobrepostos)
+  const seen = new Set();
+  const deduped = allTransactions.filter(t => {
+    const key = `${t.data}|${t.historico}|${t.valor}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
   return {
     clientName: clientName || "Titular não identificado",
     agencia,
     conta,
     banco: bankProfile.name,
     periodo: periodo || "—",
-    transactions: allTransactions,
+    transactions: deduped,
   };
 }
 
