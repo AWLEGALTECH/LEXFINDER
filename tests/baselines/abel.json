@@ -1,19 +1,19 @@
 {
   "clientName": "ABEL MOTA NOGUEIRA",
-  "totalOcorrencias": 110,
-  "totalValor": 6067.9,
+  "totalOcorrencias": 104,
+  "totalValor": 5816.16,
   "categorias": {
     "cesta": {
-      "count": 9,
-      "valor": 238.7
+      "count": 10,
+      "valor": 283.2
     },
-    "extrato": {
-      "count": 6,
-      "valor": 60.7
+    "tarifas": {
+      "count": 4,
+      "valor": 16.2
     },
     "tit_cap": {
-      "count": 31,
-      "valor": 1283.49
+      "count": 25,
+      "valor": 1031.75
     },
     "credito": {
       "count": 10,
@@ -24,12 +24,16 @@
       "valor": 3868.35
     },
     "adiantamento": {
-      "count": 14,
-      "valor": 264.95
+      "count": 13,
+      "valor": 259.85
     },
     "encargos": {
       "count": 8,
       "valor": 65.19
+    },
+    "extrato": {
+      "count": 2,
+      "valor": 5.1
     },
     "vida_prev": {
       "count": 1,

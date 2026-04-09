@@ -378,6 +378,18 @@ function matchCategoria(historico) {
       return null;
     }
   }
+  // Guard: contaminated merge detection for MORA — if text AFTER the MORA keyword
+  // contains separate-transaction patterns (compra, saque, dep, etc.), this historico was
+  // likely formed by groupByY merging two adjacent PDF rows into one.
+  // MORA entries never have purchases/withdrawals/deposits as sub-descriptions.
+  // Restrict to mora/mora_cel to avoid false negatives in other categories where
+  // patterns like "SAQUEterminal" ARE legitimate sub-descriptions of TARIFA.
+  if (bestCat && (bestCat.id === "mora" || bestCat.id === "mora_cel") && bestPos >= 0) {
+    const afterKw = h.slice(bestPos + bestLen);
+    if (/\b(compra\s*(elo|visa|master|debito|credito)|saque\s+dinheiro|dep\s+(dinheiro|corban|cheque)|deposito\s+(dinheiro|corban)|especie\b|rem[\s:\-]|transferencia\s*pix|pix\s+(enviado|recebido)|credito\s+de\s+salario)/i.test(afterKw)) {
+      return null;
+    }
+  }
   return bestCat;
 }
 

@@ -11,9 +11,9 @@
       "count": 144,
       "valor": 22810.02
     },
-    "tarifas": {
-      "count": 2,
-      "valor": 22
+    "cesta": {
+      "count": 90,
+      "valor": 1944.5
     },
     "anuidade": {
       "count": 5,
@@ -22,10 +22,6 @@
     "saque_terminal": {
       "count": 7,
       "valor": 45.45
-    },
-    "cesta": {
-      "count": 88,
-      "valor": 1922.5
     },
     "credito": {
       "count": 10,

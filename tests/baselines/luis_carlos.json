@@ -1,35 +1,39 @@
 {
   "clientName": "LUIS CARLOS MARQUES DE ALMEIDA",
-  "totalOcorrencias": 168,
-  "totalValor": 9378.07,
+  "totalOcorrencias": 172,
+  "totalValor": 9969.97,
   "categorias": {
     "encargos": {
-      "count": 45,
-      "valor": 1924.14
+      "count": 46,
+      "valor": 1987.86
     },
     "cesta": {
-      "count": 49,
-      "valor": 1871.22
+      "count": 50,
+      "valor": 1913
     },
     "mora": {
       "count": 18,
       "valor": 2936.95
     },
     "extrato": {
-      "count": 4,
-      "valor": 11.35
+      "count": 3,
+      "valor": 3.25
     },
     "credito": {
-      "count": 27,
-      "valor": 2406.89
+      "count": 31,
+      "valor": 2960.11
     },
     "adiantamento": {
-      "count": 5,
-      "valor": 181.12
+      "count": 4,
+      "valor": 117.4
+    },
+    "tarifas": {
+      "count": 1,
+      "valor": 8.1
     },
     "saque_terminal": {
-      "count": 20,
-      "valor": 46.4
+      "count": 19,
+      "valor": 43.3
     }
   }
 }
