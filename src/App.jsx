@@ -409,7 +409,7 @@ export default function App() {
     for (let i=0; i<files.length; i++) {
       const file = files[i]; setFileName(file.name);
       try {
-        const PARSE_TIMEOUT = 600_000; // 10min — OCR em PDFs grandes pode levar vários minutos
+        const PARSE_TIMEOUT = 1_800_000; // 30min — OCR de PDFs grandes (45+ páginas) pode levar 10-15 min
         const result = await Promise.race([
           parseDocumentoPDF(file,(page,total,ocr)=>setParseProgress({page,total,ocr})),
           new Promise((_,reject) => setTimeout(() => reject(new Error("Timeout: processamento excedeu 10 minutos")), PARSE_TIMEOUT))

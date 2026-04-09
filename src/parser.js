@@ -453,7 +453,7 @@ async function loadPdfJs() {
 }
 
 /* ── OCR Fallback (PDFs com texto renderizado como paths vetoriais) ── */
-const OCR_SCALE = 4; // 4x = ~288 DPI — mais pixels entre rows, melhor segmentacao
+const OCR_SCALE = 2; // 2x = ~144 DPI — bom para texto impresso, 4x mais rápido que scale=4
 
 async function loadTesseract() {
   if (window.__tesseractWorker) return window.__tesseractWorker;
