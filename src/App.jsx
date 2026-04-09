@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { CATEGORIAS, THEME, matchCategoria, analyzeAll, parseDocumentoPDF } from "./parser.js";
 
 const fmt = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -192,7 +192,7 @@ function AnalyticsDashboard({ groups, meta, totalValor, totalOcorrencias }) {
   const byCategory = reemb.map(g => ({ name:g.cat.label.replace(" de ","\nde "), shortName:g.cat.label.split(" ")[0], valor:parseFloat(g.items.reduce((s,i)=>s+i.valor,0).toFixed(2)), ocorrencias:g.items.length })).sort((a,b)=>b.valor-a.valor);
   const monthly = {};
   for (const item of allItems) {
-    const parts = item.data.split("/");
+    const parts = (item.data || "").split("/");
     if (parts.length===3) {
       const key=`${parts[2]}-${parts[1]}`, label=`${parts[1]}/${parts[2]}`;
       if (!monthly[key]) monthly[key]={ key, label, valor:0, ocorrencias:0 };
@@ -339,6 +339,25 @@ function AnalyticsDashboard({ groups, meta, totalValor, totalOcorrencias }) {
       </div>
     </div>
   );
+}
+
+/* ─────────────────────────────────────────────
+   ERROR BOUNDARY (previne tela branca no dashboard)
+───────────────────────────────────────────── */
+class DashboardErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ margin:"2rem 0", padding:"1.5rem", background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:12, textAlign:"center" }}>
+          <p style={{ color:"#f87171", fontWeight:700, marginBottom:6 }}>Erro ao renderizar o relatório</p>
+          <p style={{ color:"#64748b", fontSize:"0.82rem" }}>Tente recarregar a página. Se o problema persistir, entre em contato.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 /* ─────────────────────────────────────────────
@@ -874,7 +893,7 @@ export default function App() {
                     {showDashboard?"Ocultar Relatório":"Ver Relatório para o Cliente"}
                   </button>
                 </div>
-                {showDashboard && <AnalyticsDashboard groups={groups} meta={meta} totalValor={totalValor} totalOcorrencias={totalOcorrencias} />}
+                {showDashboard && <DashboardErrorBoundary><AnalyticsDashboard groups={groups} meta={meta} totalValor={totalValor} totalOcorrencias={totalOcorrencias} /></DashboardErrorBoundary>}
               </>
             )}
           </div>
