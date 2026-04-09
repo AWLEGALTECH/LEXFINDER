@@ -458,7 +458,9 @@ const OCR_SCALE = 4; // 4x = ~288 DPI — mais pixels entre rows, melhor segment
 async function loadTesseract() {
   if (window.__tesseractWorker) return window.__tesseractWorker;
   const { createWorker } = await import("tesseract.js");
-  const worker = await createWorker("por");
+  const worker = await createWorker("por", 1, {
+    langPath: "/tesseract",  // Servido localmente de public/tesseract/por.traineddata
+  });
   // PSM 3 = "Fully automatic page segmentation" — default, melhor para pagina completa
   // A separação de linhas é feita pelo strip detection, não pelo Tesseract
   await worker.setParameters({ tessedit_pageseg_mode: "3" });
