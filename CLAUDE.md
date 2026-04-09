@@ -7,8 +7,8 @@ Ferramenta jurídica multi-banco que analisa extratos bancários em PDF e identi
 **Cliente:** RA Reclame AI (empresa de tecnologia, cliente da AW LEGALTECH)
 **Desenvolvido por:** AW LEGALTECH (João Winícius)
 **Repo:** `AWLEGALTECH/LEXFINDER` (privado, branch `master`)
-**Deploy:** Vercel — https://lexfinder.vercel.app
-**Time Vercel:** `awlegaltech-5909s-projects` (projectId: `prj_Q3S6Fq8S1WhUN8YH92bFxkZEuwih`)
+**Deploy:** Vercel — https://lexfinder-app.vercel.app
+**Time Vercel:** `awlegaltech-5909s-projects` (projectId: `prj_1xl4mfnBjHXW2VliEf4eqwyKNtMi`)
 
 ## Stack
 
