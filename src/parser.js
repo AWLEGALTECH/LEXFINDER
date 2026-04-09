@@ -1780,8 +1780,13 @@ async function parseDocumentoPDF(file, onProgress) {
     // PDFs com CIDFont/encoding quebrado: items existem mas texto é garbage (control chars)
     const sampleText = firstItems.slice(0, 200).map(it => it.str).join("");
     if (!/[a-zA-ZÀ-ÿ]{2,}/.test(sampleText)) {
-      needsOCR = true;
-      ocrWorker = await loadTesseract();
+      try {
+        needsOCR = true;
+        ocrWorker = await loadTesseract();
+      } catch (e) {
+        needsOCR = false;
+        console.warn("Tesseract load failed, falling back to text extraction:", e);
+      }
     }
   }
 
@@ -1963,6 +1968,57 @@ async function parseDocumentoPDF(file, onProgress) {
     seen.add(key);
     return true;
   });
+
+  // ── Fallback OCR: texto extraído não produziu transações → tentar OCR ──
+  if (deduped.length === 0 && !needsOCR && bankProfile.id === "bradesco") {
+    try {
+      const ocrFallbackWorker = await loadTesseract();
+      const ocrPageData = [];
+      const ocrCols = { creditoX: null, debitoX: null, saldoX: null };
+      for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+        onProgress && onProgress(pageNum, totalPages, true);
+        const page = pageNum === 1 ? firstPage : await pdf.getPage(pageNum);
+        const ocrResult = await ocrPage(page, ocrFallbackWorker, OCR_SCALE);
+        const rows = groupByY(ocrResult.items, 3);
+        const flat = ocrResult.items.map(i => i.text).join(" ");
+        for (const item of ocrResult.items) {
+          if (/^cr[eé]dito/i.test(item.text)) ocrCols.creditoX = item.x;
+          if (/^d[eé]bito/i.test(item.text)) ocrCols.debitoX = item.x;
+          if (/^saldo/i.test(item.text)) ocrCols.saldoX = item.x;
+        }
+        ocrPageData.push({ rows, flat, items: ocrResult.items });
+      }
+      if (ocrCols.debitoX === null) {
+        const allOcrValues = ocrPageData.flatMap(p => p.items.filter(i => IS_VALUE.test(i.text)));
+        const clustered = clusterColumns(allOcrValues);
+        if (clustered) Object.assign(ocrCols, clustered);
+      }
+      const ocrRows = ocrPageData.flatMap(p => p.rows);
+      const ocrLayout = detectLayout(ocrRows);
+      const ocrClassified = classifyRows(ocrRows, ocrCols, true);
+      const ocrTransactions = assembleTransactions(ocrClassified, ocrLayout);
+      if (ocrTransactions.length > 0) {
+        const ocrSeen = new Set();
+        const ocrDeduped = ocrTransactions.filter(t => {
+          const key = `${t.data}|${t.historico}|${t.valor}`;
+          if (ocrSeen.has(key)) return false;
+          ocrSeen.add(key);
+          return true;
+        });
+        // Re-extrair header do OCR text
+        if (!clientName || clientName === "Titular não identificado") {
+          for (let i = 0; i < Math.min(3, ocrPageData.length); i++) {
+            const ocrFlat = ocrPageData[i].flat;
+            const m = ocrFlat.match(/nome\s*:?\s*([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇ\s]{3,60}?)(?=\s+extrato|\s+ag[eê]|\s+cpf|\s+conta|\d{3}\.)/i);
+            if (m) { clientName = m[1].replace(/\s+/g, " ").trim(); break; }
+          }
+        }
+        return { clientName: clientName || "Titular não identificado", agencia, conta, banco: bankProfile.name, periodo: periodo || "—", transactions: ocrDeduped };
+      }
+    } catch (e) {
+      console.warn("OCR fallback failed:", e);
+    }
+  }
 
   return {
     clientName: clientName || "Titular não identificado",
