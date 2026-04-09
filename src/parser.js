@@ -898,7 +898,17 @@ function assembleTransactions(classified, layout) {
             // lastEmitted has value but no category — text is keyword that categorizes it
             // Prepend so category keyword comes first (avoids REM:/DES: prefix blocking matchCategoria)
             // Ex: "PAGTO ELETRON COBRANCA 0000759" → "BRADESCO VIDA E PREVIDENCIA PAGTO ELETRON COBRANCA 0000759"
-            lastEmitted.historico = (c.text + " " + lastEmitted.historico).trim();
+            // Guard: if text is a separate TX type OR has values coming (standalone or on date row),
+            // it's a NEW transaction — don't recategorize the previous one
+            if (IS_SEPARATE_TX.test(c.text) || nextHasValues) {
+              const date = layout === "superior" ? lastDate : null;
+              if (date || layout === "inferior") {
+                pending = { data: date, historico: c.text, valor: null };
+              }
+              justEmitted = false;
+            } else {
+              lastEmitted.historico = (c.text + " " + lastEmitted.historico).trim();
+            }
           } else {
             const date = layout === "superior" ? lastDate : null;
             if (date || layout === "inferior") {
@@ -917,7 +927,25 @@ function assembleTransactions(classified, layout) {
             justEmitted = false;
           } else if (c.categoria && lastEmitted.valor && !matchCategoria(lastEmitted.historico)) {
             // BIDIRECTIONAL CHECK: lastEmitted has value but no recognized category — prepend keyword text
-            lastEmitted.historico = (c.text + " " + lastEmitted.historico).trim();
+            // Guard: separate TX types should never be prepended (they are independent transactions)
+            if (IS_SEPARATE_TX.test(c.text)) {
+              const date = layout === "superior" ? lastDate : null;
+              if (date || layout === "inferior") {
+                pending = { data: date, historico: c.text, valor: null };
+              }
+              justEmitted = false;
+            } else {
+              lastEmitted.historico = (c.text + " " + lastEmitted.historico).trim();
+            }
+          } else if (lastEmitted.valor && nextHasValues && c.categoria &&
+                     lastEmitted.historico.includes(c.text)) {
+            // Same-category text repeats keyword already in lastEmitted → new TX
+            // Ex: 2nd "TARIFA EMISSAO EXTRATO" after "TARIFA EMISSAO EXTRATO 0280619 EXTRATOmes(E)"
+            const date = layout === "superior" ? lastDate : null;
+            if (date || layout === "inferior") {
+              pending = { data: date, historico: c.text, valor: null };
+            }
+            justEmitted = false;
           } else {
             // Default: append as detail
             lastEmitted.historico = (lastEmitted.historico + " " + c.text).trim();
