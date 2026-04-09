@@ -459,7 +459,9 @@ async function loadTesseract() {
   if (window.__tesseractWorker) return window.__tesseractWorker;
   const { createWorker } = await import("tesseract.js");
   const worker = await createWorker("por", 1, {
-    langPath: "/tesseract",  // Servido localmente de public/tesseract/por.traineddata
+    langPath: "/tesseract",
+    gzip: false,
+    logger: m => console.log("[Tesseract]", m.status, Math.round((m.progress || 0) * 100) + "%"),
   });
   // PSM 3 = "Fully automatic page segmentation" — default, melhor para pagina completa
   // A separação de linhas é feita pelo strip detection, não pelo Tesseract
@@ -594,7 +596,7 @@ function parseValor(s) {
 const IS_DATE = /^\d{2}\/\d{2}\/\d{4}$/;
 const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
 // Detecta linhas de cabeçalho/rodapé de página que NÃO são transações
-const IS_HEADER = /bradesco\s+celular|bradesco\s+internet|internet\s+banking|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:|^data\s*:\s*\d{2}\/\d{2}\/\d{4}|^nome\s*:\s*[A-Z]/i;
+const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:|^data\s*:\s*\d{2}\/\d{2}\/\d{4}|^nome\s*:\s*[A-Z]/i;
 // Detecta linhas de TOTAL / sumário do extrato — não são transações reais
 const IS_SUMMARY = /^\s*total\b|\btotal\s*$|[uú]ltimos\s+lan[cç]amentos/i;
 const IS_SEPARATE_TX = /\b(transfer[eê]ncia\s*pix|pix\s+(enviado|recebido|qrcode)|compra\s*(elo|visa|master|d[eé]bito|cr[eé]dito)|saque\s*(dinheiro|terminal|compartilhado|bradesco|pessoal|correspon|caixa|atm|taa|pv|c\/c)|ted\s|dep[oó]sito\s|pagamento\s+(de\s+)?titulo|pagto\s|cr[eé]dito\s+de\s+sal[aá]rio|credito\s+salario|pgto\s+fornecedor|bx[\s.]*ant|iof\s)/i;
