@@ -592,7 +592,7 @@ function parseValor(s) {
 const IS_DATE = /^\d{2}\/\d{2}\/\d{4}$/;
 const IS_VALUE = /^-?\d{1,3}(?:\.\d{3})*,\d{2}[DC]?$/i;
 // Detecta linhas de cabeçalho/rodapé de página que NÃO são transações
-const IS_HEADER = /bradesco\s+celular|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:|^data\s*:\s*\d{2}\/\d{2}\/\d{4}|^nome\s*:\s*[A-Z]/i;
+const IS_HEADER = /bradesco\s+celular|bradesco\s+internet|internet\s+banking|extrato\s+de\s*:|folha\s*:\s*\d+\/\d+|data\s+hist[oó]rico|cr[eé]dito\s*\(r\$\)|d[eé]bito\s*\(r\$\)|saldo\s*\(r\$\)|movimenta[cç][aã]o\s+entre|transf\s+saldo\s+c\/sal\s+p\/cc|[uú]ltimos\s+lan[cç]amentos|total\s+data\s*:|^data\s*:\s*\d{2}\/\d{2}\/\d{4}|^nome\s*:\s*[A-Z]/i;
 // Detecta linhas de TOTAL / sumário do extrato — não são transações reais
 const IS_SUMMARY = /^\s*total\b|\btotal\s*$|[uú]ltimos\s+lan[cç]amentos/i;
 const IS_SEPARATE_TX = /\b(transfer[eê]ncia\s*pix|pix\s+(enviado|recebido|qrcode)|compra\s*(elo|visa|master|d[eé]bito|cr[eé]dito)|saque\s*(dinheiro|terminal|compartilhado|bradesco|pessoal|correspon|caixa|atm|taa|pv|c\/c)|ted\s|dep[oó]sito\s|pagamento\s+(de\s+)?titulo|pagto\s|cr[eé]dito\s+de\s+sal[aá]rio|credito\s+salario|pgto\s+fornecedor|bx[\s.]*ant|iof\s)/i;
@@ -1776,6 +1776,13 @@ async function parseDocumentoPDF(file, onProgress) {
     // PDF sem texto extraível — ativar OCR
     needsOCR = true;
     ocrWorker = await loadTesseract();
+  } else {
+    // PDFs com CIDFont/encoding quebrado: items existem mas texto é garbage (control chars)
+    const sampleText = firstItems.slice(0, 200).map(it => it.str).join("");
+    if (!/[a-zA-ZÀ-ÿ]{2,}/.test(sampleText)) {
+      needsOCR = true;
+      ocrWorker = await loadTesseract();
+    }
   }
 
   // ── Detectar banco (multi-page: pages 1-3 para score-based detection) ──
