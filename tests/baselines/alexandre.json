@@ -8,8 +8,8 @@
       "valor": 875.2
     },
     "tarifas": {
-      "count": 5,
-      "valor": 32.4
+      "count": 12,
+      "valor": 55.24
     },
     "credito": {
       "count": 3,
@@ -19,17 +19,9 @@
       "count": 9,
       "valor": 1519.13
     },
-    "extrato": {
-      "count": 3,
-      "valor": 2.7
-    },
     "encargos": {
       "count": 6,
       "valor": 120.61
-    },
-    "saque_terminal": {
-      "count": 4,
-      "valor": 20.14
     }
   }
 }

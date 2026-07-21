@@ -103,6 +103,27 @@ describe('matchCategoria', () => {
     const cat = matchCategoria('EMISSAO EXTRATO');
     expect(cat.id).toBe('extrato');
   });
+
+  it('splits mora conta de telefone from mora credito', () => {
+    expect(matchCategoria('MORA CONTA DE TELEFONE 4556442').id).toBe('mora_telefone');
+    expect(matchCategoria('MORA CREDITO PESSOAL 3460070').id).toBe('mora');
+  });
+
+  it('routes third-party lenders to credito_terceiros', () => {
+    expect(matchCategoria('CREFISA CREDITO PESSOAL PAGTO ELETRON COBRANCA').id).toBe('credito_terceiros');
+    expect(matchCategoria('SUDA').id).toBe('credito_terceiros');
+    // bank installment stays in credito
+    expect(matchCategoria('PARCELA CREDITO PESSOAL 3480162 CONTR 404254480').id).toBe('credito');
+  });
+
+  it('does not match "suda" inside another word (ESUDA)', () => {
+    expect(matchCategoria('0916487 DES: ESUDA TRANSPORTES E S 15/01')).toBeNull();
+  });
+
+  it('never classifies IOF as a chargeable category', () => {
+    expect(matchCategoria('IOF S/ UTILIZACAO LIMITE 3167043')).toBeNull();
+    expect(matchCategoria('IOF SOBRE OPERACAO DE CREDITO')).toBeNull();
+  });
 });
 
 describe('parseValor', () => {
@@ -209,8 +230,8 @@ describe('IS_VALUE', () => {
 });
 
 describe('CATEGORIAS', () => {
-  it('has 15 categories', () => {
-    expect(CATEGORIAS).toHaveLength(22);
+  it('has 24 categories', () => {
+    expect(CATEGORIAS).toHaveLength(24);
   });
 
   it('all have required fields', () => {

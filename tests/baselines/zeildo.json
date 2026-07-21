@@ -19,7 +19,7 @@
       "count": 5,
       "valor": 53.53
     },
-    "saque_terminal": {
+    "tarifas": {
       "count": 7,
       "valor": 45.45
     },
@@ -28,8 +28,12 @@
       "valor": 10.22
     },
     "mora": {
-      "count": 35,
-      "valor": 4636.91
+      "count": 28,
+      "valor": 4253.94
+    },
+    "mora_telefone": {
+      "count": 7,
+      "valor": 382.97
     }
   }
 }

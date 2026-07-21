@@ -8,8 +8,8 @@
       "valor": 283.2
     },
     "tarifas": {
-      "count": 4,
-      "valor": 16.2
+      "count": 6,
+      "valor": 21.3
     },
     "tit_cap": {
       "count": 25,
@@ -30,10 +30,6 @@
     "encargos": {
       "count": 8,
       "valor": 65.19
-    },
-    "extrato": {
-      "count": 2,
-      "valor": 5.1
     },
     "vida_prev": {
       "count": 1,

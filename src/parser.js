@@ -17,11 +17,13 @@ function normalizeText(text) {
 const CATEGORIAS = [
   {
     id: "tarifas",
-    label: "Cobranças Indevidas",
-    sublabel: "Tarifas bancárias cobradas indevidamente",
+    label: "Tarifa Indevida",
+    sublabel: "Tarifas bancárias indevidas (saque, 2ª via, TED/DOC, extrato, etc.)",
     icon: "!",
     ...THEME,
     keywords: ["tarifa bancaria", "pend.tarifas bancaria", "lancamento a debito", "recebimento fornecedor", "tar bancaria", "tar receb fornecedor", "tar manut conta", "manutencao de conta", "tar renovacao cartao", "tar transferencia",
+      // TED/DOC (tarifas de transferência)
+      "doc/ted internet", "doc/ted - internet", "doc ted internet", "ted internet", "doc internet",
       // Itau
       "tar pacote itau", "tar pacote i mens", "tar pacote 3 mens", "tar pacote3.0", "tar maxconta exced", "tar cta exced", "tar lis", "tar comunicacao digital", "tar ordem pagamento", "tar transf. recurso", "tar ted in", "tarifa mensalidade pacote",
       // BB
@@ -100,10 +102,21 @@ const CATEGORIAS = [
     sublabel: "Juros de mora em operações de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["mora credito pessoal", "mora credito pesso", "mora cred pess", "mora conta de telefone", "mora cta telef", "mora de operacao", "mora operacao de credito", "mora cartao de credito", "mora cartao", "mora encargos", "mora vida e previdencia", "mora enc descoberto", "mora enc descoberto c.c", "mora limite credito", "mora consignado", "mora financiamento", "mora cdc", "juros mora", "juros atraso", "juros de mora", "multa moratoria"],
+    keywords: ["mora credito pessoal", "mora credito pesso", "mora cred pess", "mora de operacao", "mora operacao de credito", "mora cartao de credito", "mora cartao", "mora encargos", "mora vida e previdencia", "mora enc descoberto", "mora enc descoberto c.c", "mora limite credito", "mora consignado", "mora financiamento", "mora cdc", "juros mora", "juros atraso", "juros de mora", "multa moratoria"],
     fundamento: "Art. 52, §1º, CDC; Súmula 379 STJ",
     acao: "Verificar legalidade da cobrança. Mora decorrente de cobranças indevidas é igualmente indevida. Pleitear cancelamento da mora sobre débitos contestados.",
     descricao: "Mora de Crédito",
+  },
+  {
+    id: "mora_telefone",
+    label: "Mora Conta de Telefone",
+    sublabel: "Juros de mora sobre conta de telefone",
+    icon: "!",
+    ...THEME,
+    keywords: ["mora conta de telefone", "mora conta telefone", "mora cta telef", "mora cta telefone", "mora telefone"],
+    fundamento: "Art. 52, §1º, CDC; Súmula 379 STJ",
+    acao: "Mora incidente sobre conta de telefone. Verificar legalidade da cobrança e se a dívida principal é devida. Não confundir com mora de crédito pessoal.",
+    descricao: "Mora Conta de Telefone",
   },
   {
     id: "seguros",
@@ -151,7 +164,7 @@ const CATEGORIAS = [
     sublabel: "Parcelas de empréstimos e operações de crédito",
     icon: "!",
     ...THEME,
-    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "jbcred sociedade", "jbcred", "crefisa", "sudacred", "suda", "agiplan financeira", "agiplan", "easycob", "eagle", "pagto eletron cobranca (eagle)", "parcela emprestimo", "parcela financiamento", "amort emprestimo", "amortizacao emprestimo", "prestacao credito", "parcela consignado", "parcela cdc", "cdc credito",
+    keywords: ["emprestimo pessoal", "parcela oper de credito", "parcela credito pessoal", "parc cred pess", "parcela oper", "parcela emprestimo", "parcela financiamento", "amort emprestimo", "amortizacao emprestimo", "prestacao credito", "parcela consignado", "parcela cdc", "cdc credito",
       // Multi-banco
       "cred pessoal", "bb cred", "consignado bb", "parcela cred", "consignado caixa", "siemp", "consignado santander",
       // Agibank
@@ -159,6 +172,18 @@ const CATEGORIAS = [
     fundamento: "Art. 52, CDC; Lei 10.931/04; Res. CMN 4.559/17",
     acao: "Solicitar demonstrativo completo da operação. Verificar CET e taxa de juros. Contestar cobranças acima do contratado ou sem autorização expressa.",
     descricao: "Parcela de Crédito Pessoal",
+  },
+  {
+    id: "credito_terceiros",
+    label: "Empréstimo de Financeiras (Terceiros)",
+    sublabel: "Parcelas de financeiras terceiras (Crefisa, SUDA, etc.)",
+    icon: "!",
+    ...THEME,
+    wordBoundary: true, // tokens de financeira (suda, eagle...) só casam como palavra inteira — evita "eSUDA", "eagleX"
+    keywords: ["jbcred sociedade", "jbcred", "crefisa", "sudacred", "suda", "agiplan financeira", "agiplan", "easycob", "eagle", "pagto eletron cobranca (eagle)"],
+    fundamento: "Art. 52, CDC; Súmula 297 STJ",
+    acao: "Parcela de empréstimo contratado junto a financeira terceira (não o banco), debitada em conta. Avaliar caso a caso: NÃO é tarifa/cobrança do banco. Verificar contratação e legalidade da operação antes de incluir na ação.",
+    descricao: "Empréstimo de Financeira (Terceiros)",
   },
   {
     id: "anuidade",
@@ -313,12 +338,17 @@ const CATEGORIAS = [
     sublabel: "Cobranças irregulares diversas",
     icon: "!",
     ...THEME,
-    keywords: ["msg", "debito automatico", "doc/ted internet", "doc/ted - internet", "doc ted internet", "ted internet", "doc internet", "sms aviso", "notificacao sms", "tar notificacao", "debito automatico tarifa"],
+    keywords: ["msg", "debito automatico", "sms aviso", "notificacao sms", "tar notificacao", "debito automatico tarifa"],
     fundamento: "Art. 39, CDC; Res. CMN 3.919/10",
     acao: "Verificar natureza da cobrança e se houve autorização contratual expressa. Solicitar memória de cálculo e contestar cobranças sem fundamento contratual.",
     descricao: "Cobrança Diversa",
   },
 ];
+
+// Rubricas de tarifa que são CONSOLIDADAS numa única aba "Tarifa Indevida".
+// A detecção continua separada (para não quebrar a lógica delicada do parser),
+// mas o agrupamento final junta tudo em `tarifas`.
+const TARIFA_ROLLUP = { saque_terminal: "tarifas", extrato: "tarifas", extrato_movimento: "tarifas" };
 
 function matchCategoria(historico) {
   const h = normalizeText(historico);
@@ -326,6 +356,9 @@ function matchCategoria(historico) {
   // Usar ^ (inicio da string) em vez de \b para não bloquear textos prepended
   // Ex: "BRADESCO VIDA E PREVIDENCIA REM: CLAUDIO..." deve casar vida_prev
   if (/^rem\s*:/.test(h) || /^des\s*:/.test(h)) return null;
+  // IOF é imposto federal, não é tarifa/cobrança contestável do banco.
+  // "IOF S/ UTILIZACAO LIMITE", "IOF SOBRE ...", "IOF FINANCEIRO" etc. → nunca classificar.
+  if (/^iof\b/.test(h)) return null;
   // Busca o match com keyword MAIS LONGA (mais específica) entre todas as categorias.
   // Desempate: keyword que aparece MAIS TARDE no texto é mais específica.
   // Ex: "TARIFA BANCARIA CESTA B.EXPRESSO" → "cesta b.expresso" (pos 16) vence "tarifa bancaria" (pos 0)
@@ -336,7 +369,14 @@ function matchCategoria(historico) {
   for (const cat of CATEGORIAS) {
     for (const kw of cat.keywords) {
       const nkw = normalizeText(kw);
-      const pos = h.indexOf(nkw);
+      let pos;
+      if (cat.wordBoundary) {
+        // Casa a keyword só como palavra inteira (evita substring dentro de outra palavra)
+        const m = new RegExp(`(?<![a-z0-9])${nkw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9])`).exec(h);
+        pos = m ? m.index : -1;
+      } else {
+        pos = h.indexOf(nkw);
+      }
       if (pos === -1) continue;
       if (nkw.length > bestLen || (nkw.length === bestLen && pos > bestPos)) {
         bestLen = nkw.length;
@@ -384,7 +424,7 @@ function matchCategoria(historico) {
   // MORA entries never have purchases/withdrawals/deposits as sub-descriptions.
   // Restrict to mora/mora_cel to avoid false negatives in other categories where
   // patterns like "SAQUEterminal" ARE legitimate sub-descriptions of TARIFA.
-  if (bestCat && (bestCat.id === "mora" || bestCat.id === "mora_cel") && bestPos >= 0) {
+  if (bestCat && (bestCat.id === "mora" || bestCat.id === "mora_cel" || bestCat.id === "mora_telefone") && bestPos >= 0) {
     const afterKw = h.slice(bestPos + bestLen);
     if (/\b(compra\s*(elo|visa|master|debito|credito)|saque\s+dinheiro|dep\s+(dinheiro|corban|cheque)|deposito\s+(dinheiro|corban)|especie\b|rem[\s:\-]|transferencia\s*pix|pix\s+(enviado|recebido)|credito\s+de\s+salario)/i.test(afterKw)) {
       return null;
@@ -400,8 +440,11 @@ function analyzeAll(transactions) {
   for (const t of transactions) {
     const cat = matchCategoria(t.historico);
     if (!cat) continue;
-    if (!grouped[cat.id]) grouped[cat.id] = { cat, items: [] };
-    grouped[cat.id].items.push(t);
+    // Consolidação da rubrica "Tarifa Indevida": saque/extrato/extrato_movimento → tarifas
+    const rollupId = TARIFA_ROLLUP[cat.id] || cat.id;
+    const groupCat = rollupId === cat.id ? cat : (CATEGORIAS.find(c => c.id === rollupId) || cat);
+    if (!grouped[rollupId]) grouped[rollupId] = { cat: groupCat, items: [] };
+    grouped[rollupId].items.push(t);
 
     // Count hidden MORA occurrences in merged historicos
     // e.g. "MORA CREDITO PESSOAL.! ENCARGOS LIMITE DE CRED" → primary=encargos, but also count 1 MORA

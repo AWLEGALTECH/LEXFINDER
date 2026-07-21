@@ -457,11 +457,21 @@ export default function App() {
   // Extrai Descrição (keyword matchada) e Operação (restante) do historico
   const extractDescricaoOperacao = useCallback((historico, cat) => {
     const h = historico.toUpperCase();
+    const nh = h.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     let bestKw = "";
     for (const kw of cat.keywords) {
       const nkw = kw.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      const nh = h.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (nh.includes(nkw) && nkw.length > bestKw.length) bestKw = nkw;
+    }
+    // Fallback: rubricas consolidadas (ex: "Tarifa Indevida" agrega saque/extrato) \u2014
+    // a keyword pode n\u00e3o estar em cat.keywords. Busca em todas as categorias.
+    if (!bestKw) {
+      for (const c of CATEGORIAS) {
+        for (const kw of c.keywords) {
+          const nkw = kw.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          if (nh.includes(nkw) && nkw.length > bestKw.length) bestKw = nkw;
+        }
+      }
     }
     if (!bestKw) return { descricao: historico.toUpperCase(), operacao: "" };
     const nh = h.normalize("NFD").replace(/[\u0300-\u036f]/g, "");

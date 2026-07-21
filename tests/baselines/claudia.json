@@ -28,8 +28,12 @@
       "valor": 3.35
     },
     "credito": {
-      "count": 19,
-      "valor": 1103.55
+      "count": 16,
+      "valor": 508.33
+    },
+    "credito_terceiros": {
+      "count": 3,
+      "valor": 595.22
     },
     "mora": {
       "count": 20,
