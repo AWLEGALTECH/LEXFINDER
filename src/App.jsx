@@ -474,7 +474,6 @@ export default function App() {
       }
     }
     if (!bestKw) return { descricao: historico.toUpperCase(), operacao: "" };
-    const nh = h.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const idx = nh.indexOf(bestKw.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
     const remainder = historico.substring(idx + bestKw.length).trim();
     return { descricao: bestKw, operacao: remainder || "" };
@@ -630,16 +629,14 @@ export default function App() {
         {/* HEADER */}
         <header style={{ position:"sticky",top:0,zIndex:50,height:60,borderBottom:"1px solid rgba(255,255,255,0.06)",background:"rgba(2,6,23,0.88)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 2rem" }}>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-            <div style={{ width:30,height:30,borderRadius:7,background:"linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900,color:"#fff",boxShadow:"0 0 18px rgba(59,130,246,0.5)" }}>§</div>
+            <div style={{ width:30,height:30,borderRadius:7,background:"linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 18px rgba(59,130,246,0.5)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
             <span style={{ fontSize:14,fontWeight:700,color:"#f1f5f9",letterSpacing:"-0.3px" }}>LEX FINDER</span>
             <span style={{ color:"rgba(255,255,255,0.12)",margin:"0 6px" }}>|</span>
             <span style={{ fontSize:12,color:"#475569",fontWeight:400 }}>Análise de Descontos Indevidos</span>
           </div>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-            <div style={{ display:"flex",alignItems:"center",gap:6,background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.22)",borderRadius:20,padding:"5px 12px",fontSize:11,fontWeight:600,color:"#60a5fa" }}>
-              <div style={{ width:6,height:6,borderRadius:"50%",background:"#3b82f6",animation:"pulse 2s infinite",boxShadow:"0 0 6px #3b82f6" }}/>
-              Motor Ativo · RA TECNOLOGIA
-            </div>
             <button onClick={handleLogout} style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:7,color:"#475569",fontSize:11,fontWeight:600,padding:"5px 10px",cursor:"pointer",transition:"all 0.2s",fontFamily:"Inter,sans-serif" }} onMouseEnter={e=>{e.currentTarget.style.color="#f87171";e.currentTarget.style.borderColor="rgba(239,68,68,0.3)";}} onMouseLeave={e=>{e.currentTarget.style.color="#475569";e.currentTarget.style.borderColor="rgba(255,255,255,0.08)";}}>Sair</button>
           </div>
         </header>
