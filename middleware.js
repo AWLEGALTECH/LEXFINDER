@@ -56,7 +56,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
 body{min-height:100vh;background:radial-gradient(ellipse 80% 50% at 50% 20%,rgba(59,130,246,0.1) 0%,transparent 60%),#020617;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif}
 .card{width:100%;max-width:400px;padding:0 1rem;animation:slideUp 0.4s ease}
 .logo{text-align:center;margin-bottom:32px}
-.logo-icon{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;box-shadow:0 0 32px rgba(59,130,246,0.5);margin-bottom:16px}
+.logo-icon{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#f97316,#ea580c);display:inline-flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 0 32px rgba(249,115,22,0.5);margin-bottom:16px}
 .logo-title{font-size:22px;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px}
 .logo-sub{font-size:13px;color:#475569;margin-top:4px}
 form{background:rgba(12,19,35,0.7);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
@@ -77,7 +77,7 @@ button[type=submit]:disabled{background:rgba(255,255,255,0.04);color:#475569;cur
 <body>
 <div class="card">
   <div class="logo">
-    <div class="logo-icon">&sect;</div>
+    <div class="logo-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
     <div class="logo-title">LEX FINDER</div>
     <div class="logo-sub">An&aacute;lise de Descontos Indevidos</div>
   </div>

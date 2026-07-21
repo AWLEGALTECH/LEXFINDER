@@ -629,7 +629,7 @@ export default function App() {
         {/* HEADER */}
         <header style={{ position:"sticky",top:0,zIndex:50,height:60,borderBottom:"1px solid rgba(255,255,255,0.06)",background:"rgba(2,6,23,0.88)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 2rem" }}>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-            <div style={{ width:30,height:30,borderRadius:7,background:"linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 18px rgba(59,130,246,0.5)" }}>
+            <div style={{ width:30,height:30,borderRadius:7,background:"linear-gradient(135deg,#f97316 0%,#ea580c 100%)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 18px rgba(249,115,22,0.5)" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </div>
             <span style={{ fontSize:14,fontWeight:700,color:"#f1f5f9",letterSpacing:"-0.3px" }}>LEX FINDER</span>
