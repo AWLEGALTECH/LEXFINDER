@@ -248,3 +248,20 @@ describe('CATEGORIAS', () => {
     expect(inv.naoReembolsavel).toBe(true);
   });
 });
+
+describe('analyzeAll', () => {
+  it('ignora fragmentos sem valor (null/0) para não inflar a contagem', () => {
+    const txns = [
+      { data: '01/01/2020', historico: 'TARIFA EMISSAO EXTRATO 0010120', valor: 2.4 },
+      { data: '02/01/2020', historico: 'EXTRATOmes(E)', valor: null },          // fragmento
+      { data: '03/01/2020', historico: 'CREFISA SA CREDITO FINANCIAMENTO', valor: 0 }, // sem valor
+      { data: '04/01/2020', historico: 'BRADESCO VIDA E PREVIDENCIA SA', valor: null }, // crédito/label
+    ];
+    const grouped = analyzeAll(txns);
+    const flat = Object.values(grouped).flatMap(g => g.items);
+    expect(flat).toHaveLength(1);
+    expect(flat[0].valor).toBe(2.4);
+    expect(grouped.credito_terceiros).toBeUndefined();
+    expect(grouped.vida_prev).toBeUndefined();
+  });
+});

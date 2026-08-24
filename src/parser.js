@@ -440,6 +440,11 @@ function analyzeAll(transactions) {
   for (const t of transactions) {
     const cat = matchCategoria(t.historico);
     if (!cat) continue;
+    // Ignora fragmentos sem valor monetário (ex: "EXTRATOmes(E)" ou "CREFISA SA
+    // CREDITO FINANCIAMENTO" que vazam como transação solta). Uma cobrança real
+    // sempre tem valor > 0; entradas null/0 só inflam a contagem e apareceriam
+    // como "R$ null" no relatório.
+    if (!Number.isFinite(t.valor) || t.valor <= 0) continue;
     // Consolidação da rubrica "Tarifa Indevida": saque/extrato/extrato_movimento → tarifas
     const rollupId = TARIFA_ROLLUP[cat.id] || cat.id;
     const groupCat = rollupId === cat.id ? cat : (CATEGORIAS.find(c => c.id === rollupId) || cat);

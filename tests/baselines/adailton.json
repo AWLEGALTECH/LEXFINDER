@@ -1,10 +1,10 @@
 {
   "clientName": "ADAILTON DA SILVA PEREIRA",
-  "totalOcorrencias": 435,
+  "totalOcorrencias": 431,
   "totalValor": 44075.48,
   "categorias": {
     "cesta": {
-      "count": 99,
+      "count": 98,
       "valor": 2711.71
     },
     "seguros": {
@@ -32,7 +32,7 @@
       "valor": 16414.57
     },
     "tarifas": {
-      "count": 21,
+      "count": 20,
       "valor": 68.75
     },
     "anuidade": {
@@ -40,16 +40,12 @@
       "valor": 516.22
     },
     "adiantamento": {
-      "count": 17,
+      "count": 16,
       "valor": 704.4
     },
     "bx_ant_financ": {
       "count": 11,
       "valor": 8999.64
-    },
-    "vida_prev": {
-      "count": 1,
-      "valor": 0
     }
   }
 }
