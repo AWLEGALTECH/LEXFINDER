@@ -314,13 +314,14 @@ const CATEGORIAS = [
   {
     id: "op_vencidas",
     label: "Operações Vencidas",
-    sublabel: "Cobranças de operações vencidas",
+    sublabel: "Saldo devedor das operações vencidas (valor de referência)",
     icon: "!",
     ...THEME,
     keywords: ["operacoes vencidas", "operacoes venvidas", "op.vencidas", "op vencidas", "operacao vencida"],
     fundamento: "Art. 52, CDC; Art. 397, CC",
-    acao: "Verificar se as operações vencidas são legítimas. Contestar cobranças em duplicidade ou com cálculos incorretos.",
+    acao: "ATENÇÃO — Este valor costuma ser o SALDO DEVEDOR TOTAL das operações vencidas (débito = saldo, na página 'Últimos Lançamentos'), NÃO uma cobrança avulsa. Pode já conter mora/encargos/parcelas listados nas outras rubricas. Por isso fica FORA do total automático a restituir: exibido para análise. Incluir na ação somente após conferir a memória de cálculo e evitar dupla contagem.",
     descricao: "Operações Vencidas",
+    naoReembolsavel: true,
   },
   {
     id: "reg_lancamento",
@@ -1917,8 +1918,10 @@ async function parseDocumentoPDF(file, onProgress) {
   }
 
   // Fallback: se TODAS as páginas são "Últimos Lançamentos", usar como fonte (não há duplicata)
+  let usedUltimosFallback = false;
   if (pageData.length === 0 && ultimosPages.length > 0) {
     pageData.push(...ultimosPages);
+    usedUltimosFallback = true;
   }
 
   // Re-detect bank from OCR text if initial detection defaulted to Bradesco on image PDFs
@@ -2013,9 +2016,25 @@ async function parseDocumentoPDF(file, onProgress) {
   const classified = classifyRows(allRows, cols, needsOCR);
   const allTransactions = assembleTransactions(classified, layout);
 
+  // Resgate de rubricas-resumo das páginas de "Últimos Lançamentos" que normalmente
+  // são descartadas. Ex: "OPERACOES VENCIDAS" (saldo devedor das operações vencidas)
+  // só aparece nessa página. Capturamos APENAS as linhas cuja categoria está em
+  // SUMMARY_ONLY — o resto da página é duplicata do extrato principal e continua fora.
+  // (No fallback all-ultimos as páginas já foram processadas normalmente acima.)
+  const SUMMARY_ONLY = new Set(["op_vencidas"]);
+  let summaryTransactions = [];
+  if (!usedUltimosFallback && ultimosPages.length > 0) {
+    const ultimosRows = ultimosPages.flatMap(p => p.rows);
+    const ultimosClassified = classifyRows(ultimosRows, cols, needsOCR);
+    summaryTransactions = assembleTransactions(ultimosClassified, layout).filter(t => {
+      const c = matchCategoria(t.historico);
+      return c && SUMMARY_ONLY.has(c.id) && Number.isFinite(t.valor) && t.valor > 0;
+    });
+  }
+
   // Dedup: Bradesco PDFs podem repetir seções (Últimos Lançamentos, períodos sobrepostos)
   const seen = new Set();
-  const deduped = allTransactions.filter(t => {
+  const deduped = allTransactions.concat(summaryTransactions).filter(t => {
     const key = `${t.data}|${t.historico}|${t.valor}`;
     if (seen.has(key)) return false;
     seen.add(key);

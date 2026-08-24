@@ -1,7 +1,7 @@
 {
   "clientName": "ADAILTON DA SILVA PEREIRA",
-  "totalOcorrencias": 431,
-  "totalValor": 44075.48,
+  "totalOcorrencias": 432,
+  "totalValor": 51441.92,
   "categorias": {
     "cesta": {
       "count": 98,
@@ -46,6 +46,10 @@
     "bx_ant_financ": {
       "count": 11,
       "valor": 8999.64
+    },
+    "op_vencidas": {
+      "count": 1,
+      "valor": 7366.44
     }
   }
 }

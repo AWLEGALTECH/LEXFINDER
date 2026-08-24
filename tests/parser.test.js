@@ -124,6 +124,12 @@ describe('matchCategoria', () => {
     expect(matchCategoria('IOF S/ UTILIZACAO LIMITE 3167043')).toBeNull();
     expect(matchCategoria('IOF SOBRE OPERACAO DE CREDITO')).toBeNull();
   });
+
+  it('classifies OPERACOES VENCIDAS as op_vencidas (reference-only)', () => {
+    const cat = matchCategoria('OPERACOES VENCIDAS 3100198');
+    expect(cat.id).toBe('op_vencidas');
+    expect(cat.naoReembolsavel).toBe(true);
+  });
 });
 
 describe('parseValor', () => {
