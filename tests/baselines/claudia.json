@@ -1,15 +1,15 @@
 {
   "clientName": "CLAUDIA NAYARA LIRA LEMOS",
-  "totalOcorrencias": 115,
-  "totalValor": 18396.76,
+  "totalOcorrencias": 133,
+  "totalValor": 18448.24,
   "categorias": {
     "reg_lancamento": {
       "count": 1,
       "valor": 498.58
     },
     "seguros": {
-      "count": 24,
-      "valor": 208
+      "count": 42,
+      "valor": 259.48
     },
     "encargos": {
       "count": 32,

@@ -124,7 +124,7 @@ const CATEGORIAS = [
     sublabel: "Seguros prestamista, morte e invalidez",
     icon: "!",
     ...THEME,
-    keywords: ["bradesco seg-resid/outros", "bradesco seg-resid", "sabemi segurado", "sabemi", "seguro prestamista", "seguro protecao financeira", "seguro mais protegido", "seg protecao cheque esp", "seg protecao cheque", "seguro cart deb bradesco", "servico cartao protegido", "seguradora secon", "aspecir - uniao seguradora", "aspecir", "odontoprev s/a", "odontoprev", "aquisicao/devolucao-seg", "liberty seguros", "viza prev seguros", "sebraseg clube de beneficios", "sebraseg", "sudamerica clube de servicos", "sudamerica clube", "previsul", "pagto eletron cobranca (brades resi)", "pagto eletron cobranca (dental saude)", "pagto eletron cobranca (ace seguradora", "pagto eletron cobranca (centro de assistencia)", "pagto eletron cobranca cenasp", "bradesco auto", "bradesco saude", "bradesco dental", "seguro residencial", "seguro vida", "seguro acidentes pessoais", "seguro desemprego", "seguro perda involuntaria", "zurich seguros", "mapfre seguros", "porto seguro", "pagto eletron cobranca (mapfre)", "pagto eletron cobranca (zurich)",
+    keywords: ["bradesco seg-resid/outros", "bradesco seg-resid", "sabemi segurado", "sabemi", "seguro prestamista", "seguro protecao financeira", "seguro mais protecao", "seguro mais protegido", "seguro residencial bradesco", "seguro internet sa", "seguro mais protegido", "seg protecao cheque esp", "seg protecao cheque", "seguro cart deb bradesco", "servico cartao protegido", "seguradora secon", "aspecir - uniao seguradora", "aspecir", "odontoprev s/a", "odontoprev", "aquisicao/devolucao-seg", "liberty seguros", "viza prev seguros", "sebraseg clube de beneficios", "sebraseg", "sudamerica clube de servicos", "sudamerica clube", "previsul", "pagto eletron cobranca (brades resi)", "pagto eletron cobranca (dental saude)", "pagto eletron cobranca (ace seguradora", "pagto eletron cobranca (centro de assistencia)", "pagto eletron cobranca cenasp", "bradesco auto", "bradesco saude", "bradesco dental", "seguro residencial", "seguro vida", "seguro acidentes pessoais", "seguro desemprego", "seguro perda involuntaria", "zurich seguros", "mapfre seguros", "porto seguro", "pagto eletron cobranca (mapfre)", "pagto eletron cobranca (zurich)",
       // Itau
       "itau seg vida pf", "itau seg ap pf", "itau seg vida ap pf", "seguro residencia", "seguro cartao itau", "seguro cartao", "seguro lis", "seguro itau viva", "seguro bolsa protegida", "pagto itau seguros", "itau seguros",
       // BB
@@ -400,9 +400,21 @@ function matchCategoria(historico) {
     const cs = CATEGORIAS.find(c => c.id === "cesta");
     if (cs) return cs;
   }
-  // Guard: "EMPRESTIMO PESSOAL 1234567" sem prefixo parcela/amort é desembolso (crédito), não cobrança
-  if (bestCat && bestCat.id === "credito" && /^emprestimo\s+pessoal\b/i.test(h) && !/parcela|amort|prestacao|pagamento|parc\b/i.test(h)) {
+  // Guard: "EMPRESTIMO PESSOAL" é desembolso (crédito que ENTRA), não cobrança.
+  // Vale em qualquer posição da linha: em extratos Bradesco o "EMPRESTIMO PESSOAL" de
+  // uma transação seguinte costuma grudar no histórico de outra (ex: pagamento de
+  // "CONTA DE AGUA / AGUAS DO AMAZONAS ... EMPRESTIMO PESSOAL" ou "SAQUE DINHEIRO ...
+  // EMPRESTIMO PESSOAL"), classificando indevidamente água/saque como crédito.
+  // Só é parcela real quando há prefixo parcela/amort/prestacao.
+  if (bestCat && bestCat.id === "credito" && /emprestimo\s+pessoal\b/i.test(h) && !/parcela|amort|prestacao|pagamento|parc\b/i.test(h)) {
     return null;
+  }
+  // Reclassificação: "PAGTO ELETRON COBRANCA 0000085 SEGURO" → seguros.
+  // O detalhe "SEGURO" fica após o docto e não casa como keyword sozinho (senão
+  // quebraria a montagem). \bseguro\b (palavra inteira) evita casar "PAGSEGURO" (PagSeguro).
+  if (/pagto\s+eletron\s+cobranca/i.test(h) && /\bseguro\b/i.test(h) && !/pagseguro/i.test(h)) {
+    const sg = CATEGORIAS.find(c => c.id === "seguros");
+    if (sg) return sg;
   }
   // Reclassificação: "EXTRATOmovimento(E) TARIFA EMISSAO EXTRATO" → extrato_movimento
   // O prefixo "extratomovimento"/"extrato movimento" indica extrato de movimentação

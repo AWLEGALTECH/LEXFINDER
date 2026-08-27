@@ -3,6 +3,23 @@ import { CATEGORIAS, THEME, matchCategoria, analyzeAll, parseDocumentoPDF } from
 
 const fmt = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+// Rótulo específico de cada lançamento: a keyword mais longa (mais específica)
+// encontrada no histórico, entre TODAS as categorias. Assim cada linha mostra o que
+// realmente é (ex: "EMISSAO EXTRATO", "SAQUETERMINAL", "SEGURO PRESTAMISTA") em vez de
+// repetir o rótulo genérico da rubrica ("Cobrança Indevida") em toda linha.
+const _norm = (s) => s.toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+function detectRubrica(historico, cat) {
+  const nh = _norm(historico || "");
+  let best = "";
+  for (const c of CATEGORIAS) {
+    for (const kw of c.keywords) {
+      const nkw = _norm(kw);
+      if (nh.includes(nkw) && nkw.length > best.length) best = kw;
+    }
+  }
+  return best ? best.toUpperCase() : (cat && cat.descricao ? cat.descricao : "");
+}
+
 /* ─────────────────────────────────────────────
    MODAL
 ───────────────────────────────────────────── */
@@ -80,8 +97,8 @@ function Modal({ group, onClose, clientName, onExported, buildSheet, loadXLSX })
                 <tr key={idx} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)",transition:"background 0.12s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.02)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                   <td style={{ padding:"11px 12px",color:"#475569",fontSize:"0.8rem",whiteSpace:"nowrap",fontVariantNumeric:"tabular-nums" }}>{item.data}</td>
                   <td style={{ padding:"11px 12px" }}>
-                    <div style={{ fontWeight:600,fontSize:"0.85rem",color:"#e2e8f0" }}>{cat.descricao}</div>
-                    <div style={{ fontSize:"0.72rem",color:"#334155",marginTop:2 }}>{item.historico}</div>
+                    <div style={{ fontWeight:600,fontSize:"0.85rem",color:"#e2e8f0" }}>{detectRubrica(item.historico, cat)}</div>
+                    <div style={{ fontSize:"0.72rem",color:"#64748b",marginTop:2,lineHeight:1.4,wordBreak:"break-word" }}>{item.historico}</div>
                   </td>
                   <td style={{ padding:"11px 12px",fontWeight:700,fontSize:"0.9rem",color:"#f87171",whiteSpace:"nowrap",fontVariantNumeric:"tabular-nums" }}>{fmt(item.valor)}</td>
                 </tr>

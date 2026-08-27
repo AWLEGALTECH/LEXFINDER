@@ -130,6 +130,29 @@ describe('matchCategoria', () => {
     expect(cat.id).toBe('op_vencidas');
     expect(cat.naoReembolsavel).toBe(true);
   });
+
+  it('classifies PAGTO ELETRON COBRANCA ... SEGURO as seguros', () => {
+    expect(matchCategoria('PAGTO ELETRON COBRANCA 0000085 SEGURO').id).toBe('seguros');
+  });
+
+  it('does NOT classify PagSeguro (maquininha) as seguro', () => {
+    const cat = matchCategoria('PAGSEGURO*grandev COMPRA ELO DEBITO VISTA');
+    expect(cat === null || cat.id !== 'seguros').toBe(true);
+  });
+
+  it('classifies SEGURO MAIS PROTECAO (protecao, not protegido) as seguros', () => {
+    expect(matchCategoria('SEGURO MAIS PROTECAO 2760031').id).toBe('seguros');
+  });
+
+  it('does NOT classify water bill merged with EMPRESTIMO PESSOAL as credito', () => {
+    expect(matchCategoria('0693719 AGUAS DO AMAZONAS/AM-6937195 EMPRESTIMO PESSOAL')).toBeNull();
+    expect(matchCategoria('SAQUE DINHEIRO BANCO 24H 0811863 EMPRESTIMO PESSOAL')).toBeNull();
+  });
+
+  it('still classifies real installment as credito', () => {
+    expect(matchCategoria('PARCELA CREDITO PESSOAL 3460122').id).toBe('credito');
+    expect(matchCategoria('EMPRESTIMO PESSOAL PARC 003/012').id).toBe('credito');
+  });
 });
 
 describe('parseValor', () => {
