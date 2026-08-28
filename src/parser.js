@@ -248,9 +248,8 @@ const CATEGORIAS = [
       // Agibank
       "debito de cartao"],
     fundamento: "Art. 52, CDC; Res. CMN 3.919/10",
-    acao: "ATENÇÃO — Gastos com cartão são, em regra, a própria fatura/compras do titular, NÃO uma tarifa indevida do banco. Por isso ficam FORA do total a restituir. Exibido apenas para conferência: incluir na ação somente os lançamentos comprovadamente não reconhecidos pelo cliente.",
+    acao: "Verificar se os gastos lançados foram efetivamente realizados pelo titular. Contestar cobranças não reconhecidas e pleitear estorno com correção monetária.",
     descricao: "Gasto com Cartão de Crédito",
-    naoReembolsavel: true,
   },
   {
     id: "vida_prev",
