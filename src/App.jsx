@@ -112,6 +112,71 @@ function Modal({ group, onClose, clientName, onExported, buildSheet, loadXLSX })
 }
 
 /* ─────────────────────────────────────────────
+   BANCO DE RUBRICAS
+───────────────────────────────────────────── */
+// Notas de detecção específicas além das keywords (comportamentos do motor).
+const RUBRICA_NOTAS = {
+  tarifas: "Consolida também Saque Terminal/Pessoal/Correspondente, 2ª via, TED/DOC e Extrato (mês/movimento) nesta mesma rubrica.",
+  op_vencidas: "Capturada das páginas 'Últimos Lançamentos'. É saldo devedor (referência): NÃO entra no total automático.",
+  invest_facil: "Prática abusiva: exibida mas NÃO entra no total (o dinheiro retorna ao cliente).",
+  credito: "'EMPRESTIMO PESSOAL' sozinho (desembolso) é ignorado; só conta parcela/amortização/prestação.",
+  seguros: "Também reclassifica 'PAGTO ELETRON COBRANCA ... SEGURO'. Ignora 'PAGSEGURO' (maquininha).",
+  mora: "IOF, REM:/DES: (PIX) e valores sem débito são ignorados para evitar falso positivo.",
+};
+
+function RubricasModal({ onClose }) {
+  const [busca, setBusca] = useState("");
+  const q = busca.trim().toLowerCase();
+  const lista = CATEGORIAS.filter(c => {
+    if (!q) return true;
+    if (c.label.toLowerCase().includes(q)) return true;
+    return c.keywords.some(k => k.toLowerCase().includes(q));
+  });
+  return (
+    <div onClick={onClose} style={{ position:"fixed",inset:0,zIndex:1100,background:"rgba(2,6,23,0.9)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem",animation:"mFadeIn 0.18s ease" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:"100%",maxWidth:900,maxHeight:"90vh",background:"rgba(10,17,32,0.98)",border:"1px solid rgba(249,115,22,0.25)",borderRadius:16,overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:"0 0 80px rgba(249,115,22,0.15),0 40px 80px rgba(0,0,0,0.7)",animation:"mSlideUp 0.22s cubic-bezier(0.4,0,0.2,1)",fontFamily:"Inter,sans-serif" }}>
+        <div style={{ padding:"1.4rem 1.8rem",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap" }}>
+          <div style={{ display:"flex",alignItems:"center",gap:"0.9rem" }}>
+            <div style={{ width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#f97316,#ea580c)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 18px rgba(249,115,22,0.5)" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div>
+              <div style={{ fontWeight:700,fontSize:"1.05rem",color:"#f1f5f9" }}>Banco de Rubricas</div>
+              <div style={{ fontSize:"0.75rem",color:"#64748b",marginTop:2 }}>{CATEGORIAS.length} rubricas · palavras-chave e regras de detecção</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:"#64748b",width:34,height:34,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>✕</button>
+        </div>
+        <div style={{ padding:"1rem 1.8rem 0" }}>
+          <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar rubrica ou palavra-chave (ex: saque, seguro, mora)…" style={{ width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"11px 14px",color:"#f1f5f9",fontSize:"0.85rem",outline:"none",fontFamily:"Inter,sans-serif" }} />
+        </div>
+        <div style={{ overflow:"auto",flex:1,padding:"1.1rem 1.8rem 1.8rem",display:"flex",flexDirection:"column",gap:"0.9rem" }}>
+          {lista.map(c => (
+            <div key={c.id} style={{ border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"1rem 1.15rem",background:"rgba(255,255,255,0.015)" }}>
+              <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap" }}>
+                <span style={{ fontWeight:700,fontSize:"0.95rem",color:"#e2e8f0" }}>{c.label}</span>
+                <span style={{ fontSize:"0.62rem",color:"#475569",border:"1px solid rgba(255,255,255,0.08)",borderRadius:20,padding:"1px 8px",fontFamily:"monospace" }}>{c.id}</span>
+                {c.naoReembolsavel && <span style={{ fontSize:"0.6rem",fontWeight:700,color:"#fbbf24",background:"rgba(251,191,36,0.1)",border:"1px solid rgba(251,191,36,0.3)",borderRadius:20,padding:"1px 8px",textTransform:"uppercase",letterSpacing:"0.5px" }}>Fora do total</span>}
+              </div>
+              <div style={{ fontSize:"0.76rem",color:"#64748b",marginTop:3 }}>{c.sublabel}</div>
+              <div style={{ fontSize:"0.7rem",color:"#3b82f6",marginTop:6,fontWeight:600 }}>⚖ {c.fundamento}</div>
+              {RUBRICA_NOTAS[c.id] && <div style={{ fontSize:"0.72rem",color:"#94a3b8",marginTop:6,lineHeight:1.5,background:"rgba(59,130,246,0.06)",borderLeft:"2px solid rgba(59,130,246,0.4)",padding:"5px 9px",borderRadius:4 }}>ℹ {RUBRICA_NOTAS[c.id]}</div>}
+              <div style={{ fontSize:"0.58rem",fontWeight:700,letterSpacing:"1.5px",textTransform:"uppercase",color:"#475569",margin:"9px 0 6px" }}>Morfologia de detecção ({c.keywords.length} termos)</div>
+              <div style={{ display:"flex",flexWrap:"wrap",gap:5 }}>
+                {c.keywords.map((k,i)=>(
+                  <span key={i} style={{ fontSize:"0.68rem",color:"#cbd5e1",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:"2px 7px",fontFamily:"monospace" }}>{k}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+          {lista.length===0 && <div style={{ color:"#475569",textAlign:"center",padding:"2rem",fontSize:"0.85rem" }}>Nenhuma rubrica encontrada para "{busca}".</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
    CATEGORY CARD
 ───────────────────────────────────────────── */
 function CategoryCard({ cat, items, onClick, delay, downloaded, selected, onToggleSelect }) {
@@ -400,6 +465,7 @@ export default function App() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [multipleClientsWarning, setMultipleClientsWarning] = useState(null);
+  const [showRubricas, setShowRubricas] = useState(false);
 
   const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
   const addFiles = useCallback((fileList) => {
@@ -640,6 +706,7 @@ export default function App() {
             <span style={{ fontSize:12,color:"#475569",fontWeight:400 }}>Análise de Descontos Indevidos</span>
           </div>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+            <button onClick={()=>setShowRubricas(true)} style={{ background:"rgba(249,115,22,0.08)",border:"1px solid rgba(249,115,22,0.28)",borderRadius:7,color:"#fb923c",fontSize:11,fontWeight:600,padding:"5px 10px",cursor:"pointer",transition:"all 0.2s",fontFamily:"Inter,sans-serif" }} onMouseEnter={e=>{e.currentTarget.style.background="rgba(249,115,22,0.16)";}} onMouseLeave={e=>{e.currentTarget.style.background="rgba(249,115,22,0.08)";}}>Banco de Rubricas</button>
             <button onClick={handleLogout} style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:7,color:"#475569",fontSize:11,fontWeight:600,padding:"5px 10px",cursor:"pointer",transition:"all 0.2s",fontFamily:"Inter,sans-serif" }} onMouseEnter={e=>{e.currentTarget.style.color="#f87171";e.currentTarget.style.borderColor="rgba(239,68,68,0.3)";}} onMouseLeave={e=>{e.currentTarget.style.color="#475569";e.currentTarget.style.borderColor="rgba(255,255,255,0.08)";}}>Sair</button>
           </div>
         </header>
@@ -910,6 +977,7 @@ export default function App() {
       </div>
 
       {activeModal && <Modal group={activeModal} onClose={()=>setActiveModal(null)} clientName={meta.clientName} onExported={(catId)=>setDownloadedCats(prev=>new Set([...prev,catId]))} buildSheet={buildSheet} loadXLSX={loadXLSX} />}
+      {showRubricas && <RubricasModal onClose={()=>setShowRubricas(false)} />}
     </>
   );
 }
