@@ -560,37 +560,19 @@ export default function App() {
     return ws;
   }, [extractDescricaoOperacao, applySheetStyles]);
 
-  const buildMultiSheet = useCallback((XLSX, groups) => {
-    const wsData = [];
-    const rowStyles = {};
-    const merges = [];
-    for (let gi = 0; gi < groups.length; gi++) {
-      const { cat, items } = groups[gi];
-      const titleIdx = wsData.length;
-      wsData.push([cat.label, "", "", ""]);
-      merges.push({ s: { r: titleIdx, c: 0 }, e: { r: titleIdx, c: 3 } });
-      rowStyles[titleIdx] = "title";
-      if (gi === 0) {
-        rowStyles[wsData.length] = "header";
-        wsData.push(["Data", "Descrição", "Operação", "Valor"]);
-      }
-      for (const item of items) {
-        const { descricao, operacao } = extractDescricaoOperacao(item.historico, cat);
-        rowStyles[wsData.length] = "data";
-        wsData.push([sanitizeXlsCell(item.data), sanitizeXlsCell(descricao), sanitizeXlsCell(operacao), item.valor]);
-      }
+  // Nome de aba válido p/ Excel: máx 31 chars, sem : \ / ? * [ ], único (case-insensitive).
+  const safeSheetName = (label, used) => {
+    let base = (label || "Rubrica").replace(/[:\\/?*[\]]/g, " ").replace(/\s+/g, " ").trim().slice(0, 31) || "Rubrica";
+    let name = base;
+    let n = 2;
+    while (used.has(name.toLowerCase())) {
+      const suffix = " " + n;
+      name = base.slice(0, 31 - suffix.length) + suffix;
+      n++;
     }
-    const grandTotal = groups.reduce((s, g) => s + g.items.reduce((ss, i) => ss + i.valor, 0), 0);
-    rowStyles[wsData.length] = "total";
-    wsData.push(["VALOR TOTAL", "", "", grandTotal]);
-    rowStyles[wsData.length] = "total";
-    wsData.push(["VALOR EM DOBRO", "", "", grandTotal * 2]);
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws["!cols"] = XLS_COLS;
-    ws["!merges"] = merges;
-    applySheetStyles(XLSX, ws, rowStyles);
-    return ws;
-  }, [extractDescricaoOperacao, applySheetStyles]);
+    used.add(name.toLowerCase());
+    return name;
+  };
 
   const batchExport = useCallback(async () => {
     const selected = Object.values(grouped).filter(g => selectedCats.has(g.cat.id));
@@ -599,8 +581,12 @@ export default function App() {
     try {
       const XLSX = await loadXLSX();
       const wb = XLSX.utils.book_new();
-      const ws = buildMultiSheet(XLSX, selected);
-      XLSX.utils.book_append_sheet(wb, ws, "Descontos Identificados");
+      const used = new Set();
+      // Uma ABA por rubrica selecionada (N selecionadas -> N abas).
+      for (const g of selected) {
+        const ws = buildSheet(XLSX, g.cat, g.items);
+        XLSX.utils.book_append_sheet(wb, ws, safeSheetName(g.cat.label, used));
+      }
       const wbOut = XLSX.write(wb, { bookType: "xlsx", type: "array" });
       const blob = new Blob([wbOut], { type: "application/octet-stream" });
       const url = URL.createObjectURL(blob);
@@ -611,7 +597,7 @@ export default function App() {
       for (const g of selected) setDownloadedCats(prev => new Set([...prev, g.cat.id]));
     } catch { /* export failed silently */ }
     finally { setBatchExporting(false); }
-  }, [grouped, selectedCats, loadXLSX, buildMultiSheet]);
+  }, [grouped, selectedCats, loadXLSX, buildSheet]);
 
   const groups = Object.values(grouped);
   const reembolsaveis = groups.filter(g => !g.cat.naoReembolsavel);
