@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   normalizeText, matchCategoria, parseValor, groupByY, pickDebit,
   detectLayout, extractFromRow, analyzeAll, CATEGORIAS,
-  IS_DATE, IS_VALUE, IS_HEADER, IS_SUMMARY
+  IS_DATE, IS_VALUE, IS_HEADER, IS_SUMMARY,
+  deriveKeywords, registerCustomRubricas
 } from '../src/parser.js';
 
 describe('normalizeText', () => {
@@ -275,6 +276,45 @@ describe('CATEGORIAS', () => {
   it('invest_facil is marked naoReembolsavel', () => {
     const inv = CATEGORIAS.find(c => c.id === 'invest_facil');
     expect(inv.naoReembolsavel).toBe(true);
+  });
+});
+
+describe('deriveKeywords (rubricas custom)', () => {
+  const all = [
+    '0693719 AGUAS DO AMAZONAS/AM-6937195 EMPRESTIMO PESSOAL',
+    '0693719 AGUAS DO AMAZONAS/AM-6937195',
+    'PARCELA CREDITO PESSOAL 3460122',
+    'SAQUE DINHEIRO BANCO 24H 0811863 EMPRESTIMO PESSOAL',
+    'COMPRA ELO DEBITO VISTA POSTO FRANCESIS',
+  ];
+  it('deriva keyword específica e sem vazamento', () => {
+    const kws = deriveKeywords(all.slice(0, 2), all);
+    expect(kws.length).toBeGreaterThan(0);
+    expect(kws.join(' ')).toContain('aguas do amazonas');
+    // nenhuma keyword pode casar com um lançamento não selecionado
+    const outros = all.slice(2).map(h => h.toLowerCase());
+    for (const k of kws) for (const o of outros) expect(o.includes(k)).toBe(false);
+  });
+  it('cobre todos os selecionados', () => {
+    const sel = all.slice(0, 2).map(h => h.toLowerCase());
+    const kws = deriveKeywords(all.slice(0, 2), all);
+    for (const s of sel) expect(kws.some(k => s.includes(k))).toBe(true);
+  });
+});
+
+describe('registerCustomRubricas', () => {
+  it('injeta e detecta rubrica custom, e re-registro não duplica', () => {
+    const before = CATEGORIAS.length;
+    registerCustomRubricas([{ id: 'abc', nome: 'Conta de Água', keywords: ['aguas do amazonas'], nao_reembolsavel: false }]);
+    expect(CATEGORIAS.length).toBe(before + 1);
+    const cat = matchCategoria('0693719 AGUAS DO AMAZONAS/AM-6937195');
+    expect(cat && cat.id).toBe('custom_abc');
+    // re-registrar substitui (não acumula)
+    registerCustomRubricas([{ id: 'abc', nome: 'Conta de Água', keywords: ['aguas do amazonas'], nao_reembolsavel: false }]);
+    expect(CATEGORIAS.length).toBe(before + 1);
+    // limpar
+    registerCustomRubricas([]);
+    expect(CATEGORIAS.length).toBe(before);
   });
 });
 

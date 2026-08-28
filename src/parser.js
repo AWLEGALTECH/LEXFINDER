@@ -2113,4 +2113,84 @@ async function parseDocumentoPDF(file, onProgress) {
   };
 }
 
-export { detectBank, BANK_PROFILES, CATEGORIAS, THEME, normalizeText, matchCategoria, analyzeAll, parseDocumentoPDF, parseValor, groupByY, pickDebit, pickSaldo, detectLayout, extractFromRow, loadPdfJs, loadTesseract, ocrCleanText, ocrPage, OCR_SCALE, IS_DATE, IS_VALUE, IS_HEADER, IS_SUMMARY, preprocessCanvas, otsuThreshold, clusterColumns, validateWithBalance };
+/* ─────────────────────────────────────────────
+   RUBRICAS CUSTOMIZADAS (self-service)
+───────────────────────────────────────────── */
+
+const KW_STOP = new Set(["de","da","do","das","dos","e","a","o","as","os","ao","para","por","com","cc","ref","cod","lanc","em","no","na","sa","ltda","me","the"]);
+
+// Deriva a "morfologia de detecção" (palavras-chave) a partir dos lançamentos que o
+// usuário apontou como sendo a nova rubrica. Garantias:
+//  - cada keyword é substring REAL dos históricos selecionados (casa no matchCategoria);
+//  - NENHUMA keyword casa com um lançamento NÃO selecionado do treino (zero falso positivo local);
+//  - o conjunto cobre todos os selecionados (set cover guloso).
+// selected/all: arrays de históricos (strings).
+function deriveKeywords(selected, all) {
+  const selN = selected.map(normalizeText);
+  const selSet = new Set(selN);
+  const otherN = [...new Set(all.map(normalizeText))].filter(h => !selSet.has(h));
+  const candidatesOf = (rawNorm) => {
+    const clean = rawNorm.replace(/\d+/g, " ").replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
+    const words = clean.split(" ").filter(w => w.length >= 2); // mantém stopwords no MEIO das frases
+    const out = new Set();
+    for (let n = 1; n <= 4; n++)
+      for (let i = 0; i + n <= words.length; i++) {
+        const toks = words.slice(i, i + n);
+        // não deixa começar/terminar em stopword, nem keyword de um único stopword
+        if (KW_STOP.has(toks[0]) || KW_STOP.has(toks[toks.length - 1])) continue;
+        const kw = toks.join(" ");
+        if (kw.length >= 3 && rawNorm.includes(kw)) out.add(kw); // só se casar de verdade no raw
+      }
+    return [...out];
+  };
+  const cand = new Map(); // kw -> {sup, leak}
+  for (const h of selN) for (const k of candidatesOf(h)) if (!cand.has(k)) cand.set(k, { sup: 0, leak: 0, len: k.length });
+  for (const [k, v] of cand) {
+    for (const h of selN) if (h.includes(k)) v.sup++;
+    for (const h of otherN) { if (h.includes(k)) { v.leak++; break; } }
+  }
+  // só keywords sem vazamento; prefere maior cobertura e mais específica (mais longa)
+  const clean = [...cand.entries()].filter(([, v]) => v.leak === 0 && v.sup >= 1).map(([k, v]) => ({ k, sup: v.sup, len: v.len }));
+  clean.sort((a, b) => b.sup - a.sup || b.len - a.len);
+  const uncovered = new Set(selN.map((_, i) => i));
+  const chosen = [];
+  while (uncovered.size && clean.length) {
+    let best = null, bestCovSize = 0;
+    for (const c of clean) {
+      let cov = 0;
+      for (const i of uncovered) if (selN[i].includes(c.k)) cov++;
+      if (cov > bestCovSize || (cov === bestCovSize && best && c.len > best.len)) { best = c; bestCovSize = cov; }
+    }
+    if (!best || bestCovSize === 0) break;
+    chosen.push(best.k);
+    for (const i of [...uncovered]) if (selN[i].includes(best.k)) uncovered.delete(i);
+  }
+  return chosen;
+}
+
+// Injeta rubricas customizadas (vindas do banco) no motor, em runtime.
+// Substitui as anteriores (idempotente entre chamadas). Cada item: {id, nome, sublabel,
+// fundamento, keywords[], nao_reembolsavel}.
+function registerCustomRubricas(list) {
+  for (let i = CATEGORIAS.length - 1; i >= 0; i--) if (CATEGORIAS[i]._custom) CATEGORIAS.splice(i, 1);
+  for (const r of (list || [])) {
+    const kws = (r.keywords || []).map(k => String(k).toLowerCase()).filter(Boolean);
+    if (!kws.length) continue;
+    CATEGORIAS.push({
+      id: "custom_" + r.id,
+      label: r.nome,
+      sublabel: r.sublabel || "Rubrica personalizada",
+      icon: "!",
+      ...THEME,
+      keywords: kws,
+      fundamento: r.fundamento || "Verificar legalidade da cobrança e autorização contratual.",
+      acao: r.fundamento || "Rubrica personalizada criada pelo usuário. Verificar legalidade e fundamento da cobrança.",
+      descricao: r.nome,
+      naoReembolsavel: !!r.nao_reembolsavel,
+      _custom: true,
+      _dbId: r.id,
+    });
+  }
+}
+
+export { detectBank, BANK_PROFILES, CATEGORIAS, THEME, normalizeText, matchCategoria, analyzeAll, parseDocumentoPDF, parseValor, groupByY, pickDebit, pickSaldo, detectLayout, extractFromRow, loadPdfJs, loadTesseract, ocrCleanText, ocrPage, OCR_SCALE, IS_DATE, IS_VALUE, IS_HEADER, IS_SUMMARY, preprocessCanvas, otsuThreshold, clusterColumns, validateWithBalance, deriveKeywords, registerCustomRubricas };

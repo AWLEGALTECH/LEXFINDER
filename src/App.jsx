@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { CATEGORIAS, THEME, matchCategoria, analyzeAll, parseDocumentoPDF } from "./parser.js";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { CATEGORIAS, THEME, matchCategoria, analyzeAll, parseDocumentoPDF, deriveKeywords, registerCustomRubricas } from "./parser.js";
+import { fetchCustomRubricas, createCustomRubrica, deleteCustomRubrica, updateCustomRubrica } from "./rubricasStore.js";
 
 const fmt = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -124,8 +125,9 @@ const RUBRICA_NOTAS = {
   mora: "IOF, REM:/DES: (PIX) e valores sem débito são ignorados para evitar falso positivo.",
 };
 
-function RubricasModal({ onClose }) {
+function RubricasModal({ onClose, onAdd, onDeleteCustom }) {
   const [busca, setBusca] = useState("");
+  const [delId, setDelId] = useState(null);
   const q = busca.trim().toLowerCase();
   const lista = CATEGORIAS.filter(c => {
     if (!q) return true;
@@ -145,7 +147,10 @@ function RubricasModal({ onClose }) {
               <div style={{ fontSize:"0.75rem",color:"#64748b",marginTop:2 }}>{CATEGORIAS.length} rubricas · palavras-chave e regras de detecção</div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:"#64748b",width:34,height:34,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>✕</button>
+          <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+            <button onClick={onAdd} style={{ background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,padding:"8px 14px",cursor:"pointer",fontFamily:"Inter,sans-serif",boxShadow:"0 2px 12px rgba(249,115,22,0.35)" }}>+ Adicionar Rubrica</button>
+            <button onClick={onClose} style={{ background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:"#64748b",width:34,height:34,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>✕</button>
+          </div>
         </div>
         <div style={{ padding:"1rem 1.8rem 0" }}>
           <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar rubrica ou palavra-chave (ex: saque, seguro, mora)…" style={{ width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"11px 14px",color:"#f1f5f9",fontSize:"0.85rem",outline:"none",fontFamily:"Inter,sans-serif" }} />
@@ -157,6 +162,15 @@ function RubricasModal({ onClose }) {
                 <span style={{ fontWeight:700,fontSize:"0.95rem",color:"#e2e8f0" }}>{c.label}</span>
                 <span style={{ fontSize:"0.62rem",color:"#475569",border:"1px solid rgba(255,255,255,0.08)",borderRadius:20,padding:"1px 8px",fontFamily:"monospace" }}>{c.id}</span>
                 {c.naoReembolsavel && <span style={{ fontSize:"0.6rem",fontWeight:700,color:"#fbbf24",background:"rgba(251,191,36,0.1)",border:"1px solid rgba(251,191,36,0.3)",borderRadius:20,padding:"1px 8px",textTransform:"uppercase",letterSpacing:"0.5px" }}>Fora do total</span>}
+                {c._custom && <span style={{ fontSize:"0.6rem",fontWeight:700,color:"#4ade80",background:"rgba(74,222,128,0.1)",border:"1px solid rgba(74,222,128,0.3)",borderRadius:20,padding:"1px 8px",textTransform:"uppercase",letterSpacing:"0.5px" }}>Personalizada</span>}
+                {c._custom && onDeleteCustom && (
+                  delId === c._dbId
+                    ? <span style={{ display:"inline-flex",gap:6,alignItems:"center" }}>
+                        <button onClick={()=>{ onDeleteCustom(c._dbId); setDelId(null); }} style={{ fontSize:"0.6rem",fontWeight:700,color:"#fff",background:"#ef4444",border:"none",borderRadius:6,padding:"2px 8px",cursor:"pointer" }}>Confirmar exclusão</button>
+                        <button onClick={()=>setDelId(null)} style={{ fontSize:"0.6rem",color:"#94a3b8",background:"none",border:"none",cursor:"pointer" }}>cancelar</button>
+                      </span>
+                    : <button onClick={()=>setDelId(c._dbId)} style={{ marginLeft:"auto",fontSize:"0.62rem",color:"#f87171",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.25)",borderRadius:6,padding:"2px 8px",cursor:"pointer" }}>Excluir</button>
+                )}
               </div>
               <div style={{ fontSize:"0.76rem",color:"#64748b",marginTop:3 }}>{c.sublabel}</div>
               <div style={{ fontSize:"0.7rem",color:"#3b82f6",marginTop:6,fontWeight:600 }}>⚖ {c.fundamento}</div>
@@ -170,6 +184,146 @@ function RubricasModal({ onClose }) {
             </div>
           ))}
           {lista.length===0 && <div style={{ color:"#475569",textAlign:"center",padding:"2rem",fontSize:"0.85rem" }}>Nenhuma rubrica encontrada para "{busca}".</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   ADICIONAR RUBRICA (wizard self-service)
+───────────────────────────────────────────── */
+function AddRubricaModal({ onClose, onSaved }) {
+  const [nome, setNome] = useState("");
+  const [naoReemb, setNaoReemb] = useState(false);
+  const [txs, setTxs] = useState([]);        // {data, historico, valor}
+  const [sel, setSel] = useState(new Set()); // índices selecionados
+  const [busca, setBusca] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+  const [nFiles, setNFiles] = useState(0);
+
+  const onFiles = useCallback(async (fileList) => {
+    const files = Array.from(fileList || []).filter(f => /\.pdf$/i.test(f.name));
+    if (!files.length) return;
+    setParsing(true); setErr("");
+    try {
+      const collected = [];
+      for (const f of files) {
+        const r = await parseDocumentoPDF(f, () => {});
+        for (const t of (r.transactions || [])) collected.push({ data: t.data || "", historico: t.historico || "", valor: t.valor });
+      }
+      setTxs(prev => {
+        const seen = new Set(prev.map(t => `${t.data}|${t.historico}|${t.valor}`));
+        const merged = [...prev];
+        for (const t of collected) { const k = `${t.data}|${t.historico}|${t.valor}`; if (!seen.has(k)) { seen.add(k); merged.push(t); } }
+        return merged;
+      });
+      setNFiles(n => n + files.length);
+    } catch (e) { setErr("Falha ao ler o extrato. Verifique se é um PDF de texto (não imagem)."); }
+    finally { setParsing(false); }
+  }, []);
+
+  const q = busca.trim().toLowerCase();
+  const visIdx = useMemo(() => txs.map((t, i) => i).filter(i => !q || txs[i].historico.toLowerCase().includes(q)), [txs, q]);
+
+  const derived = useMemo(() => {
+    if (!sel.size) return [];
+    const selH = [...sel].map(i => txs[i].historico);
+    const allH = txs.map(t => t.historico);
+    try { return deriveKeywords(selH, allH); } catch { return []; }
+  }, [sel, txs]);
+
+  // quantos lançamentos (do sandbox) casariam com a morfologia derivada
+  const matchCount = useMemo(() => {
+    if (!derived.length) return 0;
+    const kws = derived.map(k => k.toLowerCase());
+    const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    return txs.filter(t => { const h = norm(t.historico); return kws.some(k => h.includes(norm(k))); }).length;
+  }, [derived, txs]);
+
+  const toggle = (i) => setSel(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
+  const selecionarVisiveis = () => setSel(prev => { const n = new Set(prev); visIdx.forEach(i => n.add(i)); return n; });
+
+  const salvar = useCallback(async () => {
+    if (!nome.trim()) { setErr("Dê um nome à rubrica."); return; }
+    if (!sel.size) { setErr("Selecione ao menos um lançamento que representa a rubrica."); return; }
+    if (!derived.length) { setErr("Não consegui derivar uma morfologia segura dessa seleção (os lançamentos escolhidos se confundem com os demais). Tente selecionar lançamentos mais parecidos entre si."); return; }
+    setSaving(true); setErr("");
+    try {
+      const nova = await createCustomRubrica({
+        nome: nome.trim(),
+        sublabel: "Rubrica personalizada",
+        keywords: derived,
+        nao_reembolsavel: naoReemb,
+        amostras: [...sel].slice(0, 25).map(i => txs[i].historico),
+      });
+      await onSaved(nova);
+      onClose();
+    } catch (e) { setErr("Erro ao salvar no banco: " + (e.message || e)); setSaving(false); }
+  }, [nome, sel, derived, naoReemb, txs, onSaved, onClose]);
+
+  return (
+    <div onClick={onClose} style={{ position:"fixed",inset:0,zIndex:1200,background:"rgba(2,6,23,0.92)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem",animation:"mFadeIn 0.18s ease" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:"100%",maxWidth:920,maxHeight:"92vh",background:"rgba(10,17,32,0.98)",border:"1px solid rgba(249,115,22,0.3)",borderRadius:16,overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:"0 0 80px rgba(249,115,22,0.18),0 40px 80px rgba(0,0,0,0.7)",fontFamily:"Inter,sans-serif" }}>
+        {/* Header */}
+        <div style={{ padding:"1.3rem 1.8rem",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem" }}>
+          <div>
+            <div style={{ fontWeight:700,fontSize:"1.05rem",color:"#f1f5f9" }}>Adicionar nova rubrica</div>
+            <div style={{ fontSize:"0.74rem",color:"#64748b",marginTop:2 }}>Aponte no(s) extrato(s) onde a rubrica aparece — o Finder aprende a detectá-la sozinho.</div>
+          </div>
+          <button onClick={onClose} style={{ background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:"#64748b",width:34,height:34,cursor:"pointer",fontSize:16,flexShrink:0 }}>✕</button>
+        </div>
+        {/* Nome + upload */}
+        <div style={{ padding:"1.1rem 1.8rem 0.6rem",display:"flex",gap:12,flexWrap:"wrap",alignItems:"center" }}>
+          <input value={nome} onChange={e=>setNome(e.target.value)} placeholder="Nome da rubrica (ex: Conta de Água)" style={{ flex:"1 1 240px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:9,padding:"11px 14px",color:"#f1f5f9",fontSize:"0.9rem",outline:"none",fontFamily:"Inter,sans-serif" }} />
+          <label style={{ display:"inline-flex",alignItems:"center",gap:7,fontSize:"0.78rem",color:"#94a3b8",cursor:"pointer",userSelect:"none" }}>
+            <input type="checkbox" checked={!naoReemb} onChange={e=>setNaoReemb(!e.target.checked)} /> Conta no total
+          </label>
+          <label style={{ background:"rgba(249,115,22,0.1)",border:"1px solid rgba(249,115,22,0.3)",borderRadius:9,padding:"10px 14px",color:"#fb923c",fontSize:"0.8rem",fontWeight:600,cursor:"pointer" }}>
+            {parsing ? "Lendo…" : (txs.length ? "+ Adicionar outro extrato" : "Carregar extrato(s)")}
+            <input type="file" accept="application/pdf" multiple style={{ display:"none" }} onChange={e=>onFiles(e.target.files)} />
+          </label>
+        </div>
+        {/* Sandbox */}
+        {txs.length > 0 && (
+          <div style={{ padding:"0.5rem 1.8rem 0",display:"flex",gap:10,alignItems:"center",flexWrap:"wrap" }}>
+            <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Pesquisar entre as movimentações…" style={{ flex:"1 1 220px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"9px 12px",color:"#f1f5f9",fontSize:"0.82rem",outline:"none",fontFamily:"Inter,sans-serif" }} />
+            <button onClick={selecionarVisiveis} style={{ fontSize:"0.72rem",color:"#60a5fa",background:"rgba(59,130,246,0.08)",border:"1px solid rgba(59,130,246,0.25)",borderRadius:7,padding:"8px 11px",cursor:"pointer" }}>Selecionar filtrados</button>
+            <span style={{ fontSize:"0.72rem",color:"#64748b" }}>{sel.size} de {txs.length} selecionados · {nFiles} extrato(s)</span>
+          </div>
+        )}
+        <div style={{ overflow:"auto",flex:1,padding:"0.8rem 1.8rem 0.4rem",minHeight:180 }}>
+          {txs.length === 0 && <div style={{ color:"#475569",textAlign:"center",padding:"3rem 1rem",fontSize:"0.85rem",lineHeight:1.6 }}>Carregue um ou mais extratos PDF acima.<br/>Depois marque os lançamentos que são a rubrica "{nome || "…"}".</div>}
+          {txs.length > 0 && visIdx.map(i => {
+            const t = txs[i]; const on = sel.has(i);
+            return (
+              <div key={i} onClick={()=>toggle(i)} style={{ display:"flex",alignItems:"center",gap:12,padding:"8px 10px",borderRadius:8,cursor:"pointer",background:on?"rgba(249,115,22,0.1)":"transparent",border:on?"1px solid rgba(249,115,22,0.3)":"1px solid transparent",marginBottom:3 }}>
+                <input type="checkbox" checked={on} readOnly style={{ pointerEvents:"none" }} />
+                <span style={{ color:"#475569",fontSize:"0.76rem",width:82,flexShrink:0,fontVariantNumeric:"tabular-nums" }}>{t.data}</span>
+                <span style={{ color:"#cbd5e1",fontSize:"0.78rem",flex:1,wordBreak:"break-word" }}>{t.historico}</span>
+                <span style={{ color:"#f87171",fontSize:"0.8rem",fontWeight:700,fontVariantNumeric:"tabular-nums",flexShrink:0 }}>{fmt(t.valor)}</span>
+              </div>
+            );
+          })}
+          {txs.length > 0 && visIdx.length === 0 && <div style={{ color:"#475569",textAlign:"center",padding:"2rem",fontSize:"0.82rem" }}>Nada encontrado para "{busca}".</div>}
+        </div>
+        {/* Prévia da morfologia + salvar */}
+        <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)",padding:"0.9rem 1.8rem 1.1rem" }}>
+          {sel.size > 0 && (
+            <div style={{ marginBottom:10 }}>
+              <div style={{ fontSize:"0.58rem",fontWeight:700,letterSpacing:"1.5px",textTransform:"uppercase",color:"#475569",marginBottom:5 }}>Morfologia que o Finder vai aprender {derived.length>0 && <span style={{ color:"#4ade80" }}>· {matchCount} lançamento(s) deste extrato casariam</span>}</div>
+              <div style={{ display:"flex",flexWrap:"wrap",gap:5 }}>
+                {derived.length ? derived.map((k,i)=>(<span key={i} style={{ fontSize:"0.7rem",color:"#4ade80",background:"rgba(74,222,128,0.1)",border:"1px solid rgba(74,222,128,0.3)",borderRadius:6,padding:"2px 8px",fontFamily:"monospace" }}>{k}</span>)) : <span style={{ fontSize:"0.72rem",color:"#fbbf24" }}>Seleção ainda ambígua (se confunde com outros lançamentos). Escolha lançamentos mais parecidos.</span>}
+              </div>
+            </div>
+          )}
+          {err && <div style={{ fontSize:"0.76rem",color:"#f87171",marginBottom:9,background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.25)",borderRadius:7,padding:"8px 11px" }}>{err}</div>}
+          <div style={{ display:"flex",justifyContent:"flex-end",gap:10 }}>
+            <button onClick={onClose} style={{ background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:8,color:"#94a3b8",fontSize:"0.82rem",fontWeight:600,padding:"9px 16px",cursor:"pointer",fontFamily:"Inter,sans-serif" }}>Cancelar</button>
+            <button onClick={salvar} disabled={saving || !nome.trim() || !sel.size || !derived.length} style={{ background:(saving||!nome.trim()||!sel.size||!derived.length)?"rgba(255,255,255,0.06)":"linear-gradient(135deg,#f97316,#ea580c)",border:"none",borderRadius:8,color:(saving||!nome.trim()||!sel.size||!derived.length)?"#475569":"#fff",fontSize:"0.82rem",fontWeight:700,padding:"9px 20px",cursor:(saving||!nome.trim()||!sel.size||!derived.length)?"not-allowed":"pointer",fontFamily:"Inter,sans-serif" }}>{saving?"Salvando…":"Salvar rubrica"}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -466,6 +620,24 @@ export default function App() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [multipleClientsWarning, setMultipleClientsWarning] = useState(null);
   const [showRubricas, setShowRubricas] = useState(false);
+  const [showAddRubrica, setShowAddRubrica] = useState(false);
+  const [customRubricas, setCustomRubricas] = useState([]);
+  const [rawTx, setRawTx] = useState([]);
+
+  const refreshCustomRubricas = useCallback(async () => {
+    try {
+      const list = await fetchCustomRubricas();
+      registerCustomRubricas(list);
+      setCustomRubricas(list);
+      return list;
+    } catch { return null; }
+  }, []);
+
+  useEffect(() => { refreshCustomRubricas(); }, [refreshCustomRubricas]);
+
+  const reanalyzeCurrent = useCallback(() => { setRawTx(cur => { setGrouped(cur.length ? analyzeAll(cur) : {}); return cur; }); }, []);
+  const handleSavedRubrica = useCallback(async () => { await refreshCustomRubricas(); reanalyzeCurrent(); }, [refreshCustomRubricas, reanalyzeCurrent]);
+  const handleDeleteCustom = useCallback(async (dbId) => { try { await deleteCustomRubrica(dbId); } catch { /* ignore */ } await refreshCustomRubricas(); reanalyzeCurrent(); }, [refreshCustomRubricas, reanalyzeCurrent]);
 
   const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
   const addFiles = useCallback((fileList) => {
@@ -515,6 +687,7 @@ export default function App() {
     const allTransactions = results.flatMap(r=>r.result.transactions);
     const primary = results[0].result;
     const g = analyzeAll(allTransactions);
+    setRawTx(allTransactions);
     setMeta(primary); setGrouped(g);
     setFileName(files.length===1?files[0].name:`${files.length} documentos analisados`);
     if (Object.keys(g).length>0) { setPhase("success"); setTimeout(()=>setPhase("results"),2200); }
@@ -522,7 +695,7 @@ export default function App() {
   }, []);
 
   const reset = useCallback(() => {
-    setGrouped({}); setMeta({}); setFileName(""); setUploadedFiles([]);
+    setGrouped({}); setMeta({}); setFileName(""); setUploadedFiles([]); setRawTx([]);
     setDownloadedCats(new Set()); setSelectedCats(new Set()); setShowDashboard(false);
     setConfirmReset(false); setMultipleClientsWarning(null); setPhase("upload"); setErrorMsg("");
   }, []);
@@ -977,7 +1150,8 @@ export default function App() {
       </div>
 
       {activeModal && <Modal group={activeModal} onClose={()=>setActiveModal(null)} clientName={meta.clientName} onExported={(catId)=>setDownloadedCats(prev=>new Set([...prev,catId]))} buildSheet={buildSheet} loadXLSX={loadXLSX} />}
-      {showRubricas && <RubricasModal onClose={()=>setShowRubricas(false)} />}
+      {showRubricas && <RubricasModal onClose={()=>setShowRubricas(false)} onAdd={()=>setShowAddRubrica(true)} onDeleteCustom={handleDeleteCustom} />}
+      {showAddRubrica && <AddRubricaModal onClose={()=>setShowAddRubrica(false)} onSaved={handleSavedRubrica} />}
     </>
   );
 }
