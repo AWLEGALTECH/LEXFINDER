@@ -7,3 +7,5 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 )
+
+// redeploy: restaura LEX FINDER ao ar
