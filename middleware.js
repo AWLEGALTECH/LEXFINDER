@@ -12,7 +12,23 @@ function getCookie(request, name) {
   return match ? match.slice(name.length + 1) : null;
 }
 
+// ── MODO MANUTENÇÃO ──────────────────────────────────────────────
+// Quando true, TODO acesso ao site é bloqueado (mesmo com cookie válido):
+// ninguém vê o sistema, só a tela de manutenção. Para reativar, voltar para false.
+const MAINTENANCE = true;
+
 export default async function middleware(request) {
+  if (MAINTENANCE) {
+    return new Response(MAINTENANCE_HTML, {
+      status: 503,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Retry-After": "3600",
+      },
+    });
+  }
+
   const cookie = getCookie(request, "lf_session");
 
   if (cookie) {
@@ -116,5 +132,34 @@ document.getElementById("loginForm").addEventListener("submit",async e=>{
   btn.textContent="Entrar";btn.disabled=attempts>=5;
 });
 </script>
+</body>
+</html>`;
+
+const MAINTENANCE_HTML = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LEX FINDER - Em manutenção</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:radial-gradient(ellipse 80% 50% at 50% 20%,rgba(249,115,22,0.08) 0%,transparent 60%),#020617;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;padding:1.5rem}
+.card{width:100%;max-width:440px;text-align:center;animation:slideUp 0.4s ease}
+.logo-icon{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#f97316,#ea580c);display:inline-flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 0 40px rgba(249,115,22,0.5);margin-bottom:26px}
+.title{font-size:26px;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px;margin-bottom:12px}
+.msg{font-size:15px;color:#94a3b8;line-height:1.7;margin-bottom:6px}
+.sub{font-size:13px;color:#475569;margin-top:20px}
+@keyframes slideUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
+  <div class="title">Sistema temporariamente indispon&iacute;vel</div>
+  <div class="msg">O LEX FINDER est&aacute; em manuten&ccedil;&atilde;o no momento.</div>
+  <div class="msg">Voltaremos em breve. Por favor, tente novamente mais tarde.</div>
+  <div class="sub">LEX FINDER &middot; RA Tecnologia</div>
+</div>
 </body>
 </html>`;
