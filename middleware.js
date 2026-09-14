@@ -15,16 +15,16 @@ function getCookie(request, name) {
 // ── MODO MANUTENÇÃO ──────────────────────────────────────────────
 // Quando true, TODO acesso ao site é bloqueado (mesmo com cookie válido):
 // ninguém vê o sistema, só a tela de manutenção. Para reativar, voltar para false.
-const MAINTENANCE = false;
+const MAINTENANCE = true;
 
 export default async function middleware(request) {
   if (MAINTENANCE) {
-    return new Response(MAINTENANCE_HTML, {
-      status: 503,
+    // Página totalmente em branco — nada é exibido (nem LEX FINDER, nem mensagem).
+    return new Response("<!doctype html><html><head><meta charset=\"utf-8\"><title></title></head><body></body></html>", {
+      status: 200,
       headers: {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-store, no-cache, must-revalidate",
-        "Retry-After": "3600",
       },
     });
   }
