@@ -15,7 +15,7 @@ function getCookie(request, name) {
 // ── MODO MANUTENÇÃO ──────────────────────────────────────────────
 // Quando true, TODO acesso ao site é bloqueado (mesmo com cookie válido):
 // ninguém vê o sistema, só a tela de manutenção. Para reativar, voltar para false.
-const MAINTENANCE = true;
+const MAINTENANCE = false;
 
 export default async function middleware(request) {
   if (MAINTENANCE) {
